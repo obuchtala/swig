@@ -48,7 +48,7 @@ private:
     
 // the output cpp file
     
-    File *f_wrap_cpp;
+    //File *f_wrap_cpp;
 
     // state variables
 
