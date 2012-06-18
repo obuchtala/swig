@@ -5,6 +5,7 @@
 #include <ctype.h>
 
 #include "javascript_emitter.h"
+extern JSEmitter* create_JSC_emitter();
 
 /* ********************************************************************
  * JAVASCRIPT
@@ -205,7 +206,7 @@ void JAVASCRIPT::main(int argc, char *argv[]) {
         }
         case JSEmitter::JavascriptCore:
         {
-            // TODO: emitter = create_jsc_emitter();
+            emitter = create_JSC_emitter();
             break;
         }
         case JSEmitter::QtScript:
