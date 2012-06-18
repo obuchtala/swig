@@ -25,11 +25,10 @@ JSValueRef $functionname(JSContextRef context, JSObjectRef function, JSObjectRef
 %{
 void $jsclassname_initialize(JSContextRef context, JSObjectRef thisObject)%}
 
-%typemap (accessconstructorbody) 
+%fragment ("accessconstructorbody", "templates") 
 {
 }
-
-%typemap ("accessdestructordecl", "templates")  
+%fragment ("accessdestructordecl", "templates")  
 %{
 void $jsclassname_finalize(JSObjectRef thisObject)%}
 
