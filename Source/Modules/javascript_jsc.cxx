@@ -92,7 +92,11 @@ void JSCEmitter::marshalInputArgs(Node *n, ParmList *parms, int numarg, Wrapper 
 		SwigType *pt = Getattr(p, "type");
     	String *ln = Getattr(p, "lname");
     	String *arg = NewString("");
-		Printf(arg, "argv[%d]", i);
+       if(IsSetterMethod(n))
+             Printv(arg, "value",0);
+       else 
+             Printf(arg, "argv[%d]", i);
+ 
      	if ((tm = Getattr(p, "tmap:in")))     	// Get typemap for this argument
 		{
 			Replaceall(tm, "$input", arg);
