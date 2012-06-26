@@ -9,7 +9,7 @@ int ${modulename}_initialize(JSGlobalContextRef context) {
    JSObjectRef globalObject = JSContextGetGlobalObject(context);
    
    ${initializercode}
-   return SWIG_OK;
+
 }
 %}
 
