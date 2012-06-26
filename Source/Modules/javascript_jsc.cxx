@@ -1,45 +1,49 @@
 #include "javascript_jsc.h"
 #include "swigmod.h"
 
+
 /* -----------------------------------------------------------------------
 * String constants that are used in Lib/javascript/JSC/javascriptcode.swg
 *------------------------------------------------------------------------ */
 
 // name of templates
-#define JSC_GETPROPERTY_DECL "getpropertydecl"
-#define JSC_SETPROPERTY_DECL "setpropertydecl"
-#define JSC_FUNCTION_DECL "functiondecl"
-#define JSC_ACCESS_CONSTRUCTOR_DECL "accessconstructordecl"
-#define JSC_ACCESS_DESTRUCTOR_DECL "accessdestructordecl"
-#define JSC_ACCESS_DESTRUCTOR_BODY "accessdestructorbody"
-#define JSC_ACCESS_VARIABLE_DEFN "accessvariablesdefn"
-#define JSC_ACCESS_FUNCTION_DECL "accessfunctionsdecl"
-#define JSC_ACCESS_FUNCTION_DEFN "accessfunctionsdefn"
-#define JSC_CONSTANT_DECL "constantdecl"
-#define JSC_CONSTANT_BODY "constantbody"
-#define JSC_CCONST_DECL "cconstdecl"
-#define JSC_VARIABLE_GET_DECL "variablegetdecl"
-#define JSC_VARIABLE_SET_DECL "variablesetdecl"
-#define JSC_VARIABLE_BODY "variablebody"
-#define JSC_CVAR_DECL "cvardecl"
-#define JSC_CVAR_DEFN "cvardefn"
-#define JSC_THIS_PTR "THIS_PTR"
+#define JSC_GETPROPERTY_DECL                "getpropertydecl"
+#define JSC_SETPROPERTY_DECL                "setpropertydecl"
+#define JSC_FUNCTION_DECL                   "functiondecl"
+#define JSC_ACCESS_CONSTRUCTOR_DECL         "accessconstructordecl"
+#define JSC_ACCESS_DESTRUCTOR_DECL          "accessdestructordecl"
+#define JSC_ACCESS_DESTRUCTOR_BODY          "accessdestructorbody"
+#define JSC_ACCESS_VARIABLE_DEFN            "accessvariablesdefn"
+#define JSC_ACCESS_FUNCTION_DECL            "accessfunctionsdecl"
+#define JSC_ACCESS_FUNCTION_DEFN            "accessfunctionsdefn"
+#define JSC_CONSTANT_DECL                   "constantdecl"
+#define JSC_CONSTANT_BODY                   "constantbody"
+#define JSC_CCONST_DECL                     "cconstdecl"
+#define JSC_VARIABLE_GET_DECL               "variablegetdecl"
+#define JSC_VARIABLE_SET_DECL               "variablesetdecl"
+#define JSC_VARIABLE_BODY                   "variablebody"
+#define JSC_CVAR_DECL                       "cvardecl"
+#define JSC_CVAR_DEFN                       "cvardefn"
 
 // keywords used in templates
-#define KW_GET_NAME "${getname}"
-#define KW_SET_NAME "${setname}"
-#define KW_FUNCTION_NAME "${functionname}"
-#define KW_CLASSNAME_INITIALIZE "${jsclassname_initialize}"
-#define KW_CLASSNAME_STATICVALUES "${jsclassname_staticValues}"
-#define KW_CLASSNAME_STATICFUNCTIONS "${jsclassname_staticFunctions}"
-#define KW_INITCLASS "${jsclassname_initClass}"
-#define KW_CREATEJSCLASS "${jsclassname_createJSClass}"
-#define KW_CREATECPPOBJECT "${jsclassname_createcppObject}"
-#define KW_INITCLASS "${jsclassname_initClass}"
-#define KW_CONSTANT_GET_NAME "${constantgetname}"
-#define KW_VARIABLE_GET_NAME "${variablegetname}"
-#define KW_VARIABLE_SET_NAME "${variablesetname}"
-
+#define KW_GET_NAME                        "${getname}"
+#define KW_SET_NAME                        "${setname}"
+#define KW_FUNCTION_NAME                   "${functionname}"
+#define KW_CLASSNAME_INITIALIZE            "${jsclassname_initialize}"
+#define KW_CLASSNAME_STATICVALUES          "${jsclassname_staticValues}"
+#define KW_CLASSNAME_STATICFUNCTIONS       "${jsclassname_staticFunctions}"
+#define KW_INITCLASS                       "${jsclassname_initClass}"
+#define KW_CREATEJSCLASS                   "${jsclassname_createJSClass}"
+#define KW_CREATECPPOBJECT                 "${jsclassname_createcppObject}"
+#define KW_INITCLASS                       "${jsclassname_initClass}"
+#define KW_CONSTANT_GET_NAME               "${constantgetname}"
+#define KW_VARIABLE_GET_NAME               "${variablegetname}"
+#define KW_VARIABLE_SET_NAME               "${variablesetname}"
+#define KW_LOCALS                          "${LOCALS}"
+#define KW_CODE                            "${CODE}"
+#define KW_MARSHAL_INPUT                   "${MARSHAL_INPUT}"
+#define KW_ACTION                          "${ACTION}"
+#define KW_MARSHAL_OUTPUT                  "${MARSHAL_OUTPUT}"
 
 
 JSCEmitter::JSCEmitter()
@@ -70,7 +74,7 @@ Parm* JSCEmitter::skipIgnoredArgs(Parm *p) {
  * and convert them into C/C++ function arguments using the
  * supplied typemaps.
  * --------------------------------------------------------------------- */
-void marshalInputArgs(Node *n, ParmList *parms, int numarg, Wrapper *wrapper) {
+void JSCEmitter::marshalInputArgs(Node *n, ParmList *parms, int numarg, Wrapper *wrapper) {
 	String *tm;
     Parm *p;
  	int i = 0;
@@ -147,6 +151,10 @@ int JSCEmitter::Initialize(Node *n) {
     f_header = NewString("");
     f_wrappers = NewString("");
 
+        wrap_h_code = NewString("");
+	js_static_cvar_code = NewString("");
+	
+
 	
 	/* Register file targets with the SWIG file handler */
     Swig_register_filebyname("begin", f_wrap_cpp);
@@ -168,19 +176,29 @@ int JSCEmitter::Dump(Node *n)
 
     Printv(f_wrap_cpp, f_runtime, "\n", 0);
     Printv(f_wrap_cpp, f_header, "\n", 0);
+    Printv(f_wrap_cpp, f_wrappers, "\n", 0);
+
+// compose the initializer function using a template
+    // filled with sub-parts
+    Template initializer(GetTemplate("cvardefn"));
+   initializer.Replace("${jsstaticvarcode}",js_static_cvar_code);
+   Wrapper_pretty_print(initializer.str(), f_wrap_cpp);
+
     return SWIG_OK;
 }
+
+
 int JSCEmitter::Close()
 {
-        Delete(f_runtime);
-        Delete(f_header);
-        Delete(f_wrappers);
-        Delete(f_init);
-	
+   Delete(f_runtime);
+   Delete(f_header);
+   Delete(f_wrappers);
+   Delete(f_init);
+   
     //strings 
     Delete(f_runtime);
     Delete(f_header);
-   // Delete(f_class_templates);
+    Delete(js_static_cvar_code);
    // Delete(f_wrapper);
     
     
@@ -207,121 +225,84 @@ int JSCEmitter::EmitDtor(Node* n)
    return SWIG_OK;
 }
 
-int JSCEmitter::EmitGetter(Node *n, bool is_member) {
+int JSCEmitter::EmitGetter(Node *n, bool is_member)  
+    {
+     Template t_getter(GetTemplate("getpropertydecl"));
+
+    String* name = Getattr(n,"wrap:name");
+    String* wrap_name = Swig_name_wrapper(name);
+    Setattr(n, "wrap:name", wrap_name);
+
+    ParmList *params = Getattr(n,"parms");
+    emit_parameter_variables(params, current_wrapper);
+    emit_attach_parmmaps(params, current_wrapper);
+
+    int num_args = emit_num_arguments(params);
+    String* action = emit_action(n);
+    marshalInputArgs(n, params, num_args, current_wrapper);
+    marshalOutput(n, action, current_wrapper);
     
+    t_getter.Replace("${getname}",  wrap_name)
+     .Replace("{LOCALS}", current_wrapper->locals)
+     .Replace("{CODE}", current_wrapper->code);
+
+    Wrapper_pretty_print(t_getter.str(), f_wrappers);
+        
     return SWIG_OK;
 }
 
+   
 int JSCEmitter::EmitSetter(Node* n, bool is_member)
-{
+{Template t_setter(GetTemplate("setpropertydecl"));
+
+    String* name = Getattr(n,"wrap:name");
+    String* wrap_name = Swig_name_wrapper(name);
+    Setattr(n, "wrap:name", wrap_name);
+
+    ParmList *params = Getattr(n,"parms");
+    emit_parameter_variables(params, current_wrapper);
+    emit_attach_parmmaps(params, current_wrapper);
+
+    int num_args = emit_num_arguments(params);
+    String* action = emit_action(n);
+    marshalInputArgs(n, params, num_args, current_wrapper);
+    marshalOutput(n, action, current_wrapper);
+    
+    t_setter.Replace("${setname}", wrap_name)
+     .Replace("{LOCALS}", current_wrapper->locals)
+     .Replace("{CODE}", current_wrapper->code);
+
+    Wrapper_pretty_print(t_setter.str(), f_wrappers);
+        
     return SWIG_OK;
 }
-
+    
 
 int JSCEmitter::EmitFunction(Node* n, bool is_member)
 {
+    Template t_function(GetTemplate("functiondecl"));
 
-/* Get some useful attributes of this function */
-   String   *name   = Getattr(n,"sym:name");
-   SwigType *type   = Getattr(n,"type");
-   ParmList *parms  = Getattr(n,"parms");
-   String   *parmstr= ParmList_str_defaultargs(parms); // to string
-   String   *func   = SwigType_str(type, NewStringf("%s(%s)", name, parmstr));
-   String   *action = Getattr(n,"wrap:action");
-   String *tm;
-   Parm *p;
-   int i;
-   int num_arguments = 0;
-   int num_required = 0;
-
-   /* create the wrapper object */
-   Wrapper *wrapper = NewWrapper();
-
-   /* create the functions wrappered name */
-   String *wname = Swig_name_wrapper(name);
-
-   /* deal with overloading */
-
-   /* write the wrapper function definition */
-   Printv(wrapper->def,"JSValueRef ", wname, "(JSContextRef context, JSObjectRef function, JSObjectRef thisObject, \
-				       		size_t argCount, const JSValueRef args[], JSValueRef* exception) \n{",NIL);
-
-   /* if any additional local variable needed, add them now */
-   Wrapper_add_local(wrapper, "jsresult", "JSValueRef jsresult");
-
-   /* write the list of locals/arguments required */
-   emit_parameter_variables(parms, wrapper);
-
-   /* check arguments */
-
-   /* write typemaps(in) */
-   // Attach the standard typemaps
-   emit_attach_parmmaps(parms, wrapper);
-
-
-    // Get number of required and total arguments
-    num_arguments = emit_num_arguments(parms);
-    num_required = emit_num_required(parms);
-
-    // Now walk the function parameter list and generate code to get arguments
-    for (i = 0, p = parms; i < num_arguments; i++) {
-
-      while (checkAttribute(p, "tmap:in:numinputs", "0")) {
-	p = Getattr(p, "tmap:in:next");
-      }
-
-      SwigType *pt = Getattr(p, "type");
-      String *ln = Getattr(p, "lname");
-      String *arg = NewString("");
-
-      Printf(arg, "args[%d]", i);
-
-      // Get typemap for this argument
-      if ((tm = Getattr(p, "tmap:in"))) {
-	Replaceall(tm, "$source", arg);	/* deprecated */
-	Replaceall(tm, "$target", ln);	/* deprecated */
-	Replaceall(tm, "$arg", arg);	/* deprecated? */
-	Replaceall(tm, "$input", arg);
-	Setattr(p, "emit:input", arg);
-	Printf(wrapper->code, "%s\n", tm);
-	p = Getattr(p, "tmap:in:next");
-      } else {
-	Swig_warning(WARN_TYPEMAP_IN_UNDEF, input_file, line_number, "Unable to use type %s as a function argument.\n", SwigType_str(pt, 0));
-	p = nextSibling(p);
-      }
-      Delete(arg);
-    }
-
-   /* write constriants */
-
-   /* Emit the function call */
-   Setattr(n, "wrap:name", wname);
-   String *actioncode = emit_action(n); 
-   Printv(wrapper->code, actioncode, NIL);
-
-   /* return value if necessary  */
-
-   /* write typemaps(out) */
- 
-   /* add cleanup code */
-
-   /* Close the function */
-   Printv(wrapper->code, "return jsresult;\n}", NIL);
-
-   /* final substititions if applicable */
-
-   /* Dump the function out */
-   Wrapper_print(wrapper,f_wrappers);
-
-   /* tidy up */
-   Delete(wname);
-   DelWrapper(wrapper);
-   return SWIG_OK;
-
-
+    String* name   = Getattr(n,"sym:name");
+    String* wrap_name = Swig_name_wrapper(name);
+    Setattr(n, "wrap:name", wrap_name);
    
-    
+    ParmList *params  = Getattr(n,"parms");
+    emit_parameter_variables(params, current_wrapper);
+    emit_attach_parmmaps(params, current_wrapper);
+      
+    int num_args = emit_num_arguments(params);
+    String* action = emit_action(n);
+    marshalInputArgs(n, params, num_args, current_wrapper);
+    marshalOutput(n, action, current_wrapper);
+   
+    t_function.Replace("${functionname}", wrap_name)
+     .Replace("${LOCALS}", current_wrapper->locals)
+     .Replace("${CODE}", current_wrapper->code);
+    Wrapper_pretty_print(t_function.str(),  f_wrappers);
+
+    return SWIG_OK;
 }
+
 
 JSEmitter* create_JSC_emitter()
 {

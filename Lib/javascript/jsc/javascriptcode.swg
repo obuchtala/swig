@@ -7,18 +7,35 @@
 /* Additional typemaps for the  class code needed by the access layer. This code is copy-pasted into the wrapper header and source file */
 %fragment ("getpropertydecl", "templates") 
 %{
-JSValueRef $getname(JSContextRef context, JSObjectRef thisObject, JSStringRef propertyName, JSValueRef* exception)%}
+JSValueRef ${getname}(JSContextRef context, JSObjectRef thisObject, JSStringRef propertyName, JSValueRef* exception)
+{ 
+    ${LOCALS}
+    ${CODE}
+    return jsresult;
+}
+%}
 
 %fragment ("setpropertydecl", "templates") 
 %{
-bool $setname(JSContextRef context, JSObjectRef thisObject, JSStringRef propertyName, JSValueRef value, 
-JSValueRef* exception)%}
+bool ${setname}(JSContextRef context, JSObjectRef thisObject, JSStringRef propertyName, JSValueRef value, 
+JSValueRef* exception)
+JSValueRef* exception);
+{
+    ${LOCALS}
+    ${CODE}
+}
+%}
 
 %fragment ("functiondecl", "templates") 
 %{
-JSValueRef $functionname(JSContextRef context, JSObjectRef function, JSObjectRef thisObject, size_t argc, const JSValueRef argv[], JSValueRef* exception)%}
+JSValueRef $functionname(JSContextRef context, JSObjectRef function, JSObjectRef thisObject, size_t argc, const JSValueRef argv[], JSValueRef* exception)
+{
+  ${LOCALS}
+  ${CODE}
 
-
+  return jsresult;
+}
+%}
 
 
 %fragment ("accessconstructordecl", "templates")  
@@ -179,10 +196,10 @@ JSValueRef* exception)%}
     JSValueRef jsresult;
 %}
 
-%fragment ("cvardecl", "tamplate")  
+%fragment ("cvardecl", "templates")  
 %{
 bool cvar_initClass(JSGlobalContextRef& context, JSObjectRef& parentObject, const char* cvarclassname);
-%}
+}%}
 
 %fragment ("cvardefn", "templates") 
 %{
@@ -219,8 +236,6 @@ bool cvar_initClass(JSGlobalContextRef& context, JSObjectRef& parentObject, cons
    return true;
 } 
 %}
-
-
 
 
 
