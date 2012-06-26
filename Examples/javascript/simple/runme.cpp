@@ -1,8 +1,7 @@
-
 // Neha: Reference: http://opensource.apple.com/source/JavaScriptCore/JavaScriptCore-1C25/API/testapi.c
 
 #include "JavaScriptCore/JavaScript.h"
-#include "examplejsc.h"
+#include "example_wrap.h"
 #include<stdlib.h>
 #include<stdio.h>
 #include<iostream>
@@ -10,13 +9,15 @@ using namespace std;
 
 static JSValueRef jsc_printstring(JSContextRef context,JSObjectRef object, JSObjectRef globalobj, size_t argc, const JSValueRef	args[], JSValueRef* ex);
 static char* jsccreateStringWithContentsOfFile(const char* fileName);
-bool jscinitfunc(JSGlobalContextRef context, JSObjectRef object, const char* szFunctionName,JSObjectCallAsFunctionCallback cbFunction);
+bool jscinitfunction(JSGlobalContextRef context, JSObjectRef object, const char* szFunctionName,JSObjectCallAsFunctionCallback cbFunction);
+
+extern int example_initialize(JSGlobalContextRef context);
 
 
 int main(int argc, char* argv[]) {
     cout<<"main called\n";
     
-    const char *scriptPath = "test.js";
+    const char *scriptPath = "runme.js";
     
     if (argc > 1) {
         scriptPath = argv[1];
@@ -27,13 +28,12 @@ int main(int argc, char* argv[]) {
     JSGlobalContextRef context = JSGlobalContextCreate(NULL);
     JSObjectRef globalObject = JSContextGetGlobalObject(context);
 
-    jscinitfunc(context, globalObject, "print", jsc_printstring); // Utility print function
+    jscinitfunction(context, globalObject, "print", jsc_printstring); // Utility print function
     
-    // Define the globalvars object to access Global Variables
-    globalvars_initClass(context, globalObject, "globalvars");
-	
-    // Define the functions
-    jscinitfunc(context, globalObject, "gcd", jsc_gcd); // overloaded
+    
+    // Call the initializer
+     example_initialize(context);
+
     
     // Evaluate the javascript
     char*	szString = jsccreateStringWithContentsOfFile(scriptPath);
@@ -50,7 +50,7 @@ int main(int argc, char* argv[]) {
         JSValueRef Result = JSEvaluateScript(context,Script,NULL,NULL,0,&ex);
         
         if (Result) 
-            printf("test.js executed successfully\n");
+            printf("runme.js executed successfully\n");
         
         else {
             printf("exception encountered in the script\n");
@@ -78,13 +78,7 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 
-bool jscinitfunc(JSGlobalContextRef context, JSObjectRef object, const char* szFunctionName,JSObjectCallAsFunctionCallback cbFunction)
-{
-    JSStringRef	functionString = JSStringCreateWithUTF8CString(szFunctionName);
-    JSObjectSetProperty(context, object, functionString,JSObjectMakeFunctionWithCallback(context, functionString, cbFunction),kJSPropertyAttributeNone,NULL);
-	JSStringRelease(functionString);
-	return true;
-}
+
 
 static JSValueRef jsc_printstring(JSContextRef context,JSObjectRef object, JSObjectRef globalobj, size_t argc, const JSValueRef	args[], JSValueRef* ex)
 {
