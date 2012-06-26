@@ -4,8 +4,21 @@
  * Additional Javascript typemaps for generating code for classes, constants and variables
  * ----------------------------------------------------------------------------- ----------------*/
 
+%fragment ("jsc_initializer", "templates") %{
+int ${modulename}_initialize(JSGlobalContextRef context) {
+   JSObjectRef globalObject = JSContextGetGlobalObject(context);
+   
+   ${initializercode}
+   return SWIG_OK;
+}
+%}
+
+%fragment ("jsc_register_global_function", "templates")
+%{
+jscinitfunction("${context}", "${context_object}", "${functionname}", "${functionwrapper}");
+%}
 /* Additional typemaps for the  class code needed by the access layer. This code is copy-pasted into the wrapper header and source file */
-%fragment ("getpropertydecl", "templates") 
+%fragment ("getproperty", "templates") 
 %{
 JSValueRef ${getname}(JSContextRef context, JSObjectRef thisObject, JSStringRef propertyName, JSValueRef* exception)
 { 
@@ -15,28 +28,30 @@ JSValueRef ${getname}(JSContextRef context, JSObjectRef thisObject, JSStringRef 
 }
 %}
 
-%fragment ("setpropertydecl", "templates") 
+%fragment ("setproperty", "templates") 
 %{
-bool ${setname}(JSContextRef context, JSObjectRef thisObject, JSStringRef propertyName, JSValueRef value, 
-JSValueRef* exception)
-JSValueRef* exception);
+bool ${setname}(JSContextRef context, JSObjectRef thisObject, JSStringRef propertyName, JSValueRef value, JSValueRef* exception)
 {
     ${LOCALS}
     ${CODE}
 }
 %}
 
-%fragment ("functiondecl", "templates") 
+%fragment ("functionwrapper", "templates") 
 %{
-JSValueRef $functionname(JSContextRef context, JSObjectRef function, JSObjectRef thisObject, size_t argc, const JSValueRef argv[], JSValueRef* exception)
+JSValueRef ${functionname}(JSContextRef context, JSObjectRef function, JSObjectRef thisObject, size_t argc, const JSValueRef argv[], JSValueRef* exception)
 {
   ${LOCALS}
   ${CODE}
-
   return jsresult;
 }
 %}
 
+%fragment ("staticfunctiondecl", "templates") 
+%{
+   {"${propertyname}", "${getname}", "${setname}",
+kJSPropertyAttributeNone }
+%}
 
 %fragment ("accessconstructordecl", "templates")  
 %{
@@ -205,7 +220,7 @@ bool cvar_initClass(JSGlobalContextRef& context, JSObjectRef& parentObject, cons
 %{
 
 JSStaticValue cvar_staticValues[] = {
-$jsstaticvarcode
+${jsstaticvarcode}
     { 0, 0, 0, 0 }
 };
 
@@ -236,6 +251,5 @@ bool cvar_initClass(JSGlobalContextRef& context, JSObjectRef& parentObject, cons
    return true;
 } 
 %}
-
 
 
