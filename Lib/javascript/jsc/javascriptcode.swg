@@ -49,8 +49,7 @@ JSValueRef ${functionname}(JSContextRef context, JSObjectRef function, JSObjectR
 
 %fragment ("staticfunctiondecl", "templates") 
 %{
-   {"${propertyname}", "${getname}", "${setname}",
-kJSPropertyAttributeNone }
+{"${propertyname}",${getname}, ${setname},kJSPropertyAttributeNone},
 %}
 
 %fragment ("accessconstructordecl", "templates")  
