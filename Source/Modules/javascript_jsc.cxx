@@ -162,7 +162,7 @@ int JSCEmitter::Initialize(Node *n) {
 
         wrap_h_code = NewString("");
 	js_static_cvar_code = NewString("");
-	
+	js_initializer_code = NewString("");
 
 	
 	/* Register file targets with the SWIG file handler */
@@ -195,7 +195,11 @@ int JSCEmitter::Dump(Node *n)
   cvardefinition.Replace("${jsstaticvarcode}",js_static_cvar_code);
   Wrapper_pretty_print(cvardefinition.str(), f_wrap_cpp);
 
-    return SWIG_OK;
+   Template initializer(GetTemplate("jsc_initializer"));
+   initializer.Replace("${modulename}",module)
+   .Replace("${initializercode}",js_initializer_code);
+   Wrapper_pretty_print(initializer.str(), f_wrap_cpp);
+   return SWIG_OK;
 }
 
 
@@ -210,6 +214,8 @@ int JSCEmitter::Close()
     Delete(f_runtime);
 
     Delete(js_static_cvar_code); 
+    Delete(js_initializer_code);
+ 
    // Delete(f_wrapper);
     
     
