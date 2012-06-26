@@ -28,7 +28,7 @@
 // keywords used in templates
 #define KW_GET_NAME                        "${getname}"
 #define KW_SET_NAME                        "${setname}"
-#define KW_FUNCTION_NAME                   "${functionname}"
+//#define KW_FUNCTION_NAME                   "${functionname}"
 #define KW_CLASSNAME_INITIALIZE            "${jsclassname_initialize}"
 #define KW_CLASSNAME_STATICVALUES          "${jsclassname_staticValues}"
 #define KW_CLASSNAME_STATICFUNCTIONS       "${jsclassname_staticFunctions}"
@@ -236,6 +236,23 @@ int JSCEmitter::EmitDtor(Node* n)
    return SWIG_OK;
 }
 
+int JSCEmitter::EnterFunction(Node *n) 
+{
+current_functionname = Getattr(n, "name");
+return SWIG_OK;
+}
+int JSCEmitter::ExitFunction(Node *n) 
+{
+Template t_registerglobalfunction(GetTemplate("jsc_register_global_function"));
+t_registerglobalfunction.Replace("${context}","context")
+     .Replace("${context_object}","globalObject" )
+     .Replace("${functionname}", current_functionname)
+     .Replace("${functionwrapper}", current_functionwrapper);
+Printv(js_initializer_code, t_registerglobalfunction.str(), 0);
+
+return SWIG_OK;
+}
+
 int JSCEmitter::EnterVariable(Node *n) 
 {
    current_getter = NULL_STR;
@@ -315,10 +332,11 @@ int JSCEmitter::EmitSetter(Node* n, bool is_member)
 
 int JSCEmitter::EmitFunction(Node* n, bool is_member)
 {
-    Template t_function(GetTemplate("functiondecl"));
+    Template t_function(GetTemplate("functionwrapper"));
 
     String* name   = Getattr(n,"sym:name");
     String* wrap_name = Swig_name_wrapper(name);
+    current_functionwrapper = wrap_name;
     Setattr(n, "wrap:name", wrap_name);
    
    

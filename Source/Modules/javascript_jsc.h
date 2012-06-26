@@ -27,6 +27,11 @@ protected:
     virtual int EnterVariable(Node *n);
    
     virtual int ExitVariable(Node *n);
+
+    virtual int EnterFunction(Node *n);
+
+    virtual int ExitFunction(Node *n);
+
     virtual int EmitFunction(Node *n, bool is_member);
 
     virtual int EmitGetter(Node *n, bool is_member);
@@ -59,6 +64,8 @@ private:
         String* current_getter;
         String* current_setter;
         String* NULL_STR;
+        String *current_functionwrapper; 
+        String *current_functionname; 
         String *wrap_h_code;			
 	String *js_static_values_code;	
 	String *js_static_funcs_code;	
