@@ -15,8 +15,9 @@ int ${modulename}_initialize(JSGlobalContextRef context) {
 
 %fragment ("jsc_register_global_function", "templates")
 %{
-jscinitfunction("${context}", "${context_object}", "${functionname}", "${functionwrapper}");
+jscinitfunction(${context}, ${context_object}, "${functionname}", ${functionwrapper});
 %}
+
 /* Additional typemaps for the  class code needed by the access layer. This code is copy-pasted into the wrapper header and source file */
 %fragment ("getproperty", "templates") 
 %{
