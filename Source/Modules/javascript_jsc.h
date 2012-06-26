@@ -24,6 +24,9 @@ protected:
     
     virtual int EmitDtor(Node *n);
 
+    virtual int EnterVariable(Node *n);
+   
+    virtual int ExitVariable(Node *n);
     virtual int EmitFunction(Node *n, bool is_member);
 
     virtual int EmitGetter(Node *n, bool is_member);
@@ -52,6 +55,10 @@ private:
 
     // state variables
 
+        String* current_propertyname;
+        String* current_getter;
+        String* current_setter;
+        String* NULL_STR;
         String *wrap_h_code;			
 	String *js_static_values_code;	
 	String *js_static_funcs_code;	

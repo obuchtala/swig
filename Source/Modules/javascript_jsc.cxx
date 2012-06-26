@@ -7,9 +7,9 @@
 *------------------------------------------------------------------------ */
 
 // name of templates
-#define JSC_GETPROPERTY_DECL                "getpropertydecl"
-#define JSC_SETPROPERTY_DECL                "setpropertydecl"
-#define JSC_FUNCTION_DECL                   "functiondecl"
+#define JSC_GETPROPERTY_DECL                "getproperty"
+#define JSC_SETPROPERTY_DECL                "setproperty"
+#define JSC_FUNCTION_DECL                   "functionwrapper"
 #define JSC_ACCESS_CONSTRUCTOR_DECL         "accessconstructordecl"
 #define JSC_ACCESS_DESTRUCTOR_DECL          "accessdestructordecl"
 #define JSC_ACCESS_DESTRUCTOR_BODY          "accessdestructorbody"
@@ -47,11 +47,20 @@
 
 
 JSCEmitter::JSCEmitter()
+    : JSEmitter(),
+
+      NULL_STR(NewString("NULL"))
+
 {
 }
 
+
 JSCEmitter::~JSCEmitter()
 {
+
+    Delete(NULL_STR);
+
+
 }
    
 
@@ -177,12 +186,14 @@ int JSCEmitter::Dump(Node *n)
     Printv(f_wrap_cpp, f_runtime, "\n", 0);
     Printv(f_wrap_cpp, f_header, "\n", 0);
     Printv(f_wrap_cpp, f_wrappers, "\n", 0);
+    Printv(js_initializer_code, "cvar_initClass(context, globalObject, \"cvar\");");
+   
 
 // compose the initializer function using a template
     // filled with sub-parts
-    Template initializer(GetTemplate("cvardefn"));
-   initializer.Replace("${jsstaticvarcode}",js_static_cvar_code);
-   Wrapper_pretty_print(initializer.str(), f_wrap_cpp);
+  Template cvardefinition(GetTemplate("cvardefn"));
+  cvardefinition.Replace("${jsstaticvarcode}",js_static_cvar_code);
+  Wrapper_pretty_print(cvardefinition.str(), f_wrap_cpp);
 
     return SWIG_OK;
 }
@@ -197,8 +208,8 @@ int JSCEmitter::Close()
    
     //strings 
     Delete(f_runtime);
-    Delete(f_header);
-    Delete(js_static_cvar_code);
+
+    Delete(js_static_cvar_code); 
    // Delete(f_wrapper);
     
     
@@ -225,52 +236,76 @@ int JSCEmitter::EmitDtor(Node* n)
    return SWIG_OK;
 }
 
-int JSCEmitter::EmitGetter(Node *n, bool is_member)  
-    {
-     Template t_getter(GetTemplate("getpropertydecl"));
+int JSCEmitter::EnterVariable(Node *n) 
+{
+   current_getter = NULL_STR;
+   current_setter = NULL_STR;
+   current_propertyname = Getattr(n, "name");    
+   return SWIG_OK;
+}
+   
+
+int JSCEmitter::ExitVariable(Node *n) 
+{
+Template t_variable(GetTemplate("staticfunctiondecl"));
+t_variable.Replace("${setname}", current_setter)
+     .Replace("${getname}", current_getter)
+     .Replace("${propertyname}", current_propertyname);
+      Printv(js_static_cvar_code, t_variable.str(), 0);
+ 
+    return SWIG_OK;
+}
+
+
+int JSCEmitter::EmitGetter(Node* n, bool is_member)
+{Template t_setter(GetTemplate("getproperty"));
+
 
     String* name = Getattr(n,"wrap:name");
     String* wrap_name = Swig_name_wrapper(name);
+    current_getter = wrap_name;
     Setattr(n, "wrap:name", wrap_name);
 
     ParmList *params = Getattr(n,"parms");
     emit_parameter_variables(params, current_wrapper);
     emit_attach_parmmaps(params, current_wrapper);
-
+    Wrapper_add_local(current_wrapper, "jsresult", "JSValueRef jsresult");
     int num_args = emit_num_arguments(params);
     String* action = emit_action(n);
     marshalInputArgs(n, params, num_args, current_wrapper);
     marshalOutput(n, action, current_wrapper);
     
-    t_getter.Replace("${getname}",  wrap_name)
-     .Replace("{LOCALS}", current_wrapper->locals)
-     .Replace("{CODE}", current_wrapper->code);
+    t_setter.Replace("${getname}", wrap_name)
+     .Replace("${LOCALS}", current_wrapper->locals)
+     .Replace("${CODE}", current_wrapper->code);
 
-    Wrapper_pretty_print(t_getter.str(), f_wrappers);
+    Wrapper_pretty_print(t_setter.str(), f_wrappers);
         
     return SWIG_OK;
 }
 
    
 int JSCEmitter::EmitSetter(Node* n, bool is_member)
-{Template t_setter(GetTemplate("setpropertydecl"));
-
+{Template t_setter(GetTemplate("setproperty"));
+    
+    
     String* name = Getattr(n,"wrap:name");
     String* wrap_name = Swig_name_wrapper(name);
+    current_setter = wrap_name;
     Setattr(n, "wrap:name", wrap_name);
 
     ParmList *params = Getattr(n,"parms");
     emit_parameter_variables(params, current_wrapper);
     emit_attach_parmmaps(params, current_wrapper);
-
+    Wrapper_add_local(current_wrapper, "jsresult", "JSValueRef jsresult");
     int num_args = emit_num_arguments(params);
     String* action = emit_action(n);
     marshalInputArgs(n, params, num_args, current_wrapper);
     marshalOutput(n, action, current_wrapper);
     
     t_setter.Replace("${setname}", wrap_name)
-     .Replace("{LOCALS}", current_wrapper->locals)
-     .Replace("{CODE}", current_wrapper->code);
+     .Replace("${LOCALS}", current_wrapper->locals)
+     .Replace("${CODE}", current_wrapper->code);
 
     Wrapper_pretty_print(t_setter.str(), f_wrappers);
         
@@ -286,10 +321,11 @@ int JSCEmitter::EmitFunction(Node* n, bool is_member)
     String* wrap_name = Swig_name_wrapper(name);
     Setattr(n, "wrap:name", wrap_name);
    
+   
     ParmList *params  = Getattr(n,"parms");
     emit_parameter_variables(params, current_wrapper);
     emit_attach_parmmaps(params, current_wrapper);
-      
+    Wrapper_add_local(current_wrapper, "jsresult", "JSValueRef jsresult");
     int num_args = emit_num_arguments(params);
     String* action = emit_action(n);
     marshalInputArgs(n, params, num_args, current_wrapper);
