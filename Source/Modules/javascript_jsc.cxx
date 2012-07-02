@@ -1,68 +1,17 @@
 #include "javascript_jsc.h"
 #include "swigmod.h"
 
-
-/* -----------------------------------------------------------------------
-* String constants that are used in Lib/javascript/JSC/javascriptcode.swg
-*------------------------------------------------------------------------ */
-
-// name of templates
-#define JSC_GETPROPERTY_DECL                "getproperty"
-#define JSC_SETPROPERTY_DECL                "setproperty"
-#define JSC_FUNCTION_DECL                   "functionwrapper"
-#define JSC_ACCESS_CONSTRUCTOR_DECL         "accessconstructordecl"
-#define JSC_ACCESS_DESTRUCTOR_DECL          "accessdestructordecl"
-#define JSC_ACCESS_DESTRUCTOR_BODY          "accessdestructorbody"
-#define JSC_ACCESS_VARIABLE_DEFN            "accessvariablesdefn"
-#define JSC_ACCESS_FUNCTION_DECL            "accessfunctionsdecl"
-#define JSC_ACCESS_FUNCTION_DEFN            "accessfunctionsdefn"
-#define JSC_CONSTANT_DECL                   "constantdecl"
-#define JSC_CONSTANT_BODY                   "constantbody"
-#define JSC_CCONST_DECL                     "cconstdecl"
-#define JSC_VARIABLE_GET_DECL               "variablegetdecl"
-#define JSC_VARIABLE_SET_DECL               "variablesetdecl"
-#define JSC_VARIABLE_BODY                   "variablebody"
-#define JSC_GLOBAL_DECL                       "globaldecl"
-//#define JSC_GLOBAL_DEFN                       "globaldefn"
-
-// keywords used in templates
-#define KW_GET_NAME                        "${getname}"
-#define KW_SET_NAME                        "${setname}"
-//#define KW_FUNCTION_NAME                   "${functionname}"
-#define KW_CLASSNAME_INITIALIZE            "${jsclassname_initialize}"
-#define KW_CLASSNAME_STATICVALUES          "${jsclassname_staticValues}"
-#define KW_CLASSNAME_STATICFUNCTIONS       "${jsclassname_staticFunctions}"
-#define KW_INITCLASS                       "${jsclassname_initClass}"
-#define KW_CREATEJSCLASS                   "${jsclassname_createJSClass}"
-#define KW_CREATECPPOBJECT                 "${jsclassname_createcppObject}"
-#define KW_INITCLASS                       "${jsclassname_initClass}"
-#define KW_CONSTANT_GET_NAME               "${constantgetname}"
-#define KW_VARIABLE_GET_NAME               "${variablegetname}"
-#define KW_VARIABLE_SET_NAME               "${variablesetname}"
-#define KW_LOCALS                          "${LOCALS}"
-#define KW_CODE                            "${CODE}"
-#define KW_MARSHAL_INPUT                   "${MARSHAL_INPUT}"
-#define KW_ACTION                          "${ACTION}"
-#define KW_MARSHAL_OUTPUT                  "${MARSHAL_OUTPUT}"
-
-
 JSCEmitter::JSCEmitter()
     : JSEmitter(),
-
       NULL_STR(NewString("NULL"))
-
 {
 }
 
 
 JSCEmitter::~JSCEmitter()
 {
-
     Delete(NULL_STR);
-
-
 }
-   
 
 /* ---------------------------------------------------------------------
  * skipIgnoredArgs()
@@ -83,6 +32,7 @@ Parm* JSCEmitter::skipIgnoredArgs(Parm *p) {
  * and convert them into C/C++ function arguments using the
  * supplied typemaps.
  * --------------------------------------------------------------------- */
+
 void JSCEmitter::marshalInputArgs(ParmList *parms, Wrapper *wrapper, 
                                   MarshallingMode mode, bool is_member) {
     String *tm;
@@ -117,7 +67,7 @@ void JSCEmitter::marshalInputArgs(ParmList *parms, Wrapper *wrapper,
             Printf(arg, "argv[%d]", i);
             break;
         default:
-            ;
+            throw "Illegal state.";
         }
         
         if ((tm = Getattr(p, "tmap:in")))     // Get typemap for this argument
@@ -132,8 +82,6 @@ void JSCEmitter::marshalInputArgs(ParmList *parms, Wrapper *wrapper,
         Delete(arg);
     } 
 }
-
-
 
 /* ---------------------------------------------------------------------
 * marshalOutput()
@@ -462,7 +410,6 @@ int JSCEmitter::EmitFunction(Node* n, bool is_member)
     current_functionwrapper = wrap_name;
     Setattr(n, "wrap:name", wrap_name);
    
-   
     ParmList *params  = Getattr(n,"parms");
     emit_parameter_variables(params, current_wrapper);
     emit_attach_parmmaps(params, current_wrapper);
@@ -480,11 +427,7 @@ int JSCEmitter::EmitFunction(Node* n, bool is_member)
     return SWIG_OK;
 }
 
-
 JSEmitter* create_JSC_emitter()
 {
     return new JSCEmitter();
 }
-
-
-

@@ -49,12 +49,13 @@ const String* JSEmitter::GetTemplate(const String *name)
 
 /* -----------------------------------------------------------------------------
  * JSEmitter::typemapLookup()
- * n - for input only and must contain info for Getfile(n) and Getline(n) to work
- * tmap_method - typemap method name
- * type - typemap type to lookup
- * warning - warning number to issue if no typemaps found
- * typemap_attributes - the typemap attributes are attached to this node and will 
- *   also be used for temporary storage if non null
+ * 
+ *  n - for input only and must contain info for Getfile(n) and Getline(n) to work
+ *  tmap_method - typemap method name
+ *  type - typemap type to lookup
+ *  warning - warning number to issue if no typemaps found
+ *  typemap_attributes - the typemap attributes are attached to this node and will 
+ *                       also be used for temporary storage if non null
  * return is never NULL, unlike Swig_typemap_lookup()
  * ----------------------------------------------------------------------------- */
 
@@ -115,15 +116,20 @@ int JSEmitter::EmitWrapperFunction(Node* n)
         bool is_member = GetFlag(n, "ismember");
         if( Cmp(kind, "function") == 0 ) {
             ret = EmitFunction(n, is_member);
+
         } else if (Cmp(kind, "variable") == 0) {
             if(IsSetterMethod(n)) {
                 ret = EmitSetter(n, is_member);
+
             } else {
                 ret = EmitGetter(n, is_member);
+
             }
         } else {
             Printf(stderr, "Warning: unsupported wrapper function type\n");
             Swig_print_node(n);
+            
+            ret = SWIG_ERROR;
         }
     } else {
         String *view = Getattr(n, "view");
@@ -137,6 +143,7 @@ int JSEmitter::EmitWrapperFunction(Node* n)
         } else {
             Printf(stderr, "Warning: unsupported wrapper function type");
             Swig_print_node(n);
+            ret = SWIG_ERROR;
         }        
     }
     
@@ -147,13 +154,14 @@ int JSEmitter::EmitWrapperFunction(Node* n)
 }
 
 /* -----------------------------------------------------------------------------
- * JSEmitter::EmitConstant() :  dispatches emitter constants
+ * JSEmitter::EmitConstant() :  triggers code generation for constants
  * ----------------------------------------------------------------------------- */
 
 int JSEmitter::EmitConstant(Node* n)
 {
     current_wrapper = NewWrapper();
     Setattr(n, "wrap:name", Getattr(n, "sym:name"));
+
     EnterVariable(n);
     EmitGetter(n, false);
     ExitVariable(n);
@@ -168,7 +176,6 @@ int JSEmitter::EmitConstant(Node* n)
  * str_ends_with() :  c string helper to check suffix match
  * ----------------------------------------------------------------------------- */
 
-// TODO: shift this to DOH string API
 int str_ends_with(const char * str, const char * suffix) {
 
   if( str == NULL || suffix == NULL )
@@ -193,6 +200,10 @@ bool JSEmitter::IsSetterMethod(Node *n) {
     return ( str_ends_with( (char*) Data(symname), "_set") != 0 );
 }
 
+/* -----------------------------------------------------------------------------
+ * Template::Template() :  creates a Template class for given template code
+ * ----------------------------------------------------------------------------- */
+
 Template::Template(const String* code)
 {
     if(!code) {
@@ -203,14 +214,32 @@ Template::Template(const String* code)
     m_code = NewString(code);
 }
     
+/* -----------------------------------------------------------------------------
+ * Template::~Template() :  cleans up of Template.
+ * ----------------------------------------------------------------------------- */
+
 Template::~Template() {
     Delete(m_code);
 }
-        
+
+/* -----------------------------------------------------------------------------
+ * String* Template::str() :  retrieves the current content of the template.
+ * ----------------------------------------------------------------------------- */
+
 String* Template::str() {
     return m_code;
 }
     
+/* -----------------------------------------------------------------------------
+ * Template&  Template::Replace(const String* pattern, const String* repl) :
+ * 
+ *  replaces all occurances of a given pattern with a given replacement.
+ * 
+ *  - pattern:  the pattern to be replaced
+ *  - repl:     the replacement string
+ *  - returns a reference to the Template to allow chaining of methods.
+ * ----------------------------------------------------------------------------- */
+
 Template& Template::Replace(const String* pattern, const String* repl) {
     ::Replaceall(m_code, pattern, repl);
     return *this;
