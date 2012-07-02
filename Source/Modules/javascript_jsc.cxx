@@ -220,22 +220,6 @@ int JSCEmitter::Close()
     return SWIG_OK;
 }
 
-
-int JSCEmitter::EmitCtor(Node* n)
-{
-
-  // TODO: handle overloaded ctors using a dispatcher
-    
-   return SWIG_OK;
-}
-
-int JSCEmitter::EmitDtor(Node* n)
-{
-
-  // TODO:find out how to register a dtor in JSC
-   return SWIG_OK;
-}
-
 int JSCEmitter::EnterFunction(Node *n)
 {
     current_functionname = Getattr(n, "name");
@@ -248,14 +232,11 @@ int JSCEmitter::ExitFunction(Node *n)
     t_function.Replace("${functionname}", current_functionname)
         .Replace("${functionwrapper}", current_functionwrapper);
     
-     if(GetFlag(n, "ismember")) 
-     {
+    if(GetFlag(n, "ismember")) {
        Printv(js_class_functions_code, t_function.str(), 0);
-       }
-       else 
-       {
-       Printv(js_global_functions_code, t_function.str(), 0);
-       }
+    } else {
+        Printv(js_global_functions_code, t_function.str(), 0);
+    }
 
     return SWIG_OK;
 }
@@ -289,12 +270,13 @@ int JSCEmitter::ExitVariable(Node *n)
 
 int JSCEmitter::EnterClass(Node *n)
 {
+    current_classname = Getattr(n, "name");
 
     js_class_variables_code = NewString("");
     js_class_functions_code = NewString("");
-    current_classname = Getattr(n, "name");
+    js_ctor_wrappers = NewString("");
+    js_ctor_dispatcher_code = NewString("");
 }
-
 
 int JSCEmitter::ExitClass(Node *n)
 {
@@ -303,12 +285,95 @@ int JSCEmitter::ExitClass(Node *n)
            .Replace("${jsclassfunctions}", js_class_functions_code)
            .Replace("${classname}", current_classname);
     Wrapper_pretty_print(t_class.str(), f_wrappers);
+    
+    /* 
+     * Add the ctor wrappers at this position 
+     * Note: this is necessary to avoid extra forward declarations.
+     */    
+    Printv(f_wrappers, js_ctor_wrappers, 0);
+
+    /* adds the main constructor wrapper function */
+    Template t_mainctor(GetTemplate("mainctordefn"));
+    t_mainctor.Replace("${classname}", current_classname)
+        .Replace("${type}", current_classname)
+        .Replace("${DISPATCH_CASES}", js_ctor_dispatcher_code);
+    Wrapper_pretty_print(t_mainctor.str(), f_wrappers);
+
+
+    Template t_dtor(GetTemplate("destructordefn"));
+    t_dtor.Replace("${classname}", current_classname)
+        .Replace("${type}", current_classname);
+    Wrapper_pretty_print(t_dtor.str(), f_wrappers);
+
+    /* adds a class template statement to initializer function */
+    Template t_classtemplate(GetTemplate("create_class_template"));
+    t_classtemplate.Replace("${classname}", current_classname);
+    Wrapper_pretty_print(t_classtemplate.str(), js_initializer_code);     
+
+    /* adds a class registration statement to initializer function */
+    Template t_registerclass(GetTemplate("register_class"));
+    t_registerclass.Replace("${classname}", current_classname);
+    Wrapper_pretty_print(t_registerclass.str(), js_initializer_code);     
+
     Delete(js_class_variables_code);
     Delete(js_class_functions_code);
+    Delete(js_ctor_wrappers);
+    Delete(js_ctor_dispatcher_code);
+    js_class_variables_code = 0;
+    js_class_functions_code = 0;
+    js_ctor_wrappers = 0;
+    js_ctor_dispatcher_code = 0;
+    
+    return SWIG_OK;
+}
+
+int JSCEmitter::EmitCtor(Node* n)
+{
+    Template t_ctor(GetTemplate("ctordefn"));
+    
+    String* name = Getattr(n,"wrap:name");
+    String* overname = Getattr(n,"sym:overname");
+    String* wrap_name = Swig_name_wrapper(name);
+    Setattr(n, "wrap:name", wrap_name);
+
+    ParmList *params = Getattr(n,"parms");
+    emit_parameter_variables(params, current_wrapper);
+    emit_attach_parmmaps(params, current_wrapper);
+
+    Printf(current_wrapper->locals, "%sresult;", SwigType_str(Getattr(n, "type"),0));
+
+    int num_args = emit_num_arguments(params);
+    String* action = emit_action(n);
+    marshalInputArgs(n, params, num_args, current_wrapper);
+    Printv(current_wrapper->code, action, "\n", 0);
+    
+    t_ctor.Replace("${classname}", current_classname)
+        .Replace("${overloadext}", overname)
+        .Replace("${LOCALS}", current_wrapper->locals)
+        .Replace("${CODE}", current_wrapper->code);
+
+    Wrapper_pretty_print(t_ctor.str(), js_ctor_wrappers);
+    
+    String* argcount = NewString("");
+    Printf(argcount, "%d", num_args);
+    
+    Template t_ctor_case(GetTemplate("ctor_dispatch_case"));
+    t_ctor_case.Replace("${classname}", current_classname)
+        .Replace("${overloadext}", overname)
+        .Replace("${argcount}", argcount);
+    Printv(js_ctor_dispatcher_code, t_ctor_case.str(), 0);
+    
+    Delete(argcount);
+    
     return SWIG_OK;
     
 }
 
+int JSCEmitter::EmitDtor(Node* n)
+{
+  // TODO:find out how to register a dtor in JSC
+   return SWIG_OK;
+}
 
 int JSCEmitter::EmitGetter(Node* n, bool is_member)
 {

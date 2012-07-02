@@ -76,8 +76,9 @@ JSStaticFunction global_functions[] = {
   ${jsglobalfunctions}
   { 0, 0, 0 }
 };
-%}
 
+JSClassDefinition global_classDefinition;
+%}
 
 %fragment ("classdefn", "templates")
 %{
@@ -90,6 +91,10 @@ JSStaticFunction ${classname}_functions[] = {
   ${jsclassfunctions}
   { 0, 0, 0 }
 };
+
+JSClassDefinition ${classname}_classDefinition;
+%}
+
 %fragment ("destructordefn", "templates")
 %{
 void _wrap_${classname}_finalize(JSObjectRef thisObject)
@@ -111,6 +116,7 @@ JSObjectRef _wrap_create_${classname}(JSContextRef context, JSObjectRef ctorObje
     ${DISPATCH_CASES}
     {
         // TODO: handle illegal arguments
+        jsresult = JSValueToObject(context, JSValueMakeUndefined(context), exception);
     }
 
     return jsresult;
@@ -120,11 +126,11 @@ JSObjectRef _wrap_create_${classname}(JSContextRef context, JSObjectRef ctorObje
 %fragment ("ctor_dispatch_case", "templates")
 %{if(argc == ${argcount}) {
     jsresult = _wrap_create_${classname}${overloadext}(context, ctorObject, argc, argv, exception);
-  } else%}
+  } else %}
 
 %fragment ("ctordefn", "templates")
 %{
-JSObjectRef _wrap_create_${classname}${overloadext}(JSContextRef context, JSObjectRef ctorObject, 
+JSObjectRef _wrap_create_${classname}${overloadext}(JSContextRef context, JSObjectRef thisObject, 
     size_t argc, const JSValueRef argv[], JSValueRef* exception)
 {
     ${LOCALS}

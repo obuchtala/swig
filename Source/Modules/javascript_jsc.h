@@ -68,6 +68,8 @@ private:
     String *js_class_functions_code;
     String *js_class_variables_code;
     String *js_initializer_code;
+    String *js_ctor_wrappers;
+    String *js_ctor_dispatcher_code;
     String *current_functionwrapper;
     String *current_functionname;
 
