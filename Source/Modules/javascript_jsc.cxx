@@ -140,37 +140,31 @@ void JSCEmitter::marshalOutput(Node *n, String *actioncode, Wrapper *wrapper) {
 
 
 int JSCEmitter::Initialize(Node *n) {
+
     /* Get the module name */
     String *module = Getattr(n,"name");
+
     /* Get the output file name */
     String *outfile = Getattr(n,"outfile");
 
     /* Initialize I/O */
-	String *outfile_h = Getattr(n, "outfile_h");
-    f_wrap_h = NewFile(outfile_h, "w", SWIG_output_files());
-    if (!f_wrap_h) {
-       FileErrorDisplay(outfile);
-       SWIG_exit(EXIT_FAILURE);
-    }
     f_wrap_cpp = NewFile(outfile, "w", SWIG_output_files());
     if (!f_wrap_cpp) {
        FileErrorDisplay(outfile);
        SWIG_exit(EXIT_FAILURE);
     }
 
-	/* Initialization of members */
+    /* Initialization of members */
     f_runtime = NewString("");
     f_init = NewString("");
     f_header = NewString("");
     f_wrappers = NewString("");
 
-        wrap_h_code = NewString("");
-	js_global_variables_code = NewString("");
-	js_global_functions_code = NewString("");
-	js_initializer_code = NewString("");
+    js_global_variables_code = NewString("");
+    js_global_functions_code = NewString("");
+    js_initializer_code = NewString("");
 
-	
-	/* Register file targets with the SWIG file handler */
+    /* Register file targets with the SWIG file handler */
     Swig_register_filebyname("begin", f_wrap_cpp);
     Swig_register_filebyname("header", f_header);
     Swig_register_filebyname("wrapper", f_wrappers);
@@ -179,32 +173,31 @@ int JSCEmitter::Initialize(Node *n) {
     return SWIG_OK;
 }
 
-
 int JSCEmitter::Dump(Node *n)
 {
      /* Get the module name */
     String* module = Getattr(n,"name");
 
-   // write the swig banner
+    // write the swig banner
     Swig_banner(f_wrap_cpp);
 
     Printv(f_wrap_cpp, f_runtime, "\n", 0);
     Printv(f_wrap_cpp, f_header, "\n", 0);
     Printv(f_wrap_cpp, f_wrappers, "\n", 0);
+
+    // compose the initializer function using a template
+    Template globaldefinition(GetTemplate("globaldefn"));
+    globaldefinition.Replace("${jsglobalvariables}",js_global_variables_code)
+        .Replace("${jsglobalfunctions}",js_global_functions_code);
+    Wrapper_pretty_print(globaldefinition.str(), f_wrap_cpp);
     
-// compose the initializer function using a template
-    // filled with sub-parts
-  Template globaldefinition(GetTemplate("globaldefn"));
-  globaldefinition.Replace("${jsglobalvariables}",js_global_variables_code);
-globaldefinition.Replace("${jsglobalfunctions}",js_global_functions_code);
-  Wrapper_pretty_print(globaldefinition.str(), f_wrap_cpp);
+    
+    Template initializer(GetTemplate("jsc_initializer"));
+    initializer.Replace("${modulename}",module)
+        .Replace("${initializercode}",js_initializer_code);
+    Wrapper_pretty_print(initializer.str(), f_wrap_cpp);
 
-   Template initializer(GetTemplate("jsc_initializer"));
-   initializer.Replace("${modulename}",module)
-   .Replace("${initializercode}",js_initializer_code);
-   Wrapper_pretty_print(initializer.str(), f_wrap_cpp);
-
-   return SWIG_OK;
+    return SWIG_OK;
 }
 
 
@@ -243,45 +236,83 @@ int JSCEmitter::EmitDtor(Node* n)
    return SWIG_OK;
 }
 
-int JSCEmitter::EnterFunction(Node *n) 
+int JSCEmitter::EnterFunction(Node *n)
 {
-current_functionname = Getattr(n, "name");
-return SWIG_OK;
-}
-int JSCEmitter::ExitFunction(Node *n) 
-{
-Template t_function(GetTemplate("functiondecl"));
-  t_function.Replace("${functionname}", current_functionname)
-     .Replace("${functionwrapper}", current_functionwrapper);
-Printv(js_initializer_code, t_function.str(), 0);
-
-return SWIG_OK;
+    current_functionname = Getattr(n, "name");
+    return SWIG_OK;
 }
 
-int JSCEmitter::EnterVariable(Node *n) 
+int JSCEmitter::ExitFunction(Node *n)
 {
-   current_getter = NULL_STR;
-   current_setter = NULL_STR;
-   current_propertyname = Getattr(n, "name");    
-   return SWIG_OK;
-}
-   
+    Template t_function(GetTemplate("functiondecl"));
+    t_function.Replace("${functionname}", current_functionname)
+        .Replace("${functionwrapper}", current_functionwrapper);
+    
+     if(GetFlag(n, "ismember")) 
+     {
+       Printv(js_class_functions_code, t_function.str(), 0);
+       }
+       else 
+       {
+       Printv(js_global_functions_code, t_function.str(), 0);
+       }
 
-int JSCEmitter::ExitVariable(Node *n) 
+    return SWIG_OK;
+}
+
+int JSCEmitter::EnterVariable(Node *n)
 {
-Template t_variable(GetTemplate("variabledecl"));
-t_variable.Replace("${setname}", current_setter)
-     .Replace("${getname}", current_getter)
-     .Replace("${propertyname}", current_propertyname);
-      Printv(js_global_variables_code, t_variable.str(), 0);
- 
+    current_getter = NULL_STR;
+    current_setter = NULL_STR;
+    current_propertyname = Getattr(n, "name");
     return SWIG_OK;
 }
 
 
-int JSCEmitter::EmitGetter(Node* n, bool is_member)
-{Template t_setter(GetTemplate("getproperty"));
+int JSCEmitter::ExitVariable(Node *n)
+{
+    Template t_variable(GetTemplate("variabledecl"));
+    t_variable.Replace("${setname}", current_setter)
+        .Replace("${getname}", current_getter)
+        .Replace("${propertyname}", current_propertyname);
+         if(GetFlag(n, "ismember")) 
+         {
+         Printv(js_class_variables_code, t_variable.str(), 0);
+         }
+         else 
+         {
+         Printv(js_global_variables_code, t_variable.str(), 0);
+         }
 
+     return SWIG_OK;
+}
+
+int JSCEmitter::EnterClass(Node *n)
+{
+
+    js_class_variables_code = NewString("");
+    js_class_functions_code = NewString("");
+    current_classname = Getattr(n, "name");
+}
+
+
+int JSCEmitter::ExitClass(Node *n)
+{
+    Template t_class(GetTemplate("classdefn"));
+    t_class.Replace("${jsclassvariables}", js_class_variables_code)
+           .Replace("${jsclassfunctions}", js_class_functions_code)
+           .Replace("${classname}", current_classname);
+    Wrapper_pretty_print(t_class.str(), f_wrappers);
+    Delete(js_class_variables_code);
+    Delete(js_class_functions_code);
+    return SWIG_OK;
+    
+}
+
+
+int JSCEmitter::EmitGetter(Node* n, bool is_member)
+{
+    Template t_setter(GetTemplate("getproperty"));
 
     String* name = Getattr(n,"wrap:name");
     String* wrap_name = Swig_name_wrapper(name);
@@ -296,21 +327,21 @@ int JSCEmitter::EmitGetter(Node* n, bool is_member)
     String* action = emit_action(n);
     marshalInputArgs(n, params, num_args, current_wrapper);
     marshalOutput(n, action, current_wrapper);
-    
+
     t_setter.Replace("${getname}", wrap_name)
-     .Replace("${LOCALS}", current_wrapper->locals)
-     .Replace("${CODE}", current_wrapper->code);
+        .Replace("${LOCALS}", current_wrapper->locals)
+        .Replace("${CODE}", current_wrapper->code);
 
     Wrapper_pretty_print(t_setter.str(), f_wrappers);
-        
+
     return SWIG_OK;
 }
 
-   
+
 int JSCEmitter::EmitSetter(Node* n, bool is_member)
-{Template t_setter(GetTemplate("setproperty"));
-    
-    
+{
+    Template t_setter(GetTemplate("setproperty"));
+
     String* name = Getattr(n,"wrap:name");
     String* wrap_name = Swig_name_wrapper(name);
     current_setter = wrap_name;
@@ -324,13 +355,13 @@ int JSCEmitter::EmitSetter(Node* n, bool is_member)
     String* action = emit_action(n);
     marshalInputArgs(n, params, num_args, current_wrapper);
     marshalOutput(n, action, current_wrapper);
-    
+
     t_setter.Replace("${setname}", wrap_name)
-     .Replace("${LOCALS}", current_wrapper->locals)
-     .Replace("${CODE}", current_wrapper->code);
+        .Replace("${LOCALS}", current_wrapper->locals)
+        .Replace("${CODE}", current_wrapper->code);
 
     Wrapper_pretty_print(t_setter.str(), f_wrappers);
-        
+
     return SWIG_OK;
 }
     
@@ -353,10 +384,10 @@ int JSCEmitter::EmitFunction(Node* n, bool is_member)
     String* action = emit_action(n);
     marshalInputArgs(n, params, num_args, current_wrapper);
     marshalOutput(n, action, current_wrapper);
-   
+
     t_function.Replace("${functionname}", wrap_name)
-     .Replace("${LOCALS}", current_wrapper->locals)
-     .Replace("${CODE}", current_wrapper->code);
+        .Replace("${LOCALS}", current_wrapper->locals)
+        .Replace("${CODE}", current_wrapper->code);
     Wrapper_pretty_print(t_function.str(),  f_wrappers);
 
     return SWIG_OK;

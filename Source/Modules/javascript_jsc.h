@@ -32,6 +32,10 @@ protected:
 
     virtual int ExitFunction(Node *n);
 
+    virtual int EnterClass(Node *n);
+    
+    virtual int ExitClass(Node *n);
+
     virtual int EmitFunction(Node *n, bool is_member);
 
     virtual int EmitGetter(Node *n, bool is_member);
@@ -46,39 +50,27 @@ protected:
 
 private:
 
-    File *f_wrap_h;
-    File *f_wrap_cpp;               
+    File *f_wrap_cpp;
     File *f_runtime;
     File *f_header;
     File *f_wrappers;
     File *f_init;
 
-    
-// the output cpp file
-    
-    //File *f_wrap_cpp;
-
     // state variables
 
-        String* current_propertyname;
-        String* current_getter;
-        String* current_setter;
-        String* NULL_STR;
-        String *js_global_functions_code;
-        String *js_global_variables_code;                              
-        String *js_initializer_code;  
-        String *current_functionwrapper; 
-        String *current_functionname; 
-        String *wrap_h_code;			
-	String *js_static_values_code;	
-	String *js_static_funcs_code;	
-	String *js_static_consts_code;	
-	String *js_static_cvar_code;	
-	String *js_create_cpp_object_code; 	
-	String *js_consts_decl_code;	
-	String *current_class_name;		
-	String *current_class_type;		
-	String *variable_name;			
+    String* current_propertyname;
+    String* current_getter;
+    String* current_setter;
+    String* current_classname;
+    String* NULL_STR;
+    String *js_global_functions_code;
+    String *js_global_variables_code;
+    String *js_class_functions_code;
+    String *js_class_variables_code;
+    String *js_initializer_code;
+    String *current_functionwrapper;
+    String *current_functionname;
+
 };
 
 #endif // JAVASCRIPT_JSC_H
