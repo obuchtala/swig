@@ -64,6 +64,8 @@ private:
         String* current_getter;
         String* current_setter;
         String* NULL_STR;
+        String *js_global_functions_code;
+        String *js_global_variables_code;                              
         String *js_initializer_code;  
         String *current_functionwrapper; 
         String *current_functionname; 

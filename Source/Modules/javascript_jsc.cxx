@@ -165,7 +165,8 @@ int JSCEmitter::Initialize(Node *n) {
     f_wrappers = NewString("");
 
         wrap_h_code = NewString("");
-	js_static_cvar_code = NewString("");
+	js_global_variables_code = NewString("");
+	js_global_functions_code = NewString("");
 	js_initializer_code = NewString("");
 
 	
@@ -202,26 +203,23 @@ globaldefinition.Replace("${jsglobalfunctions}",js_global_functions_code);
    initializer.Replace("${modulename}",module)
    .Replace("${initializercode}",js_initializer_code);
    Wrapper_pretty_print(initializer.str(), f_wrap_cpp);
+
    return SWIG_OK;
 }
 
 
 int JSCEmitter::Close()
 {
-   Delete(f_runtime);
-   Delete(f_header);
-   Delete(f_wrappers);
-   Delete(f_init);
-   
-    //strings 
+    /* strings */
     Delete(f_runtime);
+    Delete(f_header);
+    Delete(f_wrappers);
+    Delete(f_init);
 
-    Delete(js_static_cvar_code); 
+    Delete(js_global_variables_code);
+    Delete(js_global_functions_code);
     Delete(js_initializer_code);
- 
-   // Delete(f_wrapper);
-    
-    
+
     /* files */
     ::Close(f_wrap_cpp);
     Delete(f_wrap_cpp);
