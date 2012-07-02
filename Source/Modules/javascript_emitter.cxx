@@ -147,6 +147,24 @@ int JSEmitter::EmitWrapperFunction(Node* n)
 }
 
 /* -----------------------------------------------------------------------------
+ * JSEmitter::EmitConstant() :  dispatches emitter constants
+ * ----------------------------------------------------------------------------- */
+
+int JSEmitter::EmitConstant(Node* n)
+{
+    current_wrapper = NewWrapper();
+    Setattr(n, "wrap:name", Getattr(n, "sym:name"));
+    EnterVariable(n);
+    EmitGetter(n, false);
+    ExitVariable(n);
+            
+    DelWrapper(current_wrapper);
+    current_wrapper = 0;
+    
+    return SWIG_OK;
+}
+
+/* -----------------------------------------------------------------------------
  * str_ends_with() :  c string helper to check suffix match
  * ----------------------------------------------------------------------------- */
 
@@ -164,6 +182,7 @@ int str_ends_with(const char * str, const char * suffix) {
 
   return 0 == strncmp( str + str_len - suffix_len, suffix, suffix_len );
 }
+
 
 /* -----------------------------------------------------------------------------
  * JSEmitter::IsSetterMethod() :  helper to check if a method is a setter function

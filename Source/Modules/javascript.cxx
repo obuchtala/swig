@@ -23,7 +23,7 @@ public:
     virtual int globalvariableHandler(Node *n);
     virtual int classHandler(Node *n);
     virtual int functionWrapper(Node *n);
-
+    virtual int constantWrapper(Node *n);
     /**
      *  Registers all %fragments assigned to section "templates" with the Emitter.
      **/
@@ -114,6 +114,21 @@ int JAVASCRIPT::globalvariableHandler(Node *n) {
 }
 
 /* ---------------------------------------------------------------------
+ * constantHandler()
+ *
+ * Function handler for generating wrappers for constants 
+ * --------------------------------------------------------------------- */
+
+
+int JAVASCRIPT::constantWrapper(Node *n){
+
+    Language::constantWrapper(n);
+    emitter->EmitConstant(n);
+    
+    return SWIG_OK;
+}
+
+/* ---------------------------------------------------------------------
  * classHandler()
  *
  * Function handler for generating wrappers for class 
@@ -159,7 +174,7 @@ int JAVASCRIPT::top(Node *n) {
     
     emitter->Dump(n);
     emitter->Close();
-    
+   
     delete emitter;
     
     return SWIG_OK;

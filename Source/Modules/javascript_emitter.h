@@ -99,7 +99,13 @@ public:
      * 
      * This method is called by the fragmentDirective handler
      * of the JAVASCRIPT language module.
-     */
+     * */
+     
+    virtual int EmitConstant(Node *n);
+    /*
+     * 
+     * */
+
     int RegisterTemplate(const String *name, const String *code);
 
     /**
