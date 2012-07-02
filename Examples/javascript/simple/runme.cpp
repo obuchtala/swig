@@ -1,7 +1,6 @@
 // Neha: Reference: http://opensource.apple.com/source/JavaScriptCore/JavaScriptCore-1C25/API/testapi.c
 
 #include "JavaScriptCore/JavaScript.h"
-#include "example_wrap.h"
 #include<stdlib.h>
 #include<stdio.h>
 #include<iostream>
@@ -12,7 +11,6 @@ static char* jsccreateStringWithContentsOfFile(const char* fileName);
 bool jsc_registerFunction(JSGlobalContextRef context, JSObjectRef object, const char* FunctionName,JSObjectCallAsFunctionCallback cbFunction);
 
 extern int example_initialize(JSGlobalContextRef context);
-
 
 int main(int argc, char* argv[]) {
     cout<<"main called\n";
@@ -33,7 +31,6 @@ int main(int argc, char* argv[]) {
     
     // Call the initializer
      example_initialize(context);
-
     
     // Evaluate the javascript
     char*	szString = jsccreateStringWithContentsOfFile(scriptPath);
@@ -124,4 +121,3 @@ static char* jsccreateStringWithContentsOfFile(const char* fileName)
 	
 	return buffer;
 }
-
