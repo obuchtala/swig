@@ -49,7 +49,7 @@ JSValueRef ${functionname}(JSContextRef context, JSObjectRef function, JSObjectR
 }
 %}
 
-%fragment ("staticfunctiondecl", "templates") 
+%fragment ("variabledecl", "templates") 
 %{
 {"${propertyname}",${getname}, ${setname},kJSPropertyAttributeNone},
 %}
@@ -212,45 +212,22 @@ JSValueRef* exception)%}
     JSValueRef jsresult;
 %}
 
-%fragment ("cvardecl", "templates")  
-%{
-bool cvar_initClass(JSGlobalContextRef& context, JSObjectRef& parentObject, const char* cvarclassname);
-}%}
 
-%fragment ("cvardefn", "templates") 
+%fragment ("globaldefn", "templates")
 %{
-
-JSStaticValue cvar_staticValues[] = {
-${jsstaticvarcode}
-    { 0, 0, 0, 0 }
+JSStaticValue global_values[] = {
+${jsglobalvariables}
+  { 0, 0, 0, 0 }
 };
-
-JSClassRef cvar_createJSClass(JSContextRef context)
-{
-	static JSClassRef jsClass = NULL;
-	if (!jsClass)
-	{
-		JSClassDefinition definition	= kJSClassDefinitionEmpty;
-		definition.staticValues			= cvar_staticValues;
-		jsClass							= JSClassCreate(&definition);
-	}
-	return jsClass;
-}
-
-bool cvar_initClass(JSGlobalContextRef& context, JSObjectRef& parentObject, const char* cvarclassname)
-{
-    JSStringRef jsstring = JSStringCreateWithUTF8CString(cvarclassname);
-    static JSObjectRef cvarclassObject = JSObjectMake(context, cvar_createJSClass(context), NULL);
-    JSObjectSetProperty(
-		context,
-	    parentObject,
-	    jsstring,
-	    cvarclassObject,
-	    kJSPropertyAttributeNone,
-	    NULL);
-   JSStringRelease(jsstring);
-   return true;
-} 
+JSStaticFunction global_functions[] = {
+  ${jsglobalfunctions}
+  { 0, 0, 0 }
+};
 %}
 
+
+%fragment ("functiondecl", "templates")
+%{{"${functionname}",${functionwrapper}, kJSPropertyAttributeNone},
+%}
+ 
 

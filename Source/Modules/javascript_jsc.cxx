@@ -22,8 +22,8 @@
 #define JSC_VARIABLE_GET_DECL               "variablegetdecl"
 #define JSC_VARIABLE_SET_DECL               "variablesetdecl"
 #define JSC_VARIABLE_BODY                   "variablebody"
-#define JSC_CVAR_DECL                       "cvardecl"
-#define JSC_CVAR_DEFN                       "cvardefn"
+#define JSC_GLOBAL_DECL                       "globaldecl"
+//#define JSC_GLOBAL_DEFN                       "globaldefn"
 
 // keywords used in templates
 #define KW_GET_NAME                        "${getname}"
@@ -190,14 +190,13 @@ int JSCEmitter::Dump(Node *n)
     Printv(f_wrap_cpp, f_runtime, "\n", 0);
     Printv(f_wrap_cpp, f_header, "\n", 0);
     Printv(f_wrap_cpp, f_wrappers, "\n", 0);
-    Printv(js_initializer_code, "cvar_initClass(context, globalObject, \"cvar\");");
-   
-
+    
 // compose the initializer function using a template
     // filled with sub-parts
-  Template cvardefinition(GetTemplate("cvardefn"));
-  cvardefinition.Replace("${jsstaticvarcode}",js_static_cvar_code);
-  Wrapper_pretty_print(cvardefinition.str(), f_wrap_cpp);
+  Template globaldefinition(GetTemplate("globaldefn"));
+  globaldefinition.Replace("${jsglobalvariables}",js_global_variables_code);
+globaldefinition.Replace("${jsglobalfunctions}",js_global_functions_code);
+  Wrapper_pretty_print(globaldefinition.str(), f_wrap_cpp);
 
    Template initializer(GetTemplate("jsc_initializer"));
    initializer.Replace("${modulename}",module)
@@ -253,12 +252,10 @@ return SWIG_OK;
 }
 int JSCEmitter::ExitFunction(Node *n) 
 {
-Template t_registerglobalfunction(GetTemplate("jsc_register_global_function"));
-t_registerglobalfunction.Replace("${context}","context")
-     .Replace("${context_object}","globalObject" )
-     .Replace("${functionname}", current_functionname)
+Template t_function(GetTemplate("functiondecl"));
+  t_function.Replace("${functionname}", current_functionname)
      .Replace("${functionwrapper}", current_functionwrapper);
-Printv(js_initializer_code, t_registerglobalfunction.str(), 0);
+Printv(js_initializer_code, t_function.str(), 0);
 
 return SWIG_OK;
 }
@@ -274,11 +271,11 @@ int JSCEmitter::EnterVariable(Node *n)
 
 int JSCEmitter::ExitVariable(Node *n) 
 {
-Template t_variable(GetTemplate("staticfunctiondecl"));
+Template t_variable(GetTemplate("variabledecl"));
 t_variable.Replace("${setname}", current_setter)
      .Replace("${getname}", current_getter)
      .Replace("${propertyname}", current_propertyname);
-      Printv(js_static_cvar_code, t_variable.str(), 0);
+      Printv(js_global_variables_code, t_variable.str(), 0);
  
     return SWIG_OK;
 }
