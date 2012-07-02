@@ -5,7 +5,8 @@
 #include <ctype.h>
 
 #include "javascript_emitter.h"
-extern JSEmitter *create_JSC_emitter();
+
+extern swig::JSEmitter *swig_javascript_create_JSC_emitter();
 
 /* ********************************************************************
  * JAVASCRIPT
@@ -35,7 +36,7 @@ public:
 
 private:
 
-  JSEmitter * emitter;
+  swig::JSEmitter * emitter;
 };
 
 /* ---------------------------------------------------------------------
@@ -48,7 +49,7 @@ int JAVASCRIPT::functionWrapper(Node *n) {
 
   Language::functionWrapper(n);
 
-  emitter->EmitWrapperFunction(n);
+  emitter->emitWrapperFunction(n);
 
   return SWIG_OK;
 }
@@ -61,11 +62,11 @@ int JAVASCRIPT::functionWrapper(Node *n) {
 
 int JAVASCRIPT::functionHandler(Node *n) {
 
-  emitter->EnterFunction(n);
+  emitter->enterFunction(n);
 
   Language::functionHandler(n);
 
-  emitter->ExitFunction(n);
+  emitter->exitFunction(n);
 
   return SWIG_OK;
 }
@@ -77,7 +78,7 @@ int JAVASCRIPT::functionHandler(Node *n) {
  * --------------------------------------------------------------------- */
 
 int JAVASCRIPT::globalfunctionHandler(Node *n) {
-  emitter->SwitchContext(n);
+  emitter->switchNamespace(n);
 
   Language::globalfunctionHandler(n);
   return SWIG_OK;
@@ -91,11 +92,11 @@ int JAVASCRIPT::globalfunctionHandler(Node *n) {
 
 int JAVASCRIPT::variableHandler(Node *n) {
 
-  emitter->EnterVariable(n);
+  emitter->enterVariable(n);
 
   Language::variableHandler(n);
 
-  emitter->ExitVariable(n);
+  emitter->exitVariable(n);
 
   return SWIG_OK;
 }
@@ -108,7 +109,7 @@ int JAVASCRIPT::variableHandler(Node *n) {
 
 int JAVASCRIPT::globalvariableHandler(Node *n) {
 
-  emitter->SwitchContext(n);
+  emitter->switchNamespace(n);
 
   Language::globalvariableHandler(n);
   return SWIG_OK;
@@ -124,7 +125,7 @@ int JAVASCRIPT::globalvariableHandler(Node *n) {
 int JAVASCRIPT::constantWrapper(Node *n) {
 
   Language::constantWrapper(n);
-  emitter->EmitConstant(n);
+  emitter->emitConstant(n);
 
   return SWIG_OK;
 }
@@ -136,11 +137,11 @@ int JAVASCRIPT::constantWrapper(Node *n) {
  * --------------------------------------------------------------------- */
 
 int JAVASCRIPT::classHandler(Node *n) {
-  emitter->SwitchContext(n);
+  emitter->switchNamespace(n);
 
-  emitter->EnterClass(n);
+  emitter->enterClass(n);
   Language::classHandler(n);
-  emitter->ExitClass(n);
+  emitter->exitClass(n);
 
   return SWIG_OK;
 }
@@ -152,7 +153,7 @@ int JAVASCRIPT::fragmentDirective(Node *n) {
   String *section = Getattr(n, "section");
 
   if (Cmp(section, "templates") == 0) {
-    emitter->RegisterTemplate(Getattr(n, "value"), Getattr(n, "code"));
+    emitter->registerTemplate(Getattr(n, "value"), Getattr(n, "code"));
   } else {
     Swig_fragment_register(n);
   }
@@ -169,12 +170,12 @@ int JAVASCRIPT::fragmentDirective(Node *n) {
 
 int JAVASCRIPT::top(Node *n) {
 
-  emitter->Initialize(n);
+  emitter->initialize(n);
 
   Language::top(n);
 
-  emitter->Dump(n);
-  emitter->Close();
+  emitter->dump(n);
+  emitter->close();
 
   delete emitter;
 
@@ -198,32 +199,32 @@ void JAVASCRIPT::main(int argc, char *argv[]) {
     if (argv[i]) {
       if (strcmp(argv[i], "-v8") == 0) {
         Swig_mark_arg(i);
-        mode = JSEmitter::V8;
+        mode = swig::JSEmitter::V8;
         SWIG_library_directory("javascript/v8");
       } else if (strcmp(argv[i], "-jsc") == 0) {
         Swig_mark_arg(i);
-        mode = JSEmitter::JavascriptCore;
+        mode = swig::JSEmitter::JavascriptCore;
         SWIG_library_directory("javascript/jsc");
       } else if (strcmp(argv[i], "-qt") == 0) {
         Swig_mark_arg(i);
-        mode = JSEmitter::QtScript;
+        mode = swig::JSEmitter::QtScript;
         SWIG_library_directory("javascript/qt");
       }
     }
   }
 
   switch (mode) {
-  case JSEmitter::V8:
+  case swig::JSEmitter::V8:
     {
       // TODO: emitter = create_v8_emitter();
       break;
     }
-  case JSEmitter::JavascriptCore:
+  case swig::JSEmitter::JavascriptCore:
     {
-      emitter = create_JSC_emitter();
+      emitter = swig_javascript_create_JSC_emitter();
       break;
     }
-  case JSEmitter::QtScript:
+  case swig::JSEmitter::QtScript:
     {
       // TODO: emitter = create_qtscript_emitter();
       break;

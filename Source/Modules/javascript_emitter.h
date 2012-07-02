@@ -3,6 +3,8 @@
 
 #include "swigmod.h"
 
+namespace swig {
+
 /**
  *  A class that wraps a code snippet used as template for code generation.
  */
@@ -15,10 +17,10 @@ public:
 
   String *str();
 
-   Template & Replace(const String *pattern, const String *repl);
+  Template & replace(const String *pattern, const String *repl);
 
 private:
-  String *m_code;
+  String *code;
 };
 
 class JSEmitter {
@@ -38,17 +40,17 @@ public:
     /**
      * Opens output files and temporary output DOHs.
      */
-  virtual int Initialize(Node *n) = 0;
+  virtual int initialize(Node *n) = 0;
 
     /**
      * Writes all collected code into the output file(s).
      */
-  virtual int Dump(Node *n) = 0;
+  virtual int dump(Node *n) = 0;
 
     /**
      * Cleans up all open output DOHs.
      */
-  virtual int Close() = 0;
+  virtual int close() = 0;
 
     /**
      * Switches the context for code generation.
@@ -57,61 +59,61 @@ public:
      * be registered in certain static tables.
      * This method should be used to switch output DOHs correspondingly.
      */
-  virtual int SwitchContext(Node *) {
+  virtual int switchNamespace(Node *) {
     return SWIG_OK;
   };
 
     /**
      * Invoked at the beginning of the classHandler.
      */
-  virtual int EnterClass(Node *) {
+  virtual int enterClass(Node *) {
     return SWIG_OK;
   };
 
     /**
      * Invoked at the end of the classHandler.
      */
-  virtual int ExitClass(Node *) {
+  virtual int exitClass(Node *) {
     return SWIG_OK;
   };
 
     /**
      * Invoked at the beginning of the variableHandler.
      */
-  virtual int EnterVariable(Node *) {
+  virtual int enterVariable(Node *) {
     return SWIG_OK;
   };
 
     /**
      * Invoked at the end of the variableHandler.
      */
-  virtual int ExitVariable(Node *) {
+  virtual int exitVariable(Node *) {
     return SWIG_OK;
   };
 
     /**
      * Invoked at the beginning of the functionHandler.
      */
-  virtual int EnterFunction(Node *) {
+  virtual int enterFunction(Node *) {
     return SWIG_OK;
   };
 
     /**
      * Invoked at the end of the functionHandler.
      */
-  virtual int ExitFunction(Node *) {
+  virtual int exitFunction(Node *) {
     return SWIG_OK;
   };
 
     /**
      * Invoked by functionWrapper callback after call to Language::functionWrapper.
      */
-  virtual int EmitWrapperFunction(Node *n);
+  virtual int emitWrapperFunction(Node *n);
 
     /**
      * Invoked from constantWrapper after call to Language::constantWrapper.
      **/
-  virtual int EmitConstant(Node *n);
+  virtual int emitConstant(Node *n);
 
     /**
      * Registers a given code snippet for a given key name.
@@ -119,28 +121,28 @@ public:
      * This method is called by the fragmentDirective handler
      * of the JAVASCRIPT language module.
      **/
-  int RegisterTemplate(const String *name, const String *code);
+  int registerTemplate(const String *name, const String *code);
 
     /**
      * Retrieve the code template registered for a given name.
      */
-  const String *GetTemplate(const String *name);
+  const String *getTemplate(const String *name);
 
 protected:
 
-  virtual int EmitCtor(Node *n) = 0;
+  virtual int emitCtor(Node *n) = 0;
 
-  virtual int EmitDtor(Node *n) = 0;
+  virtual int emitDtor(Node *n) = 0;
 
-  virtual int EmitFunction(Node *n, bool is_member) = 0;
+  virtual int emitFunction(Node *n, bool is_member) = 0;
 
-  virtual int EmitGetter(Node *n, bool is_member) = 0;
+  virtual int emitGetter(Node *n, bool is_member) = 0;
 
-  virtual int EmitSetter(Node *n, bool is_member) = 0;
+  virtual int emitSetter(Node *n, bool is_member) = 0;
 
-  bool IsSetterMethod(Node *n);
+  bool isSetterMethod(Node *n);
 
-  Node *GetBaseClass(Node *n);
+  Node *getBaseClass(Node *n);
 
   const String *typemapLookup(Node *n, const_String_or_char_ptr tmap_method, SwigType *type, int warning, Node *typemap_attributes = 0);
 
@@ -154,4 +156,6 @@ protected:
   Wrapper *current_wrapper;
 };
 
-#endif                          // JAVASCRIPT_EMITTER_H
+} // namespace swig
+
+#endif // JAVASCRIPT_EMITTER_H

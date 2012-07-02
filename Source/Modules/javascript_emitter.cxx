@@ -6,7 +6,7 @@
  * JSEmitter()
  * ----------------------------------------------------------------------------- */
 
-JSEmitter::JSEmitter()
+swig::JSEmitter::JSEmitter()
 :  empty_string(NewString("")) {
   templates = NewHash();
 }
@@ -15,24 +15,24 @@ JSEmitter::JSEmitter()
  * ~JSEmitter()
  * ----------------------------------------------------------------------------- */
 
-JSEmitter::~JSEmitter() {
+swig::JSEmitter::~JSEmitter() {
   Delete(empty_string);
   Delete(templates);
 }
 
 /* -----------------------------------------------------------------------------
- * JSEmitter::RegisterTemplate() :  Registers a code template
+ * swig::JSEmitter::RegisterTemplate() :  Registers a code template
  * ----------------------------------------------------------------------------- */
 
-int JSEmitter::RegisterTemplate(const String *name, const String *code) {
+int swig::JSEmitter::registerTemplate(const String *name, const String *code) {
   return Setattr(templates, name, code);
 }
 
 /* -----------------------------------------------------------------------------
- * JSEmitter::GetTemplate() :  Retrieves a registered a code template
+ * swig::JSEmitter::GetTemplate() :  Retrieves a registered a code template
  * ----------------------------------------------------------------------------- */
 
-const String *JSEmitter::GetTemplate(const String *name) {
+const String *swig::JSEmitter::getTemplate(const String *name) {
   String *templ = Getattr(templates, name);
 
   if (!templ) {
@@ -44,7 +44,7 @@ const String *JSEmitter::GetTemplate(const String *name) {
 }
 
 /* -----------------------------------------------------------------------------
- * JSEmitter::typemapLookup()
+ * swig::JSEmitter::typemapLookup()
  * 
  *  n - for input only and must contain info for Getfile(n) and Getline(n) to work
  *  tmap_method - typemap method name
@@ -55,7 +55,7 @@ const String *JSEmitter::GetTemplate(const String *name) {
  * return is never NULL, unlike Swig_typemap_lookup()
  * ----------------------------------------------------------------------------- */
 
-const String *JSEmitter::typemapLookup(Node *n, const_String_or_char_ptr tmap_method, SwigType *type, int warning, Node *typemap_attributes) {
+const String *swig::JSEmitter::typemapLookup(Node *n, const_String_or_char_ptr tmap_method, SwigType *type, int warning, Node *typemap_attributes) {
   Node *node = !typemap_attributes ? NewHash() : typemap_attributes;
   Setattr(node, "type", type);
   Setfile(node, Getfile(n));
@@ -74,10 +74,10 @@ const String *JSEmitter::typemapLookup(Node *n, const_String_or_char_ptr tmap_me
 }
 
 /* -----------------------------------------------------------------------------
- * JSEmitter::GetBaseClass() :  the node of the base class or NULL
+ * swig::JSEmitter::getBaseClass() :  the node of the base class or NULL
  * ----------------------------------------------------------------------------- */
 
-Node *JSEmitter::GetBaseClass(Node *n) {
+Node *swig::JSEmitter::getBaseClass(Node *n) {
   // retrieve the first base class that is not %ignored
   List *baselist = Getattr(n, "bases");
   if (baselist) {
@@ -93,10 +93,10 @@ Node *JSEmitter::GetBaseClass(Node *n) {
 }
 
 /* -----------------------------------------------------------------------------
- * JSEmitter::EmitWrapperFunction() :  dispatches emitter functions
+ * swig::JSEmitter::emitWrapperFunction() :  dispatches emitter functions
  * ----------------------------------------------------------------------------- */
 
-int JSEmitter::EmitWrapperFunction(Node *n) {
+int swig::JSEmitter::emitWrapperFunction(Node *n) {
   int ret = SWIG_OK;
 
   current_wrapper = NewWrapper();
@@ -107,14 +107,14 @@ int JSEmitter::EmitWrapperFunction(Node *n) {
   if (kind) {
     bool is_member = GetFlag(n, "ismember");
     if (Cmp(kind, "function") == 0) {
-      ret = EmitFunction(n, is_member);
+      ret = emitFunction(n, is_member);
 
     } else if (Cmp(kind, "variable") == 0) {
-      if (IsSetterMethod(n)) {
-        ret = EmitSetter(n, is_member);
+      if (isSetterMethod(n)) {
+        ret = emitSetter(n, is_member);
 
       } else {
-        ret = EmitGetter(n, is_member);
+        ret = emitGetter(n, is_member);
 
       }
     } else {
@@ -127,10 +127,10 @@ int JSEmitter::EmitWrapperFunction(Node *n) {
     String *view = Getattr(n, "view");
 
     if (Cmp(view, "constructorHandler") == 0) {
-      ret = EmitCtor(n);
+      ret = emitCtor(n);
 
     } else if (Cmp(view, "destructorHandler") == 0) {
-      ret = EmitDtor(n);
+      ret = emitDtor(n);
 
     } else {
       Printf(stderr, "Warning: unsupported wrapper function type");
@@ -146,16 +146,16 @@ int JSEmitter::EmitWrapperFunction(Node *n) {
 }
 
 /* -----------------------------------------------------------------------------
- * JSEmitter::EmitConstant() :  triggers code generation for constants
+ * swig::JSEmitter::emitConstant() :  triggers code generation for constants
  * ----------------------------------------------------------------------------- */
 
-int JSEmitter::EmitConstant(Node *n) {
+int swig::JSEmitter::emitConstant(Node *n) {
   current_wrapper = NewWrapper();
   Setattr(n, "wrap:name", Getattr(n, "sym:name"));
 
-  EnterVariable(n);
-  EmitGetter(n, false);
-  ExitVariable(n);
+  enterVariable(n);
+  emitGetter(n, false);
+  exitVariable(n);
 
   DelWrapper(current_wrapper);
   current_wrapper = 0;
@@ -164,10 +164,10 @@ int JSEmitter::EmitConstant(Node *n) {
 }
 
 /* -----------------------------------------------------------------------------
- * str_ends_with() :  c string helper to check suffix match
+ * __swigjs_str_ends_with() :  c string helper to check suffix match
  * ----------------------------------------------------------------------------- */
 
-int str_ends_with(const char *str, const char *suffix) {
+int __swigjs_str_ends_with(const char *str, const char *suffix) {
 
   if (str == NULL || suffix == NULL)
     return 0;
@@ -183,45 +183,46 @@ int str_ends_with(const char *str, const char *suffix) {
 
 
 /* -----------------------------------------------------------------------------
- * JSEmitter::IsSetterMethod() :  helper to check if a method is a setter function
+ * swig::JSEmitter::isSetterMethod() :  helper to check if a method is a setter function
  * ----------------------------------------------------------------------------- */
 
-bool JSEmitter::IsSetterMethod(Node *n) {
+bool swig::JSEmitter::isSetterMethod(Node *n) {
   String *symname = Getattr(n, "sym:name");
-  return (str_ends_with((char *) Data(symname), "_set") != 0);
+  return (__swigjs_str_ends_with((char *) Data(symname), "_set") != 0);
 }
 
 /* -----------------------------------------------------------------------------
- * Template::Template() :  creates a Template class for given template code
+ * swig::Template::Template() :  creates a Template class for given template code
  * ----------------------------------------------------------------------------- */
 
-Template::Template(const String *code) {
-  if (!code) {
+swig::Template::Template(const String *code_) {
+  
+  if (!code_) {
     Printf(stdout, "Template code was null. Illegal input for template.");
     SWIG_exit(EXIT_FAILURE);
   }
 
-  m_code = NewString(code);
+  code = NewString(code_);
 }
 
 /* -----------------------------------------------------------------------------
- * Template::~Template() :  cleans up of Template.
+ * swig::Template::~Template() :  cleans up of Template.
  * ----------------------------------------------------------------------------- */
 
-Template::~Template() {
-  Delete(m_code);
+swig::Template::~Template() {
+  Delete(code);
 }
 
 /* -----------------------------------------------------------------------------
- * String* Template::str() :  retrieves the current content of the template.
+ * String* swig::Template::str() :  retrieves the current content of the template.
  * ----------------------------------------------------------------------------- */
 
-String *Template::str() {
-  return m_code;
+String *swig::Template::str() {
+  return code;
 }
 
 /* -----------------------------------------------------------------------------
- * Template&  Template::Replace(const String* pattern, const String* repl) :
+ * Template&  swig::Template::replace(const String* pattern, const String* repl) :
  * 
  *  replaces all occurances of a given pattern with a given replacement.
  * 
@@ -230,7 +231,7 @@ String *Template::str() {
  *  - returns a reference to the Template to allow chaining of methods.
  * ----------------------------------------------------------------------------- */
 
-Template & Template::Replace(const String *pattern, const String *repl) {
-  ::Replaceall(m_code, pattern, repl);
+swig::Template & swig::Template::replace(const String *pattern, const String *repl) {
+  ::Replaceall(code, pattern, repl);
   return *this;
 }

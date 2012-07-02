@@ -3,6 +3,8 @@
 
 #include "javascript_emitter.h"
 
+namespace swig {
+
 class JSCEmitter:public JSEmitter {
 
 private:
@@ -16,40 +18,40 @@ private:
 
 public:
 
-   JSCEmitter();
+  JSCEmitter();
 
-   virtual ~ JSCEmitter();
+  virtual ~ JSCEmitter();
 
-  virtual int Initialize(Node *n);
+  virtual int initialize(Node *n);
 
-  virtual int Dump(Node *n);
+  virtual int dump(Node *n);
 
-  virtual int Close();
+  virtual int close();
 
 
 protected:
 
-   virtual int EmitCtor(Node *n);
+  virtual int emitCtor(Node *n);
 
-  virtual int EmitDtor(Node *n);
+  virtual int emitDtor(Node *n);
 
-  virtual int EnterVariable(Node *n);
+  virtual int enterVariable(Node *n);
 
-  virtual int ExitVariable(Node *n);
+  virtual int exitVariable(Node *n);
 
-  virtual int EnterFunction(Node *n);
+  virtual int enterFunction(Node *n);
 
-  virtual int ExitFunction(Node *n);
+  virtual int exitFunction(Node *n);
 
-  virtual int EnterClass(Node *n);
+  virtual int enterClass(Node *n);
 
-  virtual int ExitClass(Node *n);
+  virtual int exitClass(Node *n);
 
-  virtual int EmitFunction(Node *n, bool is_member);
+  virtual int emitFunction(Node *n, bool is_member);
 
-  virtual int EmitGetter(Node *n, bool is_member);
+  virtual int emitGetter(Node *n, bool is_member);
 
-  virtual int EmitSetter(Node *n, bool is_member);
+  virtual int emitSetter(Node *n, bool is_member);
 
   void marshalInputArgs(ParmList *parms, Wrapper *wrapper, MarshallingMode mode, bool is_member);
 
@@ -89,7 +91,8 @@ private:
   String *current_functionwrapper;
   String *current_functionname;
 
-
 };
 
-#endif                          // JAVASCRIPT_JSC_H
+} // namespace swig
+
+#endif // JAVASCRIPT_JSC_H

@@ -1,21 +1,19 @@
 #include "javascript_jsc.h"
 #include "swigmod.h"
 
-JSCEmitter::JSCEmitter()
+swig::JSCEmitter::JSCEmitter()
 :  JSEmitter(), NULL_STR(NewString("NULL")) {
 }
 
-
-JSCEmitter::~JSCEmitter() {
+swig::JSCEmitter::~JSCEmitter() {
   Delete(NULL_STR);
 }
 
 /* ---------------------------------------------------------------------
  * skipIgnoredArgs()
- *
  * --------------------------------------------------------------------- */
 
-Parm *JSCEmitter::skipIgnoredArgs(Parm *p) {
+Parm *swig::JSCEmitter::skipIgnoredArgs(Parm *p) {
   while (checkAttribute(p, "tmap:in:numinputs", "0")) {
     p = Getattr(p, "tmap:in:next");
   }
@@ -30,7 +28,7 @@ Parm *JSCEmitter::skipIgnoredArgs(Parm *p) {
  * supplied typemaps.
  * --------------------------------------------------------------------- */
 
-void JSCEmitter::marshalInputArgs(ParmList *parms, Wrapper *wrapper, MarshallingMode mode, bool is_member) {
+void swig::JSCEmitter::marshalInputArgs(ParmList *parms, Wrapper *wrapper, MarshallingMode mode, bool is_member) {
   String *tm;
   Parm *p;
 
@@ -47,16 +45,16 @@ void JSCEmitter::marshalInputArgs(ParmList *parms, Wrapper *wrapper, Marshalling
     case Getter:
     case Function:
       if (is_member && i == 0) {
-        Printv(arg, "thisObject", 0);
+	Printv(arg, "thisObject", 0);
       } else {
-        Printf(arg, "argv[%d]", i - startIdx);
+	Printf(arg, "argv[%d]", i - startIdx);
       }
       break;
     case Setter:
       if (is_member && i == 0) {
-        Printv(arg, "thisObject", 0);
+	Printv(arg, "thisObject", 0);
       } else {
-        Printv(arg, "value", 0);
+	Printv(arg, "value", 0);
       }
       break;
     case Ctor:
@@ -66,7 +64,7 @@ void JSCEmitter::marshalInputArgs(ParmList *parms, Wrapper *wrapper, Marshalling
       throw "Illegal state.";
     }
 
-    if ((tm = Getattr(p, "tmap:in")))   // Get typemap for this argument
+    if ((tm = Getattr(p, "tmap:in")))	// Get typemap for this argument
     {
       Replaceall(tm, "$input", arg);
       Setattr(p, "emit:input", arg);
@@ -87,7 +85,7 @@ void JSCEmitter::marshalInputArgs(ParmList *parms, Wrapper *wrapper, Marshalling
 * supplied typemaps.
 * --------------------------------------------------------------------- */
 
-void JSCEmitter::marshalOutput(Node *n, String *actioncode, Wrapper *wrapper) {
+void swig::JSCEmitter::marshalOutput(Node *n, String *actioncode, Wrapper *wrapper) {
   SwigType *type = Getattr(n, "type");
   Setattr(n, "type", type);
   String *tm;
@@ -105,7 +103,7 @@ void JSCEmitter::marshalOutput(Node *n, String *actioncode, Wrapper *wrapper) {
 }
 
 
-int JSCEmitter::Initialize(Node *n) {
+int swig::JSCEmitter::initialize(Node *n) {
 
   /* Get the output file name */
   String *outfile = Getattr(n, "outfile");
@@ -133,10 +131,11 @@ int JSCEmitter::Initialize(Node *n) {
   Swig_register_filebyname("wrapper", f_wrappers);
   Swig_register_filebyname("runtime", f_runtime);
   Swig_register_filebyname("init", f_init);
+
   return SWIG_OK;
 }
 
-int JSCEmitter::Dump(Node *n) {
+int swig::JSCEmitter::dump(Node *n) {
   /* Get the module name */
   String *module = Getattr(n, "name");
 
@@ -148,22 +147,22 @@ int JSCEmitter::Dump(Node *n) {
   Printv(f_wrap_cpp, f_wrappers, "\n", 0);
 
   // compose the initializer function using a template
-  Template globaldefinition(GetTemplate("globaldefn"));
-  globaldefinition.Replace("${jsglobalvariables}", js_global_variables_code)
-      .Replace("${jsglobalfunctions}", js_global_functions_code);
+  Template globaldefinition(getTemplate("globaldefn"));
+  globaldefinition.replace("${jsglobalvariables}", js_global_variables_code)
+      .replace("${jsglobalfunctions}", js_global_functions_code);
   Wrapper_pretty_print(globaldefinition.str(), f_wrap_cpp);
 
 
-  Template initializer(GetTemplate("jsc_initializer"));
-  initializer.Replace("${modulename}", module)
-      .Replace("${initializercode}", js_initializer_code);
+  Template initializer(getTemplate("jsc_initializer"));
+  initializer.replace("${modulename}", module)
+      .replace("${initializercode}", js_initializer_code);
   Wrapper_pretty_print(initializer.str(), f_wrap_cpp);
 
   return SWIG_OK;
 }
 
 
-int JSCEmitter::Close() {
+int swig::JSCEmitter::close() {
   /* strings */
   Delete(f_runtime);
   Delete(f_header);
@@ -181,15 +180,15 @@ int JSCEmitter::Close() {
   return SWIG_OK;
 }
 
-int JSCEmitter::EnterFunction(Node *n) {
+int swig::JSCEmitter::enterFunction(Node *n) {
   current_functionname = Getattr(n, "name");
   return SWIG_OK;
 }
 
-int JSCEmitter::ExitFunction(Node *n) {
-  Template t_function(GetTemplate("functiondecl"));
-  t_function.Replace("${functionname}", current_functionname)
-      .Replace("${functionwrapper}", current_functionwrapper);
+int swig::JSCEmitter::exitFunction(Node *n) {
+  Template t_function(getTemplate("functiondecl"));
+  t_function.replace("${functionname}", current_functionname)
+      .replace("${functionwrapper}", current_functionwrapper);
 
   if (GetFlag(n, "ismember")) {
     if (Equal(Getattr(n, "storage"), "static")) {
@@ -206,7 +205,7 @@ int JSCEmitter::ExitFunction(Node *n) {
   return SWIG_OK;
 }
 
-int JSCEmitter::EnterVariable(Node *n) {
+int swig::JSCEmitter::enterVariable(Node *n) {
   current_getter = NULL_STR;
   current_setter = NULL_STR;
   current_propertyname = Getattr(n, "name");
@@ -214,11 +213,11 @@ int JSCEmitter::EnterVariable(Node *n) {
 }
 
 
-int JSCEmitter::ExitVariable(Node *n) {
-  Template t_variable(GetTemplate("variabledecl"));
-  t_variable.Replace("${setname}", current_setter)
-      .Replace("${getname}", current_getter)
-      .Replace("${propertyname}", current_propertyname);
+int swig::JSCEmitter::exitVariable(Node *n) {
+  Template t_variable(getTemplate("variabledecl"));
+  t_variable.replace("${setname}", current_setter)
+      .replace("${getname}", current_getter)
+      .replace("${propertyname}", current_propertyname);
 
   if (GetFlag(n, "ismember")) {
     if (Equal(Getattr(n, "storage"), "static")) {
@@ -234,7 +233,7 @@ int JSCEmitter::ExitVariable(Node *n) {
   return SWIG_OK;
 }
 
-int JSCEmitter::EnterClass(Node *n) {
+int swig::JSCEmitter::enterClass(Node *n) {
   current_classname = Getattr(n, "name");
 
   js_class_variables_code = NewString("");
@@ -248,13 +247,13 @@ int JSCEmitter::EnterClass(Node *n) {
   return SWIG_OK;
 }
 
-int JSCEmitter::ExitClass(Node *) {
-  Template t_class(GetTemplate("classdefn"));
-  t_class.Replace("${classname}", current_classname)
-      .Replace("${jsclassvariables}", js_class_variables_code)
-      .Replace("${jsclassfunctions}", js_class_functions_code)
-      .Replace("${jsstaticclassfunctions}", js_class_static_functions_code)
-      .Replace("${jsstaticclassvariables}", js_class_static_variables_code);
+int swig::JSCEmitter::exitClass(Node *) {
+  Template t_class(getTemplate("classdefn"));
+  t_class.replace("${classname}", current_classname)
+      .replace("${jsclassvariables}", js_class_variables_code)
+      .replace("${jsclassfunctions}", js_class_functions_code)
+      .replace("${jsstaticclassfunctions}", js_class_static_functions_code)
+      .replace("${jsstaticclassvariables}", js_class_static_variables_code);
   Wrapper_pretty_print(t_class.str(), f_wrappers);
 
   /* 
@@ -264,26 +263,26 @@ int JSCEmitter::ExitClass(Node *) {
   Printv(f_wrappers, js_ctor_wrappers, 0);
 
   /* adds the main constructor wrapper function */
-  Template t_mainctor(GetTemplate("mainctordefn"));
-  t_mainctor.Replace("${classname}", current_classname)
-      .Replace("${type}", current_classname)
-      .Replace("${DISPATCH_CASES}", js_ctor_dispatcher_code);
+  Template t_mainctor(getTemplate("mainctordefn"));
+  t_mainctor.replace("${classname}", current_classname)
+      .replace("${type}", current_classname)
+      .replace("${DISPATCH_CASES}", js_ctor_dispatcher_code);
   Wrapper_pretty_print(t_mainctor.str(), f_wrappers);
 
   /* adds the dtor wrapper */
-  Template t_dtor(GetTemplate("destructordefn"));
-  t_dtor.Replace("${classname}", current_classname)
-      .Replace("${type}", current_classname);
+  Template t_dtor(getTemplate("destructordefn"));
+  t_dtor.replace("${classname}", current_classname)
+      .replace("${type}", current_classname);
   Wrapper_pretty_print(t_dtor.str(), f_wrappers);
 
   /* adds a class template statement to initializer function */
-  Template t_classtemplate(GetTemplate("create_class_template"));
-  t_classtemplate.Replace("${classname}", current_classname);
+  Template t_classtemplate(getTemplate("create_class_template"));
+  t_classtemplate.replace("${classname}", current_classname);
   Wrapper_pretty_print(t_classtemplate.str(), js_initializer_code);
 
   /* adds a class registration statement to initializer function */
-  Template t_registerclass(GetTemplate("register_class"));
-  t_registerclass.Replace("${classname}", current_classname);
+  Template t_registerclass(getTemplate("register_class"));
+  t_registerclass.replace("${classname}", current_classname);
   Wrapper_pretty_print(t_registerclass.str(), js_initializer_code);
 
   /* clean up all DOHs */
@@ -303,8 +302,8 @@ int JSCEmitter::ExitClass(Node *) {
   return SWIG_OK;
 }
 
-int JSCEmitter::EmitCtor(Node *n) {
-  Template t_ctor(GetTemplate("ctordefn"));
+int swig::JSCEmitter::emitCtor(Node *n) {
+  Template t_ctor(getTemplate("ctordefn"));
 
   String *name = Getattr(n, "wrap:name");
   String *overname = Getattr(n, "sym:overname");
@@ -322,20 +321,20 @@ int JSCEmitter::EmitCtor(Node *n) {
   marshalInputArgs(params, current_wrapper, Ctor, true);
   Printv(current_wrapper->code, action, "\n", 0);
 
-  t_ctor.Replace("${classname}", current_classname)
-      .Replace("${overloadext}", overname)
-      .Replace("${LOCALS}", current_wrapper->locals)
-      .Replace("${CODE}", current_wrapper->code);
+  t_ctor.replace("${classname}", current_classname)
+      .replace("${overloadext}", overname)
+      .replace("${LOCALS}", current_wrapper->locals)
+      .replace("${CODE}", current_wrapper->code);
 
   Wrapper_pretty_print(t_ctor.str(), js_ctor_wrappers);
 
   String *argcount = NewString("");
   Printf(argcount, "%d", num_args);
 
-  Template t_ctor_case(GetTemplate("ctor_dispatch_case"));
-  t_ctor_case.Replace("${classname}", current_classname)
-      .Replace("${overloadext}", overname)
-      .Replace("${argcount}", argcount);
+  Template t_ctor_case(getTemplate("ctor_dispatch_case"));
+  t_ctor_case.replace("${classname}", current_classname)
+      .replace("${overloadext}", overname)
+      .replace("${argcount}", argcount);
   Printv(js_ctor_dispatcher_code, t_ctor_case.str(), 0);
 
   Delete(argcount);
@@ -344,13 +343,13 @@ int JSCEmitter::EmitCtor(Node *n) {
 
 }
 
-int JSCEmitter::EmitDtor(Node *) {
+int swig::JSCEmitter::emitDtor(Node *) {
   // TODO:find out how to register a dtor in JSC
   return SWIG_OK;
 }
 
-int JSCEmitter::EmitGetter(Node *n, bool is_member) {
-  Template t_setter(GetTemplate("getproperty"));
+int swig::JSCEmitter::emitGetter(Node *n, bool is_member) {
+  Template t_setter(getTemplate("getproperty"));
 
   String *name = Getattr(n, "wrap:name");
   String *wrap_name = Swig_name_wrapper(name);
@@ -366,9 +365,9 @@ int JSCEmitter::EmitGetter(Node *n, bool is_member) {
   marshalInputArgs(params, current_wrapper, Getter, is_member);
   marshalOutput(n, action, current_wrapper);
 
-  t_setter.Replace("${getname}", wrap_name)
-      .Replace("${LOCALS}", current_wrapper->locals)
-      .Replace("${CODE}", current_wrapper->code);
+  t_setter.replace("${getname}", wrap_name)
+      .replace("${LOCALS}", current_wrapper->locals)
+      .replace("${CODE}", current_wrapper->code);
 
   Wrapper_pretty_print(t_setter.str(), f_wrappers);
 
@@ -376,8 +375,8 @@ int JSCEmitter::EmitGetter(Node *n, bool is_member) {
 }
 
 
-int JSCEmitter::EmitSetter(Node *n, bool is_member) {
-  Template t_setter(GetTemplate("setproperty"));
+int swig::JSCEmitter::emitSetter(Node *n, bool is_member) {
+  Template t_setter(getTemplate("setproperty"));
 
   String *name = Getattr(n, "wrap:name");
   String *wrap_name = Swig_name_wrapper(name);
@@ -393,9 +392,9 @@ int JSCEmitter::EmitSetter(Node *n, bool is_member) {
   marshalInputArgs(params, current_wrapper, Setter, is_member);
   marshalOutput(n, action, current_wrapper);
 
-  t_setter.Replace("${setname}", wrap_name)
-      .Replace("${LOCALS}", current_wrapper->locals)
-      .Replace("${CODE}", current_wrapper->code);
+  t_setter.replace("${setname}", wrap_name)
+      .replace("${LOCALS}", current_wrapper->locals)
+      .replace("${CODE}", current_wrapper->code);
 
   Wrapper_pretty_print(t_setter.str(), f_wrappers);
 
@@ -403,8 +402,8 @@ int JSCEmitter::EmitSetter(Node *n, bool is_member) {
 }
 
 
-int JSCEmitter::EmitFunction(Node *n, bool is_member) {
-  Template t_function(GetTemplate("functionwrapper"));
+int swig::JSCEmitter::emitFunction(Node *n, bool is_member) {
+  Template t_function(getTemplate("functionwrapper"));
 
   String *name = Getattr(n, "sym:name");
   String *wrap_name = Swig_name_wrapper(name);
@@ -420,14 +419,14 @@ int JSCEmitter::EmitFunction(Node *n, bool is_member) {
   marshalInputArgs(params, current_wrapper, Function, is_member);
   marshalOutput(n, action, current_wrapper);
 
-  t_function.Replace("${functionname}", wrap_name)
-      .Replace("${LOCALS}", current_wrapper->locals)
-      .Replace("${CODE}", current_wrapper->code);
+  t_function.replace("${functionname}", wrap_name)
+      .replace("${LOCALS}", current_wrapper->locals)
+      .replace("${CODE}", current_wrapper->code);
   Wrapper_pretty_print(t_function.str(), f_wrappers);
 
   return SWIG_OK;
 }
 
-JSEmitter *create_JSC_emitter() {
-  return new JSCEmitter();
+swig::JSEmitter *swig_javascript_create_JSC_emitter() {
+  return new swig::JSCEmitter();
 }
