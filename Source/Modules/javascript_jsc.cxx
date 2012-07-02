@@ -102,7 +102,6 @@ void swig::JSCEmitter::marshalOutput(Node *n, String *actioncode, Wrapper *wrapp
   emit_return_variable(n, type, wrapper);
 }
 
-
 int swig::JSCEmitter::initialize(Node *n) {
 
   /* Get the output file name */

@@ -150,17 +150,23 @@ int swig::JSEmitter::emitWrapperFunction(Node *n) {
  * ----------------------------------------------------------------------------- */
 
 int swig::JSEmitter::emitConstant(Node *n) {
-  current_wrapper = NewWrapper();
-  Setattr(n, "wrap:name", Getattr(n, "sym:name"));
+    current_wrapper = NewWrapper();
+    String* action = NewString("");
 
-  enterVariable(n);
-  emitGetter(n, false);
-  exitVariable(n);
+    Setattr(n, "wrap:name", Getattr(n, "sym:name"));
+    //TODO
+    Printf(action, "result = %s;", Getattr(n, "name"));
+    Setattr(n, "wrap:action", action);
 
-  DelWrapper(current_wrapper);
-  current_wrapper = 0;
+    enterVariable(n);
+    emitGetter(n, false);
+    exitVariable(n);
 
-  return SWIG_OK;
+    DelWrapper(current_wrapper);
+    
+    current_wrapper = 0;
+
+    return SWIG_OK;
 }
 
 /* -----------------------------------------------------------------------------
