@@ -536,7 +536,7 @@ JSCFLAGS = @JSCORECFLAGS@
 javascript: $(SRCS)
 	$(SWIG) -javascript -jsc $(SWIGOPT) $(INTERFACEPATH)
 	$(CC) -c $(CCSHARED) $(CFLAGS) $(JSCFLAGS) $(SRCS) $(ISRCS) $(INCLUDES) $(JS_INCLUDE)
-	$(JSLDSHARED) $(CFLAGS) $(OBJS) $(IOBJS) $(JS_DLNK) $(LIBS) -o $(JS_LIBPREFIX)$(TARGET)$(JSSO)
+	$(JSLDSHARED) $(CCSHARED) $(CFLAGS) $(OBJS) $(IOBJS) $(JS_DLNK) $(LIBS) -o $(JS_LIBPREFIX)$(TARGET)$(JSSO)
 
 # ----------------------------------------------------------------
 # Build a javascript dynamically loadable module (C++)
@@ -545,7 +545,7 @@ javascript: $(SRCS)
 javascript_cpp: $(SRCS)
 	$(SWIG) -javascript -jsc -c++ $(SWIGOPT) $(INTERFACEPATH)
 	$(CXX) -c $(CCSHARED) $(CFLAGS) $(JSCFLAGS) $(SRCS) $(CXXSRCS) $(ICXXSRCS) $(INCLUDES) $(JS_INCLUDE)
-	$(JSCXXSHARED) $(CFLAGS) $(OBJS) $(IOBJS) $(JS_DLNK) $(LIBS) $(CPP_DLLIBS) -o $(JS_LIBPREFIX)$(TARGET)$(JSSO)
+	$(JSCXXSHARED) $(CCSHARED) $(CFLAGS) $(OBJS) $(IOBJS) $(JS_DLNK) $(LIBS) $(CPP_DLLIBS) -o $(JS_LIBPREFIX)$(TARGET)$(JSSO)
 
 # ----------------------------------------------------------------
 # Compile runme.cxx files and run
