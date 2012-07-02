@@ -1,24 +1,18 @@
 %insert(runtime) %{
-
  
 bool jsc_registerClass(JSGlobalContextRef& context, JSObjectRef& parentObject,
                              const char* className,
-                             JSClassDefinition* definition,
-                             JSObjectCallAsConstructorCallback ctor = NULL) {
+                             JSClassDefinition* definition) {
 
     JSStringRef js_className = JSStringCreateWithUTF8CString(className);
     
-    JSObjectRef classObject;
-    if(ctor == NULL) {
-        classObject = JSObjectMake(context, JSClassCreate(definition), NULL);
-    } else {
-        classObject = JSObjectMakeConstructor(context, JSClassCreate(definition), ctor);
-    }
+    JSObjectRef classObject = JSObjectMake(context, JSClassCreate(definition), NULL);
 
     JSObjectSetProperty(context, parentObject,
                         js_className, classObject,
                         kJSPropertyAttributeNone, NULL);
     JSStringRelease(js_className);
+    
     return true;
 }
 

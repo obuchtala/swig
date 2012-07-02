@@ -201,7 +201,13 @@ int JSCEmitter::ExitFunction(Node *n)
         .Replace("${functionwrapper}", current_functionwrapper);
     
     if(GetFlag(n, "ismember")) {
-       Printv(js_class_functions_code, t_function.str(), 0);
+        if(Equal(Getattr(n, "storage"), "static")) {
+            Printv(js_class_static_functions_code, t_function.str(), 0);
+        
+        } else {
+            Printv(js_class_functions_code, t_function.str(), 0);
+        }
+
     } else {
         Printv(js_global_functions_code, t_function.str(), 0);
     }
@@ -224,16 +230,19 @@ int JSCEmitter::ExitVariable(Node *n)
     t_variable.Replace("${setname}", current_setter)
         .Replace("${getname}", current_getter)
         .Replace("${propertyname}", current_propertyname);
-         if(GetFlag(n, "ismember")) 
-         {
-         Printv(js_class_variables_code, t_variable.str(), 0);
-         }
-         else 
-         {
-         Printv(js_global_variables_code, t_variable.str(), 0);
-         }
 
-     return SWIG_OK;
+    if(GetFlag(n, "ismember")) {
+        if(Equal(Getattr(n, "storage"), "static")) {
+            Printv(js_class_static_variables_code, t_variable.str(), 0);
+        
+        } else {
+            Printv(js_class_variables_code, t_variable.str(), 0);
+        }
+    } else {
+         Printv(js_global_variables_code, t_variable.str(), 0);
+    }
+
+    return SWIG_OK;
 }
 
 int JSCEmitter::EnterClass(Node *n)
@@ -242,6 +251,9 @@ int JSCEmitter::EnterClass(Node *n)
 
     js_class_variables_code = NewString("");
     js_class_functions_code = NewString("");
+    js_class_static_variables_code = NewString("");
+    js_class_static_functions_code = NewString("");
+    
     js_ctor_wrappers = NewString("");
     js_ctor_dispatcher_code = NewString("");
     
@@ -251,9 +263,11 @@ int JSCEmitter::EnterClass(Node *n)
 int JSCEmitter::ExitClass(Node*)
 {
     Template t_class(GetTemplate("classdefn"));
-    t_class.Replace("${jsclassvariables}", js_class_variables_code)
-           .Replace("${jsclassfunctions}", js_class_functions_code)
-           .Replace("${classname}", current_classname);
+    t_class.Replace("${classname}", current_classname)
+        .Replace("${jsclassvariables}", js_class_variables_code)
+        .Replace("${jsclassfunctions}", js_class_functions_code)
+        .Replace("${jsstaticclassfunctions}", js_class_static_functions_code)
+        .Replace("${jsstaticclassvariables}", js_class_static_variables_code);
     Wrapper_pretty_print(t_class.str(), f_wrappers);
     
     /* 
@@ -269,7 +283,7 @@ int JSCEmitter::ExitClass(Node*)
         .Replace("${DISPATCH_CASES}", js_ctor_dispatcher_code);
     Wrapper_pretty_print(t_mainctor.str(), f_wrappers);
 
-
+    /* adds the dtor wrapper */
     Template t_dtor(GetTemplate("destructordefn"));
     t_dtor.Replace("${classname}", current_classname)
         .Replace("${type}", current_classname);
@@ -285,12 +299,17 @@ int JSCEmitter::ExitClass(Node*)
     t_registerclass.Replace("${classname}", current_classname);
     Wrapper_pretty_print(t_registerclass.str(), js_initializer_code);     
 
+    /* clean up all DOHs */
     Delete(js_class_variables_code);
     Delete(js_class_functions_code);
+    Delete(js_class_static_variables_code);
+    Delete(js_class_static_functions_code);
     Delete(js_ctor_wrappers);
     Delete(js_ctor_dispatcher_code);
     js_class_variables_code = 0;
     js_class_functions_code = 0;
+    js_class_static_variables_code = 0;
+    js_class_static_functions_code = 0;
     js_ctor_wrappers = 0;
     js_ctor_dispatcher_code = 0;
     

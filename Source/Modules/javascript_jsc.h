@@ -66,22 +66,30 @@ private:
     File *f_wrappers;
     File *f_init;
 
-    // state variables
+    String* NULL_STR;
 
+    // dynamically filled code parts
+    String *js_global_functions_code;
+    String *js_global_variables_code;
+
+    String *js_class_functions_code;
+    String *js_class_variables_code;
+    String *js_class_static_functions_code;
+    String *js_class_static_variables_code;
+    
+    String *js_ctor_wrappers;
+    String *js_ctor_dispatcher_code;
+
+    String *js_initializer_code;
+
+    // state variables
     String* current_propertyname;
     String* current_getter;
     String* current_setter;
     String* current_classname;
-    String* NULL_STR;
-    String *js_global_functions_code;
-    String *js_global_variables_code;
-    String *js_class_functions_code;
-    String *js_class_variables_code;
-    String *js_initializer_code;
-    String *js_ctor_wrappers;
-    String *js_ctor_dispatcher_code;
     String *current_functionwrapper;
     String *current_functionname;
+
     
 };
 
