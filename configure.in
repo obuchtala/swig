@@ -1095,9 +1095,9 @@ AC_ARG_WITH(javascriptincl, [  --with-javascript=path    Set location of Javascr
 if test -z "$JSCOREINCDIR"; then
   JSCOREINCDIR="/usr/include/ /usr/local/include/"
 
-  # Add in default directory for JavaScriptCore headers for Linux and MacOSX 
+  # Add in default directory for JavaScriptCore headers for Linux and MacOSX
   case $host in
-  *-*-linux*) JSCOREINCDIR="/usr/include/webkit-1.0/ /usr/local/include/webkit-1.0/JavaScriptCore/ $JSCOREINCDIR";;
+  *-*-linux*) JSCOREINCDIR="/usr/include/webkit-1.0/ /usr/include/webkitgtk-1.0/ /usr/local/include/webkit-1.0/JavaScriptCore/ $JSCOREINCDIR";;
   *-*-darwin*) JSCOREINCDIR="/System/Library/Frameworks/JavaScriptCore.framework/Headers/ $JSCOREINCDIR";;
   *);;
   esac
@@ -1123,26 +1123,26 @@ AC_ARG_WITH(jscorelib,[  --with-jscorelib =path      Set location of JavaScriptC
 AC_MSG_CHECKING(for JavaScriptCore(Webkit) library)
 
 if test -z "$JSCORELIB"; then
-dirs="/usr/local/lib/ /usr/lib/"
+dirs="/usr/lib/ /usr/local/lib/"
 for i in $dirs ; do
 
-if test -r $i/libwebkit-1.0.la; then
-AC_MSG_RESULT($i)
-JSCORELIB="-L$i -lwebkit-1.0"
-break
-fi
+    if test -r $i/libwebkit-1.0.la; then
+            AC_MSG_RESULT($i)
+            JSCORELIB="-L$i -lwebkit-1.0"
+            break
+    fi
+
+    if test -r $i/libjavascriptcoregtk-1.0.so; then
+           AC_MSG_RESULT($i)
+           JSCORELIB="-L$i -ljavascriptcoregtk-1.0"
+           break
+    fi
 
     if test -r $i/libwebkitgtk-1.0.so; then
            AC_MSG_RESULT($i)
            JSCORELIB="-L$i -lwebkitgtk-1.0"
            break
-     fi
-
-     if test -r $i/libwebkitgtk-1.0.so; then
-	    AC_MSG_RESULT($i)
-	    JSCORELIB="-L$i -lwebkitgtk-1.0"
-	    break
-     fi
+    fi
 done
 
 if test -z "$JSCORELIB"; then
