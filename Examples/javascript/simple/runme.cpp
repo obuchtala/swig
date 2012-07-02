@@ -40,7 +40,7 @@ int main(int argc, char* argv[]) {
     JSStringRef Script;
     
     if(!szString) {
-        printf("FAIL: Test script could not be loaded.\n");
+        printf("FAIL: runme script could not be loaded.\n");
         failed = 1;
     }
     else {
