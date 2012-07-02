@@ -1,20 +1,19 @@
 %insert(runtime) %{
 
-JSClassRef jsc_createClassTemplate(JSStaticValue* values, JSStaticFunction* functions) {
-   JSClassRef jsClass = NULL;
-   JSClassDefinition definition = kJSClassDefinitionEmpty;
-   definition.staticValues = values;
-   definition.staticFunctions = functions;
-   jsClass = JSClassCreate(&definition);
-   
-   return jsClass;
-}
  
 bool jsc_registerClass(JSGlobalContextRef& context, JSObjectRef& parentObject,
-                             JSClassRef& classTemplate, const char* className) {
+                             const char* className,
+                             JSClassDefinition* definition,
+                             JSObjectCallAsConstructorCallback ctor = NULL) {
 
     JSStringRef js_className = JSStringCreateWithUTF8CString(className);
-    JSObjectRef classObject = JSObjectMake(context, classTemplate, NULL);
+    
+    JSObjectRef classObject;
+    if(ctor == NULL) {
+        classObject = JSObjectMake(context, JSClassCreate(definition), NULL);
+    } else {
+        classObject = JSObjectMakeConstructor(context, JSClassCreate(definition), ctor);
+    }
 
     JSObjectSetProperty(context, parentObject,
                         js_className, classObject,
