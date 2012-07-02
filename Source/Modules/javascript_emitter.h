@@ -57,37 +57,37 @@ public:
      * be registered in certain static tables.
      * This method should be used to switch output DOHs correspondingly.
      */
-    virtual int SwitchContext(Node *n) { return SWIG_OK; };
+    virtual int SwitchContext(Node*) { return SWIG_OK; };
 
     /**
      * Invoked at the beginning of the classHandler.
      */
-    virtual int EnterClass(Node *n) { return SWIG_OK; };
+    virtual int EnterClass(Node*) { return SWIG_OK; };
     
     /**
      * Invoked at the end of the classHandler.
      */
-    virtual int ExitClass(Node *n) { return SWIG_OK; };
+    virtual int ExitClass(Node*) { return SWIG_OK; };
 
     /**
      * Invoked at the beginning of the variableHandler.
      */
-    virtual int EnterVariable(Node *n) { return SWIG_OK; };
+    virtual int EnterVariable(Node*) { return SWIG_OK; };
 
     /**
      * Invoked at the end of the variableHandler.
      */
-    virtual int ExitVariable(Node *n) { return SWIG_OK; };
+    virtual int ExitVariable(Node*) { return SWIG_OK; };
 
     /**
      * Invoked at the beginning of the functionHandler.
      */
-    virtual int EnterFunction(Node *n) { return SWIG_OK; };
+    virtual int EnterFunction(Node*) { return SWIG_OK; };
 
     /**
      * Invoked at the end of the functionHandler.
      */
-    virtual int ExitFunction(Node *n) { return SWIG_OK; };
+    virtual int ExitFunction(Node*) { return SWIG_OK; };
     
     /**
      * Invoked by functionWrapper callback after call to Language::functionWrapper.
@@ -95,17 +95,16 @@ public:
     virtual int EmitWrapperFunction(Node *n);
     
     /**
+     * Invoked from constantWrapper after call to Language::constantWrapper.
+     **/
+    virtual int EmitConstant(Node *n);
+
+    /**
      * Registers a given code snippet for a given key name.
      * 
      * This method is called by the fragmentDirective handler
      * of the JAVASCRIPT language module.
-     * */
-     
-    virtual int EmitConstant(Node *n);
-    /*
-     * 
-     * */
-
+     **/
     int RegisterTemplate(const String *name, const String *code);
 
     /**

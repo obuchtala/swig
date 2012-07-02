@@ -83,7 +83,7 @@ Parm* JSCEmitter::skipIgnoredArgs(Parm *p) {
  * and convert them into C/C++ function arguments using the
  * supplied typemaps.
  * --------------------------------------------------------------------- */
-void JSCEmitter::marshalInputArgs(Node *n, ParmList *parms, int numarg, Wrapper *wrapper, 
+void JSCEmitter::marshalInputArgs(ParmList *parms, Wrapper *wrapper, 
                                   MarshallingMode mode, bool is_member) {
     String *tm;
     Parm *p;
@@ -95,7 +95,6 @@ void JSCEmitter::marshalInputArgs(Node *n, ParmList *parms, int numarg, Wrapper 
     for (p = parms; p; p = nextSibling(p), i++)
     {
         SwigType *pt = Getattr(p, "type");
-        String *ln = Getattr(p, "lname");
         String *arg = NewString("");
 
         switch (mode) {
@@ -164,9 +163,6 @@ void JSCEmitter::marshalOutput(Node *n, String *actioncode, Wrapper *wrapper) {
 
 
 int JSCEmitter::Initialize(Node *n) {
-
-    /* Get the module name */
-    String *module = Getattr(n,"name");
 
     /* Get the output file name */
     String *outfile = Getattr(n,"outfile");
@@ -300,9 +296,11 @@ int JSCEmitter::EnterClass(Node *n)
     js_class_functions_code = NewString("");
     js_ctor_wrappers = NewString("");
     js_ctor_dispatcher_code = NewString("");
+    
+    return SWIG_OK;
 }
 
-int JSCEmitter::ExitClass(Node *n)
+int JSCEmitter::ExitClass(Node*)
 {
     Template t_class(GetTemplate("classdefn"));
     t_class.Replace("${jsclassvariables}", js_class_variables_code)
@@ -368,7 +366,7 @@ int JSCEmitter::EmitCtor(Node* n)
 
     int num_args = emit_num_arguments(params);
     String* action = emit_action(n);
-    marshalInputArgs(n, params, num_args, current_wrapper, Ctor, true);
+    marshalInputArgs(params, current_wrapper, Ctor, true);
     Printv(current_wrapper->code, action, "\n", 0);
     
     t_ctor.Replace("${classname}", current_classname)
@@ -393,7 +391,7 @@ int JSCEmitter::EmitCtor(Node* n)
     
 }
 
-int JSCEmitter::EmitDtor(Node* n)
+int JSCEmitter::EmitDtor(Node*)
 {
   // TODO:find out how to register a dtor in JSC
    return SWIG_OK;
@@ -412,9 +410,9 @@ int JSCEmitter::EmitGetter(Node* n, bool is_member)
     emit_parameter_variables(params, current_wrapper);
     emit_attach_parmmaps(params, current_wrapper);
     Wrapper_add_local(current_wrapper, "jsresult", "JSValueRef jsresult");
-    int num_args = emit_num_arguments(params);
+
     String* action = emit_action(n);
-    marshalInputArgs(n, params, num_args, current_wrapper, Getter, is_member);
+    marshalInputArgs(params, current_wrapper, Getter, is_member);
     marshalOutput(n, action, current_wrapper);
 
     t_setter.Replace("${getname}", wrap_name)
@@ -440,9 +438,9 @@ int JSCEmitter::EmitSetter(Node* n, bool is_member)
     emit_parameter_variables(params, current_wrapper);
     emit_attach_parmmaps(params, current_wrapper);
     Wrapper_add_local(current_wrapper, "jsresult", "JSValueRef jsresult");
-    int num_args = emit_num_arguments(params);
+
     String* action = emit_action(n);
-    marshalInputArgs(n, params, num_args, current_wrapper, Setter, is_member);
+    marshalInputArgs(params, current_wrapper, Setter, is_member);
     marshalOutput(n, action, current_wrapper);
 
     t_setter.Replace("${setname}", wrap_name)
@@ -469,9 +467,9 @@ int JSCEmitter::EmitFunction(Node* n, bool is_member)
     emit_parameter_variables(params, current_wrapper);
     emit_attach_parmmaps(params, current_wrapper);
     Wrapper_add_local(current_wrapper, "jsresult", "JSValueRef jsresult");
-    int num_args = emit_num_arguments(params);
+
     String* action = emit_action(n);
-    marshalInputArgs(n, params, num_args, current_wrapper, Function, is_member);
+    marshalInputArgs(params, current_wrapper, Function, is_member);
     marshalOutput(n, action, current_wrapper);
 
     t_function.Replace("${functionname}", wrap_name)

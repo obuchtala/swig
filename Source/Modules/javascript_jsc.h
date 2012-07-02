@@ -51,7 +51,7 @@ protected:
 
     virtual int EmitSetter(Node *n, bool is_member);
 
-    void marshalInputArgs(Node *n, ParmList *parms, int numarg, Wrapper *wrapper, 
+    void marshalInputArgs(ParmList *parms, Wrapper *wrapper, 
                           MarshallingMode mode, bool is_member);
     
     void marshalOutput(Node *n, String *actioncode, Wrapper *wrapper);

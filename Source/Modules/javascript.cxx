@@ -188,8 +188,6 @@ int JAVASCRIPT::top(Node *n) {
 
 void JAVASCRIPT::main(int argc, char *argv[]) {
 
-    const char* lib_dir;
-
     // Set javascript subdirectory in SWIG library
     SWIG_library_directory("javascript");
     
