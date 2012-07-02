@@ -83,30 +83,54 @@ Parm* JSCEmitter::skipIgnoredArgs(Parm *p) {
  * and convert them into C/C++ function arguments using the
  * supplied typemaps.
  * --------------------------------------------------------------------- */
-void JSCEmitter::marshalInputArgs(Node *n, ParmList *parms, int numarg, Wrapper *wrapper) {
-	String *tm;
+void JSCEmitter::marshalInputArgs(Node *n, ParmList *parms, int numarg, Wrapper *wrapper, 
+                                  MarshallingMode mode, bool is_member) {
+    String *tm;
     Parm *p;
- 	int i = 0;
-	for (p = parms; p; p = nextSibling(p), i++)
-	{
-		SwigType *pt = Getattr(p, "type");
-    	String *ln = Getattr(p, "lname");
-    	String *arg = NewString("");
-       if(IsSetterMethod(n))
-             Printv(arg, "value",0);
-       else 
-             Printf(arg, "argv[%d]", i);
- 
-     	if ((tm = Getattr(p, "tmap:in")))     	// Get typemap for this argument
-		{
-			Replaceall(tm, "$input", arg);
-			Setattr(p, "emit:input", arg);
-			Printf(wrapper->code, "%s\n", tm);
-      	} else {
-		Swig_warning(WARN_TYPEMAP_IN_UNDEF, input_file, line_number, "Unable to use type %s as a function argument.\n", SwigType_str(pt, 0));
-		p = nextSibling(p);
-      	}
-      Delete(arg);
+    
+    int startIdx = 0;
+    if(is_member) startIdx = 1;
+    
+    int i = 0;
+    for (p = parms; p; p = nextSibling(p), i++)
+    {
+        SwigType *pt = Getattr(p, "type");
+        String *ln = Getattr(p, "lname");
+        String *arg = NewString("");
+
+        switch (mode) {
+        case Getter: 
+        case Function:
+            if(is_member && i==0) {
+                Printv(arg, "thisObject", 0);
+            } else {
+                Printf(arg, "argv[%d]", i - startIdx);
+            }
+            break;
+        case Setter:
+            if(is_member && i==0) {
+                Printv(arg, "thisObject", 0);
+            } else {
+                Printv(arg, "value", 0);
+            }
+            break;
+        case Ctor:
+            Printf(arg, "argv[%d]", i);
+            break;
+        default:
+            ;
+        }
+        
+        if ((tm = Getattr(p, "tmap:in")))     // Get typemap for this argument
+        {
+            Replaceall(tm, "$input", arg);
+            Setattr(p, "emit:input", arg);
+            Printf(wrapper->code, "%s\n", tm);
+        } else {
+            Swig_warning(WARN_TYPEMAP_IN_UNDEF, input_file, line_number, "Unable to use type %s as a function argument.\n", SwigType_str(pt, 0));
+            p = nextSibling(p);
+        }
+        Delete(arg);
     } 
 }
 
@@ -344,7 +368,7 @@ int JSCEmitter::EmitCtor(Node* n)
 
     int num_args = emit_num_arguments(params);
     String* action = emit_action(n);
-    marshalInputArgs(n, params, num_args, current_wrapper);
+    marshalInputArgs(n, params, num_args, current_wrapper, Ctor, true);
     Printv(current_wrapper->code, action, "\n", 0);
     
     t_ctor.Replace("${classname}", current_classname)
@@ -390,7 +414,7 @@ int JSCEmitter::EmitGetter(Node* n, bool is_member)
     Wrapper_add_local(current_wrapper, "jsresult", "JSValueRef jsresult");
     int num_args = emit_num_arguments(params);
     String* action = emit_action(n);
-    marshalInputArgs(n, params, num_args, current_wrapper);
+    marshalInputArgs(n, params, num_args, current_wrapper, Getter, is_member);
     marshalOutput(n, action, current_wrapper);
 
     t_setter.Replace("${getname}", wrap_name)
@@ -418,7 +442,7 @@ int JSCEmitter::EmitSetter(Node* n, bool is_member)
     Wrapper_add_local(current_wrapper, "jsresult", "JSValueRef jsresult");
     int num_args = emit_num_arguments(params);
     String* action = emit_action(n);
-    marshalInputArgs(n, params, num_args, current_wrapper);
+    marshalInputArgs(n, params, num_args, current_wrapper, Setter, is_member);
     marshalOutput(n, action, current_wrapper);
 
     t_setter.Replace("${setname}", wrap_name)
@@ -447,7 +471,7 @@ int JSCEmitter::EmitFunction(Node* n, bool is_member)
     Wrapper_add_local(current_wrapper, "jsresult", "JSValueRef jsresult");
     int num_args = emit_num_arguments(params);
     String* action = emit_action(n);
-    marshalInputArgs(n, params, num_args, current_wrapper);
+    marshalInputArgs(n, params, num_args, current_wrapper, Function, is_member);
     marshalOutput(n, action, current_wrapper);
 
     t_function.Replace("${functionname}", wrap_name)

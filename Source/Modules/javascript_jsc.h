@@ -4,7 +4,16 @@
 #include "javascript_emitter.h"
 
 class JSCEmitter: public JSEmitter {
-    
+
+private:
+
+    enum MarshallingMode {
+        Setter,
+        Getter,
+        Ctor,
+        Function
+    };
+
 public:
 
     JSCEmitter();
@@ -42,7 +51,8 @@ protected:
 
     virtual int EmitSetter(Node *n, bool is_member);
 
-    void marshalInputArgs(Node *n, ParmList *parms, int numarg, Wrapper *wrapper);
+    void marshalInputArgs(Node *n, ParmList *parms, int numarg, Wrapper *wrapper, 
+                          MarshallingMode mode, bool is_member);
     
     void marshalOutput(Node *n, String *actioncode, Wrapper *wrapper);
 
@@ -72,7 +82,7 @@ private:
     String *js_ctor_dispatcher_code;
     String *current_functionwrapper;
     String *current_functionname;
-
+    
 };
 
 #endif // JAVASCRIPT_JSC_H
