@@ -12,7 +12,6 @@ bool jsc_registerFunction(JSGlobalContextRef context, JSObjectRef object, const 
 
 extern int example_initialize(JSGlobalContextRef context);
 
-
 int main(int argc, char* argv[]) {
     cout<<"main called\n";
     
@@ -32,7 +31,6 @@ int main(int argc, char* argv[]) {
     
     // Call the initializer
      example_initialize(context);
-
     
     // Evaluate the javascript
     char*	szString = jsccreateStringWithContentsOfFile(scriptPath);
@@ -123,4 +121,3 @@ static char* jsccreateStringWithContentsOfFile(const char* fileName)
 	
 	return buffer;
 }
-

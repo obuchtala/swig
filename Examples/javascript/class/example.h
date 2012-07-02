@@ -1,9 +1,11 @@
 class Circle
 {
-private:
-     int r;
 public:
-     int area();
+    Circle();
+    
+    Circle(double r);
+    
+    double area();
+
+    double radius;
 };
-
-
