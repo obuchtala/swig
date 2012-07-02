@@ -5,11 +5,12 @@
  * ----------------------------------------------------------------------------- ----------------*/
 
 %fragment ("jsc_initializer", "templates") %{
-int ${modulename}_initialize(JSGlobalContextRef context) {
+bool ${modulename}_initialize(JSGlobalContextRef context) {
    JSObjectRef globalObject = JSContextGetGlobalObject(context);
-   
+   JSClassRef cvar_classTemplate = jsc_createClassTemplate(global_values,global_functions);
+ jsc_registerClass(context, globalObject, cvar_classTemplate, "cvar");
    ${initializercode}
-
+   return true;
 }
 %}
 
