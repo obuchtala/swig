@@ -176,6 +176,11 @@ JSObjectRef _wrap_create_${classname_mangled}${overloadext}(JSContextRef context
 bool ${modulename}_initialize(JSGlobalContextRef context) {
     JSObjectRef global_object = JSContextGetGlobalObject(context);
     
+    /* Initialize the base swig type object */
+    _SwigObject_objectDefinition.staticFunctions = _SwigObject_functions;
+    _SwigObject_objectDefinition.staticValues = _SwigObject_values;
+    _SwigObject_classRef = JSClassCreate(&_SwigObject_objectDefinition);
+    
     /* Create objects for namespaces */
     ${create_namespaces}
 
@@ -189,19 +194,13 @@ bool ${modulename}_initialize(JSGlobalContextRef context) {
 }
 %}
 
-/* setup inheritances */
-
-%fragment ("inheritance", "templates")
-%{${classname_mangled}_objectDefinition.parentClass = ${base_classname}_classRef;
-%}    
-
 %fragment ("create_class_template", "templates")
 %{ ${classname_mangled}_classDefinition.staticFunctions = ${classname_mangled}_staticFunctions;
     ${classname_mangled}_classDefinition.staticValues = ${classname_mangled}_staticValues;
     ${classname_mangled}_classDefinition.callAsConstructor = _wrap_create_${classname_mangled};
     ${classname_mangled}_objectDefinition.staticValues = ${classname_mangled}_values;
     ${classname_mangled}_objectDefinition.staticFunctions = ${classname_mangled}_functions;
-    ${parent_class_defintion}
+    ${classname_mangled}_objectDefinition.parentClass = ${base_classname}_classRef;
     ${classname_mangled}_classRef = JSClassCreate(&${classname_mangled}_objectDefinition);%}
 
 
@@ -211,7 +210,6 @@ bool ${modulename}_initialize(JSGlobalContextRef context) {
 %{swigjsc_registerClass(context, ${namespace}_object, "${classname}", &${classname_mangled}_classDefinition);%}
 
 /* register global function */
-
 %fragment ("register_global_function", "templates")
 %{swigjsc_registerFunction(${context}, ${context_object}, "${functionname}", ${functionwrapper});%}
 

@@ -332,19 +332,15 @@ int swig::JSCEmitter::exitClass(Node *n) {
   Template t_classtemplate(getTemplate("create_class_template"));
 
   /* prepare registration of base class */
-  String *parentClassDefn = NewString("");
+  String *base_name_mangled = NewString("_SwigObject");
   Node* base_class = getBaseClass(n);
   if(base_class!=NULL) {
-    String *base_name_mangled = SwigType_manglestr(Getattr(base_class, "name"));
-
-    Template t_inherit(getTemplate("inheritance"));
-    t_inherit.replace("${classname_mangled}", mangled_name)
-        .replace("${base_classname}", base_name_mangled);
-    Printv(parentClassDefn, t_inherit.str(), 0);
+    Delete(base_name_mangled);
+    base_name_mangled = SwigType_manglestr(Getattr(base_class, "name"));
   }
 
   t_classtemplate.replace("${classname_mangled}", mangled_name)
-      .replace("${parent_class_defintion}", parentClassDefn);
+      .replace("${base_classname}", base_name_mangled);
   Wrapper_pretty_print(t_classtemplate.str(), initializer_code);
 
   /* adds a class registration statement to initializer function */
@@ -361,7 +357,6 @@ int swig::JSCEmitter::exitClass(Node *n) {
   Delete(class_static_functions_code);
   Delete(ctor_wrappers);
   Delete(mangled_name);
-  Delete(parentClassDefn);
   Delete(ctor_dispatcher_code);
   class_variables_code = 0;
   current_class_functions = 0;

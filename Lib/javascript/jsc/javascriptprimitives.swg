@@ -211,7 +211,7 @@
  privatedata->swigCMemOwn = false;
  privatedata->swigCObject = result;
  // DEBUG: JSObjectMake - case 4
- $result = JSObjectMake(context, $*1_mangle_classRef, privatedata);
+ $result = JSObjectMake(context, _SwigObject_classRef, privatedata);
 %}
 
 %typemap(arginit) SWIGTYPE *
@@ -226,13 +226,16 @@
  }
 %}
 
-%typemap(in) SWIGTYPE (CLASS::*) ""
+%typemap(in) SWIGTYPE (CLASS::*)
+%{
+ // TODO: SWIGTYPE Class* in typemap
+%}
 
 %typemap(out) SWIGTYPE (CLASS::*)
 %{
- // Class* out typemap
+ // TODO: SWIGTYPE Class* out typemap
  // DEBUG: JSObjectMake - case 5
- $result = JSObjectMake(context, $*1_mangle_classRef, result);
+ $result = JSObjectMake(context, $*1, result);
 %}
 
 
