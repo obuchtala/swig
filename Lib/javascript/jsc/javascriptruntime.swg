@@ -24,6 +24,14 @@ typedef struct {
 %}
 
 %insert(runtime) %{
+void SWIG_exception(int code, const char* msg) {
+  // TODO: throw a js exception...
+  throw msg;
+}
+
+%}
+
+%insert(runtime) %{
 
 JSValueRef _wrap_SwigObject_disown(JSContextRef context, JSObjectRef function, JSObjectRef thisObject, size_t argc, const JSValueRef argv[], JSValueRef* exception)
 {
