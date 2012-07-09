@@ -7,7 +7,8 @@
  * ----------------------------------------------------------------------------- */
 
 swig::JSEmitter::JSEmitter()
-:  empty_string(NewString("")) {
+:  empty_string(NewString("")),
+   debug(false) {
   templates = NewHash();
 }
 
@@ -32,7 +33,7 @@ int swig::JSEmitter::registerTemplate(const String *name, const String *code) {
  * swig::JSEmitter::GetTemplate() :  Retrieves a registered a code template
  * ----------------------------------------------------------------------------- */
 
-const String *swig::JSEmitter::getTemplate(const String *name) {
+swig::Template swig::JSEmitter::getTemplate(const String *name) {
   String *templ = Getattr(templates, name);
 
   if (!templ) {
@@ -40,8 +41,15 @@ const String *swig::JSEmitter::getTemplate(const String *name) {
     SWIG_exit(EXIT_FAILURE);
   }
 
-  return templ;
+  Template t(templ, name, debug);
+  
+  return t;
 }
+
+void swig::JSEmitter::enableDebug() {
+  debug = true;
+}
+
 
 /* -----------------------------------------------------------------------------
  * swig::JSEmitter::typemapLookup()
@@ -209,7 +217,21 @@ swig::Template::Template(const String *code_) {
   }
 
   code = NewString(code_);
+  templateName = NewString("");
 }
+
+swig::Template::Template(const String *code_, const String *templateName_, bool debug_) {
+  
+  if (!code_) {
+    Printf(stdout, "Template code was null. Illegal input for template.");
+    SWIG_exit(EXIT_FAILURE);
+  }
+
+  code = NewString(code_);
+  templateName = NewString(templateName_);
+  debug = debug_;
+}
+
 
 /* -----------------------------------------------------------------------------
  * swig::Template::~Template() :  cleans up of Template.
@@ -217,6 +239,7 @@ swig::Template::Template(const String *code_) {
 
 swig::Template::~Template() {
   Delete(code);
+  Delete(templateName);
 }
 
 /* -----------------------------------------------------------------------------
@@ -224,6 +247,20 @@ swig::Template::~Template() {
  * ----------------------------------------------------------------------------- */
 
 String *swig::Template::str() {
+  if (debug) {
+    String *pre_code = NewString("");
+    String *post_code = NewString("");
+    String *debug_code = NewString("");
+    Printf(pre_code, "//begin fragment(\"%s\")\n", templateName);
+    Printf(post_code, "//end fragment(\"%s\")\n", templateName);
+    Printf(debug_code, "%s\n%s\n%s", pre_code, code, post_code);
+    
+    Delete(code);
+    Delete(pre_code);
+    Delete(post_code);
+    
+    code = debug_code;
+  }
   return code;
 }
 

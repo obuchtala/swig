@@ -196,6 +196,7 @@ void JAVASCRIPT::main(int argc, char *argv[]) {
 
   int mode = -1;
 
+  bool debug_templates = false;
   for (int i = 1; i < argc; i++) {
     if (argv[i]) {
       if (strcmp(argv[i], "-v8") == 0) {
@@ -210,6 +211,9 @@ void JAVASCRIPT::main(int argc, char *argv[]) {
         Swig_mark_arg(i);
         mode = swig::JSEmitter::QtScript;
         SWIG_library_directory("javascript/qt");
+      } else if (strcmp(argv[i], "-debug-templates") == 0) {
+        Swig_mark_arg(i);
+        debug_templates = true;
       }
     }
   }
@@ -237,6 +241,9 @@ void JAVASCRIPT::main(int argc, char *argv[]) {
     }
   }
 
+  if(debug_templates) {
+    emitter->enableDebug();
+  }
 
   // Add a symbol to the parser for conditional compilation
   Preprocessor_define("SWIGJAVASCRIPT 1", 0);

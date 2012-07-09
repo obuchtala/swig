@@ -13,6 +13,8 @@ class Template {
 public:
   Template(const String *code);
 
+  Template(const String *code, const String *templateName, bool debug);
+
   ~Template();
 
   String *str();
@@ -21,6 +23,8 @@ public:
 
 private:
   String *code;
+  String *templateName;
+  bool debug;
 };
 
 class JSEmitter {
@@ -126,7 +130,9 @@ public:
     /**
      * Retrieve the code template registered for a given name.
      */
-  const String *getTemplate(const String *name);
+  Template getTemplate(const String *name);
+  
+  void enableDebug();
 
 protected:
 
@@ -145,6 +151,8 @@ protected:
   Node *getBaseClass(Node *n);
 
   const String *typemapLookup(Node *n, const_String_or_char_ptr tmap_method, SwigType *type, int warning, Node *typemap_attributes = 0);
+  
+  void enableDebugTemplates();
 
 protected:
 
@@ -154,6 +162,8 @@ protected:
   Hash *templates;
 
   Wrapper *current_wrapper;
+  
+  bool debug;
 };
 
 } // namespace swig

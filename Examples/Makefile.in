@@ -534,7 +534,7 @@ JSCFLAGS = @JSCORECFLAGS@
 # ----------------------------------------------------------------
 
 javascript: $(SRCS)
-	$(SWIG) -javascript -jsc $(SWIGOPT) $(INTERFACEPATH)
+	$(SWIG) -javascript -jsc -debug-templates $(SWIGOPT) $(INTERFACEPATH)
 	$(CC) -c $(CCSHARED) $(CFLAGS) $(JSCFLAGS) $(SRCS) $(ISRCS) $(INCLUDES) $(JS_INCLUDE)
 	$(JSLDSHARED) $(CCSHARED) $(CFLAGS) $(OBJS) $(IOBJS) $(JS_DLNK) $(LIBS) -o $(JS_LIBPREFIX)$(TARGET)$(JSSO)
 
@@ -543,7 +543,7 @@ javascript: $(SRCS)
 # ----------------------------------------------------------------
 
 javascript_cpp: $(SRCS)
-	$(SWIG) -javascript -jsc -c++ $(SWIGOPT) $(INTERFACEPATH)
+	$(SWIG) -javascript -jsc -c++ -debug-templates $(SWIGOPT) $(INTERFACEPATH)
 	$(CXX) -c $(CCSHARED) $(CFLAGS) $(JSCFLAGS) $(SRCS) $(CXXSRCS) $(ICXXSRCS) $(INCLUDES) $(JS_INCLUDE)
 	$(JSCXXSHARED) $(CCSHARED) $(CFLAGS) $(OBJS) $(IOBJS) $(JS_DLNK) $(LIBS) $(CPP_DLLIBS) -o $(JS_LIBPREFIX)$(TARGET)$(JSSO)
 
