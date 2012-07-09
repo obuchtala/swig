@@ -639,6 +639,15 @@ int swig::JSCEmitter::emitNamespaces() {
 }
 
 
-swig::JSEmitter * swig_javascript_create_JSC_emitter() {
-  return new swig::JSCEmitter();
+int swig::JSCEmitter::declareCConst(Node *n) {
+  Printf(f_header, "%s %s = %s;\n", Getattr(n, "type"), Getattr(n, "sym:name"), Getattr(n, "rawvalue"));
+
+  return SWIG_OK;
+}
+
+
+
+swig::JSEmitter* swig_javascript_create_JSC_emitter()
+{
+    return new swig::JSCEmitter();
 }

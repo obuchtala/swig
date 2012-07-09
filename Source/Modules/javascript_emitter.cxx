@@ -157,8 +157,14 @@ int swig::JSEmitter::emitWrapperFunction(Node *n) {
  * ----------------------------------------------------------------------------- */
 
 int swig::JSEmitter::emitConstant(Node *n) {
-  current_wrapper = NewWrapper();
-  String *action = NewString("");
+  
+    // TODO: extra handling for constants defined using the %constant keyword
+    if( Equal(Getattr(n, "storage"), "%constant") ) {
+      declareCConst(n);
+    }
+  
+    current_wrapper = NewWrapper();
+    String* action = NewString("");
 
     Setattr(n, "wrap:name", Getattr(n, "sym:name"));
     Printf(action, "result = %s;", Getattr(n, "name"));

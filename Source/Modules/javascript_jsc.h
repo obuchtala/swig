@@ -69,7 +69,9 @@ namespace swig {
 
     virtual int emitNamespaces();
 
-  private:
+  virtual int declareCConst(Node *n);
+
+private:
 
     File *f_wrap_cpp;
     File *f_runtime;

@@ -144,7 +144,9 @@ namespace swig {
 
     virtual int emitGetter(Node *n, bool is_member) = 0;
 
-    virtual int emitSetter(Node *n, bool is_member) = 0;
+  virtual int emitSetter(Node *n, bool is_member) = 0;
+  
+  virtual int declareCConst(Node *n) = 0;
 
     bool isSetterMethod(Node *n);
 
