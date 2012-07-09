@@ -56,36 +56,36 @@ JSClassDefinition ${namespace}_classDefinition;
 
 %fragment ("classdefn", "templates")
 %{
-JSStaticValue ${classname}_staticValues[] = {
+JSStaticValue ${classname_mangled}_staticValues[] = {
   ${jsstaticclassvariables}
   { 0, 0, 0, 0 }
 };
 
-JSStaticFunction ${classname}_staticFunctions[] = {
+JSStaticFunction ${classname_mangled}_staticFunctions[] = {
   ${jsstaticclassfunctions}
   { 0, 0, 0 }
 };
 
-JSStaticValue ${classname}_values[] = {
+JSStaticValue ${classname_mangled}_values[] = {
   ${jsclassvariables}
   { 0, 0, 0, 0 }
 };
 
-JSStaticFunction ${classname}_functions[] = {
+JSStaticFunction ${classname_mangled}_functions[] = {
   ${jsclassfunctions}
   { 0, 0, 0 }
 };
 
-JSClassDefinition ${classname}_classDefinition;
+JSClassDefinition ${classname_mangled}_classDefinition;
 
-JSClassDefinition ${classname}_objectDefinition;
+JSClassDefinition ${classname_mangled}_objectDefinition;
 
-JSClassRef ${classname}_classRef;
+JSClassRef ${classname_mangled}_classRef;
 %}
 
 %fragment ("destructordefn", "templates")
 %{
-void _wrap_${classname}_finalize(JSObjectRef thisObject)
+void _wrap_${classname_mangled}_finalize(JSObjectRef thisObject)
 {
   SWIG_PRV_DATA* t = (SWIG_PRV_DATA*)JSObjectGetPrivate(thisObject);
   if(t && t->swigCMemOwn) delete (${type}*)(t->swigCObject);
@@ -95,10 +95,10 @@ void _wrap_${classname}_finalize(JSObjectRef thisObject)
 
 %fragment ("mainctordefn", "templates")
 %{
-JSObjectRef _wrap_create_${classname}(JSContextRef context, JSObjectRef ctorObject,
+JSObjectRef _wrap_create_${classname_mangled}(JSContextRef context, JSObjectRef ctorObject,
     size_t argc, const JSValueRef argv[], JSValueRef* exception)
 {
-    JSObjectRef thisObject = JSObjectMake(context, ${classname}_classRef, NULL);
+    JSObjectRef thisObject = JSObjectMake(context, ${classname_mangled}_classRef, NULL);
     
     ${DISPATCH_CASES}
     {
@@ -112,12 +112,12 @@ JSObjectRef _wrap_create_${classname}(JSContextRef context, JSObjectRef ctorObje
 
 %fragment ("ctor_dispatch_case", "templates")
 %{if(argc == ${argcount}) {
-    thisObject = _wrap_create_${classname}${overloadext}(context, thisObject, argc, argv, exception);
+    thisObject = _wrap_create_${classname_mangled}${overloadext}(context, thisObject, argc, argv, exception);
   } else %}
 
 %fragment ("ctordefn", "templates")
 %{
-JSObjectRef _wrap_create_${classname}${overloadext}(JSContextRef context, JSObjectRef thisObject, size_t argc, const JSValueRef argv[], JSValueRef* exception)
+JSObjectRef _wrap_create_${classname_mangled}${overloadext}(JSContextRef context, JSObjectRef thisObject, size_t argc, const JSValueRef argv[], JSValueRef* exception)
 {
     ${LOCALS}
     ${CODE}
@@ -132,7 +132,7 @@ JSObjectRef _wrap_create_${classname}${overloadext}(JSContextRef context, JSObje
 }
 %}
 
-%fragment ("jsc_initializer", "templates") %{
+%fragment ("initializer", "templates") %{
 bool ${modulename}_initialize(JSGlobalContextRef context) {
     JSObjectRef global_object = JSContextGetGlobalObject(context);
     
@@ -149,27 +149,34 @@ bool ${modulename}_initialize(JSGlobalContextRef context) {
 }
 %}
 
-%fragment ("jsc_inherit", "templates")
-%{${classname}_objectDefinition.parentClass = ${base_classname}_classRef;
+/* setup inheritances */
+
+%fragment ("inheritance", "templates")
+%{${classname_mangled}_objectDefinition.parentClass = ${base_classname}_classRef;
 %}    
 
 %fragment ("create_class_template", "templates")
-%{ ${classname}_classDefinition.staticFunctions = ${classname}_staticFunctions;
-    ${classname}_classDefinition.staticValues = ${classname}_staticValues;
-    ${classname}_classDefinition.callAsConstructor = _wrap_create_${classname};
-    ${classname}_objectDefinition.staticValues = ${classname}_values;
-    ${classname}_objectDefinition.staticFunctions = ${classname}_functions;
+%{ ${classname_mangled}_classDefinition.staticFunctions = ${classname_mangled}_staticFunctions;
+    ${classname_mangled}_classDefinition.staticValues = ${classname_mangled}_staticValues;
+    ${classname_mangled}_classDefinition.callAsConstructor = _wrap_create_${classname_mangled};
+    ${classname_mangled}_objectDefinition.staticValues = ${classname_mangled}_values;
+    ${classname_mangled}_objectDefinition.staticFunctions = ${classname_mangled}_functions;
     ${parent_class_defintion}
-    ${classname}_classRef = JSClassCreate(&${classname}_objectDefinition);%}
+    ${classname_mangled}_classRef = JSClassCreate(&${classname_mangled}_objectDefinition);%}
 
+
+/* register classes */
 
 %fragment ("register_class", "templates")
-%{jsc_registerClass(context, ${namespace}_object, "${classname}", &${classname_mangled}_classDefinition);%}
+%{swigjsc_registerClass(context, ${namespace}_object, "${classname}", &${classname_mangled}_classDefinition);%}
+
+/* register global function */
+
+%fragment ("register_global_function", "templates")
+%{swigjsc_registerFunction(${context}, ${context_object}, "${functionname}", ${functionwrapper});%}
 
 
-
-%fragment ("jsc_register_global_function", "templates")
-%{jsc_registerFunction(${context}, ${context_object}, "${functionname}", ${functionwrapper});%}
+/* create and register namespaces */
 
 %fragment ("create_namespace", "templates")
 %{ ${namespace}_classDefinition.staticFunctions = ${namespace}_functions;
@@ -179,6 +186,6 @@ bool ${modulename}_initialize(JSGlobalContextRef context) {
 
 %fragment ("register_namespace", "templates")
 %{
-jsc_registerNamespace(context, ${namespace}_object, ${parent_namespace}_object, "${namespace}"); %}
+swigjsc_registerNamespace(context, ${namespace}_object, ${parent_namespace}_object, "${namespace}"); %}
 
 

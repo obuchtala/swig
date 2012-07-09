@@ -6,7 +6,7 @@
 
 #include "javascript_emitter.h"
 
-extern swig::JSEmitter *swig_javascript_create_JSC_emitter();
+extern swig::JSEmitter * swig_javascript_create_JSC_emitter();
 
 /* ********************************************************************
  * JAVASCRIPT
@@ -241,10 +241,9 @@ void JAVASCRIPT::main(int argc, char *argv[]) {
     }
   }
 
-  if(debug_templates) {
+  if (debug_templates) {
     emitter->enableDebug();
   }
-
   // Add a symbol to the parser for conditional compilation
   Preprocessor_define("SWIGJAVASCRIPT 1", 0);
 

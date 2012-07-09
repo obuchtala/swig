@@ -7,8 +7,7 @@
  * ----------------------------------------------------------------------------- */
 
 swig::JSEmitter::JSEmitter()
-:  empty_string(NewString("")),
-   debug(false) {
+:  empty_string(NewString("")), debug(false) {
   templates = NewHash();
 }
 
@@ -42,7 +41,7 @@ swig::Template swig::JSEmitter::getTemplate(const String *name) {
   }
 
   Template t(templ, name, debug);
-  
+
   return t;
 }
 
@@ -100,9 +99,9 @@ Node *swig::JSEmitter::getBaseClass(Node *n) {
   return NULL;
 }
 
-/* -----------------------------------------------------------------------------
- * swig::JSEmitter::emitWrapperFunction() :  dispatches emitter functions
- * ----------------------------------------------------------------------------- */
+ /* -----------------------------------------------------------------------------
+  * swig::JSEmitter::emitWrapperFunction() :  dispatches emitter functions
+  * ----------------------------------------------------------------------------- */
 
 int swig::JSEmitter::emitWrapperFunction(Node *n) {
   int ret = SWIG_OK;
@@ -158,23 +157,23 @@ int swig::JSEmitter::emitWrapperFunction(Node *n) {
  * ----------------------------------------------------------------------------- */
 
 int swig::JSEmitter::emitConstant(Node *n) {
-    current_wrapper = NewWrapper();
-    String* action = NewString("");
+  current_wrapper = NewWrapper();
+  String *action = NewString("");
 
-    Setattr(n, "wrap:name", Getattr(n, "sym:name"));
-    //TODO
-    Printf(action, "result = %s;", Getattr(n, "name"));
-    Setattr(n, "wrap:action", action);
+  Setattr(n, "wrap:name", Getattr(n, "sym:name"));
+  //TODO
+  Printf(action, "result = %s;", Getattr(n, "name"));
+  Setattr(n, "wrap:action", action);
 
-    enterVariable(n);
-    emitGetter(n, false);
-    exitVariable(n);
+  enterVariable(n);
+  emitGetter(n, false);
+  exitVariable(n);
 
-    DelWrapper(current_wrapper);
-    
-    current_wrapper = 0;
+  DelWrapper(current_wrapper);
 
-    return SWIG_OK;
+  current_wrapper = 0;
+
+  return SWIG_OK;
 }
 
 /* -----------------------------------------------------------------------------
@@ -210,7 +209,7 @@ bool swig::JSEmitter::isSetterMethod(Node *n) {
  * ----------------------------------------------------------------------------- */
 
 swig::Template::Template(const String *code_) {
-  
+
   if (!code_) {
     Printf(stdout, "Template code was null. Illegal input for template.");
     SWIG_exit(EXIT_FAILURE);
@@ -221,7 +220,7 @@ swig::Template::Template(const String *code_) {
 }
 
 swig::Template::Template(const String *code_, const String *templateName_, bool debug_) {
-  
+
   if (!code_) {
     Printf(stdout, "Template code was null. Illegal input for template.");
     SWIG_exit(EXIT_FAILURE);
@@ -254,11 +253,11 @@ String *swig::Template::str() {
     Printf(pre_code, "//begin fragment(\"%s\")\n", templateName);
     Printf(post_code, "//end fragment(\"%s\")\n", templateName);
     Printf(debug_code, "%s\n%s\n%s", pre_code, code, post_code);
-    
+
     Delete(code);
     Delete(pre_code);
     Delete(post_code);
-    
+
     code = debug_code;
   }
   return code;

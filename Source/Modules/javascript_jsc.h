@@ -5,69 +5,69 @@
 
 namespace swig {
 
-class JSCEmitter:public JSEmitter {
+  class JSCEmitter:public JSEmitter {
 
-private:
+  private:
 
-  enum MarshallingMode {
-    Setter,
-    Getter,
-    Ctor,
-    Function
-  };
+    enum MarshallingMode {
+      Setter,
+      Getter,
+      Ctor,
+      Function
+    };
 
-public:
+  public:
 
-  JSCEmitter();
+     JSCEmitter();
 
-  virtual ~ JSCEmitter();
+     virtual ~ JSCEmitter();
 
-  virtual int initialize(Node *n);
+    virtual int initialize(Node *n);
 
-  virtual int dump(Node *n);
+    virtual int dump(Node *n);
 
-  virtual int close();
+    virtual int close();
 
 
-protected:
+  protected:
 
-  virtual int emitCtor(Node *n);
+     virtual int emitCtor(Node *n);
 
-  virtual int emitDtor(Node *n);
+    virtual int emitDtor(Node *n);
 
-  virtual int enterVariable(Node *n);
+    virtual int enterVariable(Node *n);
 
-  virtual int exitVariable(Node *n);
+    virtual int exitVariable(Node *n);
 
-  virtual int enterFunction(Node *n);
+    virtual int enterFunction(Node *n);
 
-  virtual int exitFunction(Node *n);
+    virtual int exitFunction(Node *n);
 
-  virtual int enterClass(Node *n);
+    virtual int enterClass(Node *n);
 
-  virtual int exitClass(Node *n);
+    virtual int exitClass(Node *n);
 
-  virtual int emitFunction(Node *n, bool is_member);
+    virtual int emitFunction(Node *n, bool is_member);
 
-  virtual int emitGetter(Node *n, bool is_member);
+    virtual int emitGetter(Node *n, bool is_member);
 
-  virtual int emitSetter(Node *n, bool is_member);
+    virtual int emitSetter(Node *n, bool is_member);
 
-  void marshalInputArgs(ParmList *parms, Wrapper *wrapper, MarshallingMode mode, bool is_member);
+    void marshalInputArgs(ParmList *parms, Wrapper *wrapper, MarshallingMode mode, bool is_member);
 
-  void marshalOutput(Node *n, String *actioncode, Wrapper *wrapper);
+    void marshalOutput(Node *n, String *actioncode, Wrapper *wrapper);
 
-  Parm *skipIgnoredArgs(Parm *p);
+    Parm *skipIgnoredArgs(Parm *p);
 
-  virtual int switchNamespace(Node *n);
+    virtual int switchNamespace(Node *n);
 
-  virtual int createNamespace(String* scope);
+    virtual int createNamespace(String *scope);
 
-  virtual Hash* createNamespaceEntry(const char* name, const char* parent);
+    virtual Hash *createNamespaceEntry(const char *name, const char *parent);
 
-  virtual int emitNamespaces();
+    virtual int emitNamespaces();
 
-private:
+  private:
 
     File *f_wrap_cpp;
     File *f_runtime;
@@ -75,8 +75,8 @@ private:
     File *f_wrappers;
     File *f_init;
 
-    String* NULL_STR;
-    const char* GLOBAL_STR;
+    String *NULL_STR;
+    const char *GLOBAL_STR;
 
     // contains context specific structs
     // to allow generation different class definition tables
@@ -89,27 +89,25 @@ private:
     String *create_namespaces_code;
     String *register_namespaces_code;
 
-    String *js_class_functions_code;
-    String *js_class_variables_code;
-    String *js_class_static_functions_code;
-    String *js_class_static_variables_code;
-    
-    String *js_ctor_wrappers;
-    String *js_ctor_dispatcher_code;
+    String *current_class_functions;
+    String *class_variables_code;
+    String *class_static_functions_code;
+    String *class_static_variables_code;
 
-    String *js_initializer_code;
+    String *ctor_wrappers;
+    String *ctor_dispatcher_code;
+
+    String *initializer_code;
 
     // state variables
-    String* current_propertyname;
-    String* current_getter;
-    String* current_setter;
-    String* current_classname;
+    String *current_propertyname;
+    String *current_getter;
+    String *current_setter;
+    String *current_classname;
     String *current_functionwrapper;
     String *current_functionname;
 
-    
-};
+  };
 
-} // namespace swig
-
-#endif // JAVASCRIPT_JSC_H
+}                               // namespace swig
+#endif                          // JAVASCRIPT_JSC_H
