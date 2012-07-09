@@ -125,6 +125,12 @@ int JAVASCRIPT::globalvariableHandler(Node *n) {
 
 int JAVASCRIPT::constantWrapper(Node *n) {
 
+  // TODO: handle callback declarations
+  //Note: callbacks trigger this wrapper handler
+  if( Equal(Getattr(n, "kind"), "function") ) {
+    return SWIG_OK;
+  }
+  
   //Language::constantWrapper(n);
   emitter->emitConstant(n);
 
