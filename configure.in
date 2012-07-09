@@ -2581,6 +2581,7 @@ AC_CONFIG_FILES([			        \
     Examples/test-suite/uffi/Makefile		\
     Examples/test-suite/r/Makefile		\
     Examples/test-suite/go/Makefile		\
+    Examples/test-suite/javascript/Makefile		\
     Lib/ocaml/swigp4.ml
 ])
 AC_CONFIG_FILES([preinst-swig], [chmod +x preinst-swig])
