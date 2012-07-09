@@ -84,14 +84,23 @@ JSClassDefinition ${namespace}_classDefinition;
 %}
 
 /*************************************************
- * classdefn:
+ * class_definition:
  *    this code template is used to define classes.
  *
  *  ${classname_mangled}:   the mangled name of the qualified class name, e.g., foo::A -> foo_A
  * 
   ***********************************************/
 
-%fragment ("classdefn", "templates")
+%fragment ("class_definition", "templates")
+%{
+JSClassDefinition ${classname_mangled}_classDefinition;
+
+JSClassDefinition ${classname_mangled}_objectDefinition;
+
+JSClassRef ${classname_mangled}_classRef;
+%}
+
+%fragment ("class_tables", "templates")
 %{
 JSStaticValue ${classname_mangled}_staticValues[] = {
   ${jsstaticclassvariables}
@@ -112,12 +121,6 @@ JSStaticFunction ${classname_mangled}_functions[] = {
   ${jsclassfunctions}
   { 0, 0, 0 }
 };
-
-JSClassDefinition ${classname_mangled}_classDefinition;
-
-JSClassDefinition ${classname_mangled}_objectDefinition;
-
-JSClassRef ${classname_mangled}_classRef;
 %}
 
 %fragment ("destructordefn", "templates")

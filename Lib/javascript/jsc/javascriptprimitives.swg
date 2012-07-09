@@ -93,7 +93,10 @@
  SWIG_PRV_DATA *privatedata = new SWIG_PRV_DATA();
  privatedata->swigCMemOwn = false;
  privatedata->swigCObject = result;
- $result = JSObjectMake(context, _wrap_swig_ptr_$*1_ltype_createJSClass(context), privatedata);
+ // DEBUG: JSObjectMake - case 1
+ // TODO: this needs to be fixed
+ // $result = JSObjectMake(context, $1_mangle_classRef, privatedata);
+ $result = JSValueMakeUndefined(context);
 %}
 
 %typemap(in) bool
@@ -115,7 +118,7 @@
 %{
  JSStringRef $1_str = JSValueToStringCopy(context, $input, NULL);
  size_t $1_strsize = JSStringGetMaximumUTF8CStringSize($1_str);
- $1 = (char *)malloc($1_strsize * sizeof(char));
+ $1 = ($1_ltype) malloc($1_strsize * sizeof(char));
  JSStringGetUTF8CString($1_str, $1, $1_strsize);
 %}
 
@@ -177,11 +180,10 @@
  SWIG_PRV_DATA *privatedata = new SWIG_PRV_DATA();
  privatedata->swigCMemOwn = false;
  privatedata->swigCObject = temp;
- $result = JSObjectMake(context, _wrap_$1_type_createJSClass(context), privatedata);
- //$result = JSObjectMake(context, _wrap_$1_basetype_createJSClass(context), privatedata);
- //$result = JSObjectMake(context, _wrap_$objecttype_createJSClass(context), privatedata);
- // $1_mangle
- // $1_descriptor
+ // DEBUG: JSObjectMake - case 2 
+ // TODO: this needs to be fixed
+ // $result = JSObjectMake(context, $1_mangle_classRef, privatedata);
+ $result = JSValueMakeUndefined(context);
 %}
 #else
 {
@@ -191,11 +193,8 @@
  SWIG_PRV_DATA *privatedata = (SWIG_PRV_DATA *)malloc(sizeof(SWIG_PRV_DATA());
  privatedata->swigCMemOwn = false;
  privatedata->swigCObject = temp;
- $result = JSObjectMake(context, _wrap_$1_ltype_createJSClass(context), privatedata);
- //$result = JSObjectMake(context, _wrap_$1_basetype_createJSClass(context), privatedata);
- //$result = JSObjectMake(context, _wrap_$objecttype_createJSClass(context), privatedata);
- // $1_mangle
- // $1_descriptor
+ // DEBUG: JSObjectMake - case 3 
+ $result = JSObjectMake(context, $*1_mangle_classRef, privatedata);
 }
 #endif
 
@@ -211,11 +210,8 @@
  SWIG_PRV_DATA *privatedata = new SWIG_PRV_DATA();
  privatedata->swigCMemOwn = false;
  privatedata->swigCObject = result;
- $result = JSObjectMake(context, _wrap_$*1_ltype_createJSClass(context), privatedata);
- //$result = JSObjectMake(context, _wrap_$1_basetype_createJSClass(context), privatedata);
- //$result = JSObjectMake(context, _wrap_$objecttype_createJSClass(context), privatedata);
- // $1_mangle
- // $1_descriptor
+ // DEBUG: JSObjectMake - case 4
+ $result = JSObjectMake(context, $*1_mangle_classRef, privatedata);
 %}
 
 %typemap(arginit) SWIGTYPE *
@@ -235,7 +231,8 @@
 %typemap(out) SWIGTYPE (CLASS::*)
 %{
  // Class* out typemap
- $result = JSObjectMake(context, _wrap_$*1_ltype_createJSClass(context), result);
+ // DEBUG: JSObjectMake - case 5
+ $result = JSObjectMake(context, $*1_mangle_classRef, result);
 %}
 
 

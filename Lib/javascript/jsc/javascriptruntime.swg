@@ -17,3 +17,9 @@ typedef struct {
 	void *swigCObject;
 }SWIG_PRV_DATA; 
 %}
+
+%insert(runtime) %{
+/* Contract support */
+
+#define SWIG_contract_assert(expr, msg) if (!(expr)) { throw "contract violated: msg"; } else
+%}

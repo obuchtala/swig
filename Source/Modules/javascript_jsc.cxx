@@ -288,8 +288,15 @@ int swig::JSCEmitter::exitVariable(Node *n) {
 }
 
 int swig::JSCEmitter::enterClass(Node *n) {
+      
+  current_classname = Swig_scopename_last(Getattr(n, "name"));
+  current_classname_mangled = SwigType_manglestr(Getattr(n, "name"));
+  current_classtype = NewString(Getattr(n, "classtype"));
+    
+  Template t_class_defn = getTemplate("class_definition");
+  t_class_defn.replace("${classname_mangled}", current_classname_mangled);
+  Wrapper_pretty_print(t_class_defn.str(), f_wrappers);
 
-  current_classname = Swig_scopename_last(Getattr(n, "classtype"));
   class_variables_code = NewString("");
   current_class_functions = NewString("");
   class_static_variables_code = NewString("");
@@ -299,22 +306,20 @@ int swig::JSCEmitter::enterClass(Node *n) {
   return SWIG_OK;
 }
 
-int swig::JSCEmitter::exitClass(Node *n) {
-
-  Template t_class(getTemplate("classdefn"));
-  String *mangled_name = Swig_name_mangle(Getattr(n, "name"));
-
-  t_class.replace("${classname_mangled}", mangled_name)
+int swig::JSCEmitter::exitClass(Node *n) {    
+  
+  String *mangled_name = SwigType_manglestr(Getattr(n, "name"));
+  
+  Template t_class_tables(getTemplate("class_tables"));
+  t_class_tables.replace("${classname_mangled}", mangled_name)
       .replace("${jsclassvariables}", class_variables_code)
       .replace("${jsclassfunctions}", current_class_functions)
       .replace("${jsstaticclassfunctions}", class_static_functions_code)
       .replace("${jsstaticclassvariables}", class_static_variables_code);
-  Wrapper_pretty_print(t_class.str(), f_wrappers);
+  Wrapper_pretty_print(t_class_tables.str(), f_wrappers);
 
-  /* 
-   * Add the ctor wrappers at this position 
-   * Note: this is necessary to avoid extra forward declarations.
-   */
+  /* adds the ctor wrappers at this position */
+  // Note: this is necessary to avoid extra forward declarations.
   Printv(f_wrappers, ctor_wrappers, 0);
 
   /* adds the main constructor wrapper function */
@@ -323,23 +328,21 @@ int swig::JSCEmitter::exitClass(Node *n) {
       .replace("${DISPATCH_CASES}", ctor_dispatcher_code);
   Wrapper_pretty_print(t_mainctor.str(), f_wrappers);
 
-  /* adds the dtor wrapper */
-  Template t_dtor(getTemplate("destructordefn"));
-  t_dtor.replace("${classname_mangled}", mangled_name)
-      .replace("${type}", Getattr(n, "classtype"));
-  Wrapper_pretty_print(t_dtor.str(), f_wrappers);
-
   /* adds a class template statement to initializer function */
-  Node *base_class = getBaseClass(n);
+  Template t_classtemplate(getTemplate("create_class_template"));
+
+  /* prepare registration of base class */
   String *parentClassDefn = NewString("");
-  if (base_class != NULL) {
+  Node* base_class = getBaseClass(n);
+  if(base_class!=NULL) {
+    String *base_name_mangled = SwigType_manglestr(Getattr(base_class, "name"));
+
     Template t_inherit(getTemplate("inheritance"));
     t_inherit.replace("${classname_mangled}", mangled_name)
-        .replace("${base_classname}", Swig_name_mangle(Getattr(base_class, "name")));
+        .replace("${base_classname}", base_name_mangled);
     Printv(parentClassDefn, t_inherit.str(), 0);
   }
 
-  Template t_classtemplate(getTemplate("create_class_template"));
   t_classtemplate.replace("${classname_mangled}", mangled_name)
       .replace("${parent_class_defintion}", parentClassDefn);
   Wrapper_pretty_print(t_classtemplate.str(), initializer_code);
@@ -347,12 +350,12 @@ int swig::JSCEmitter::exitClass(Node *n) {
   /* adds a class registration statement to initializer function */
   Template t_registerclass(getTemplate("register_class"));
   t_registerclass.replace("${classname}", current_classname)
-      .replace("${classname_mangled}", mangled_name)
-      .replace("${namespace}", Getattr(current_namespace, "name"));
+    .replace("${classname_mangled}", current_classname_mangled)
+    .replace("${namespace}", Getattr(current_namespace, "name"));
   Wrapper_pretty_print(t_registerclass.str(), initializer_code);
-
-  /* clean up all DOHs */
-  Delete(class_variables_code);
+  
+    /* clean up all DOHs */
+  Delete(js_class_variables_code);
   Delete(current_class_functions);
   Delete(class_static_variables_code);
   Delete(class_static_functions_code);
@@ -367,14 +370,17 @@ int swig::JSCEmitter::exitClass(Node *n) {
   ctor_wrappers = 0;
   ctor_dispatcher_code = 0;
 
+  Delete(current_classname);
+  Delete(current_classname_mangled);
+  Delete(current_classtype);
+
   return SWIG_OK;
 }
 
 int swig::JSCEmitter::emitCtor(Node *n) {
 
   Template t_ctor(getTemplate("ctordefn"));
-
-  String *mangled_name = Swig_name_mangle(Getattr(n, "name"));
+  String *mangled_name = SwigType_manglestr(Getattr(n, "name"));
 
   String *name = (Getattr(n, "wrap:name"));
   String *overname = Getattr(n, "sym:overname");
@@ -414,7 +420,12 @@ int swig::JSCEmitter::emitCtor(Node *n) {
 }
 
 int swig::JSCEmitter::emitDtor(Node *) {
-  // TODO:find out how to register a dtor in JSC
+ 
+  Template t_dtor = getTemplate("destructordefn");
+  t_dtor.replace("${classname_mangled}", current_classname_mangled)
+      .replace("${type}", current_classtype);
+  Wrapper_pretty_print(t_dtor.str(), f_wrappers);
+  
   return SWIG_OK;
 }
 
