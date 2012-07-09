@@ -128,7 +128,7 @@ int swig::JSCEmitter::initialize(Node *n) {
 
   create_namespaces_code = NewString("");
   register_namespaces_code = NewString("");
-  js_initializer_code = NewString("");
+  initializer_code = NewString("");
 
 
   namespaces = NewHash();
@@ -162,7 +162,7 @@ int swig::JSCEmitter::dump(Node *n) {
   // compose the initializer function using a template
   Template initializer(getTemplate("initializer"));
   initializer.replace("${modulename}", module)
-      .replace("${initializercode}", js_initializer_code)
+      .replace("${initializercode}", initializer_code)
       .replace("${create_namespaces}", create_namespaces_code)
       .replace("${register_namespaces}", register_namespaces_code);
   Wrapper_pretty_print(initializer.str(), f_wrap_cpp);
@@ -192,17 +192,57 @@ int swig::JSCEmitter::close() {
 }
 
 int swig::JSCEmitter::enterFunction(Node *n) {
-  current_functionname = (Getattr(n, "sym:name"));
+
+  bool is_overloaded = GetFlag(n, "sym:overloaded");
+  
+  current_functionname = Getattr(n, "sym:name");
+
+  if(is_overloaded && function_dispatcher_code == 0) {
+    function_dispatcher_code = NewString("");
+  }
+
   return SWIG_OK;
 }
 
 int swig::JSCEmitter::exitFunction(Node *n) {
-  Template t_function(getTemplate("functiondecl"));
-  t_function.replace("${functionname}", current_functionname)
-      .replace("${functionwrapper}", current_functionwrapper);
+  Template t_function = getTemplate("functiondecl");
 
-  if (GetFlag(n, "ismember")) {
+  String *functionname = current_functionname;
+  String *functionwrapper = current_functionwrapper;
+  
+  bool is_member = GetFlag(n, "ismember");
+  
+  // handle overloaded functions
+  // Note: wrappers for overloaded functions are currently
+  //       not made available (e.g., foo_double, foo_int)
+  //       maybe this could be enabled by an extra feature flag 
+  bool is_overloaded = GetFlag(n, "sym:overloaded");
 
+  if(is_overloaded) {
+    if(!Getattr(n, "sym:nextSibling")) {
+
+      functionwrapper = Swig_name_wrapper(Getattr(n, "name"));
+      // note: set this attribute to transfer ownership
+      Setattr(n, "wrap:dispatcher", functionwrapper);
+
+      // create dispatcher
+      emitFunctionDispatcher(n, is_member);
+      
+      Delete(function_dispatcher_code);
+      function_dispatcher_code = 0;
+
+    } else {
+      
+      //don't register wrappers of overloaded functions in function tables
+      return SWIG_OK;
+    }
+  }
+
+  t_function.replace("${functionname}", functionname)
+      .replace("${functionwrapper}", functionwrapper);
+
+  if (is_member) {
+    
     if (Equal(Getattr(n, "storage"), "static")) {
       Printv(class_static_functions_code, t_function.str(), 0);
 
@@ -435,8 +475,15 @@ int swig::JSCEmitter::emitSetter(Node *n, bool is_member) {
 int swig::JSCEmitter::emitFunction(Node *n, bool is_member) {
   Template t_function(getTemplate("functionwrapper"));
 
+  bool is_overloaded = GetFlag(n, "sym:overloaded");
+  
   String *name = Getattr(n, "sym:name");
   String *wrap_name = Swig_name_wrapper(name);
+  
+  if(is_overloaded) {
+    Append(wrap_name, Getattr(n, "sym:overname"));
+  }
+  
   current_functionwrapper = wrap_name;
   Setattr(n, "wrap:name", wrap_name);
 
@@ -454,6 +501,45 @@ int swig::JSCEmitter::emitFunction(Node *n, bool is_member) {
       .replace("${CODE}", current_wrapper->code);
   Wrapper_pretty_print(t_function.str(), f_wrappers);
 
+  if(is_overloaded) {
+    Template t_dispatch_case = getTemplate("function_dispatch_case");
+    
+    int argc = emit_num_arguments(params);
+    String *argcount = NewString("");
+    Printf(argcount, "%d", argc);
+    
+    t_dispatch_case.replace("${functionwrapper}", wrap_name)
+      .replace("${argcount}", argcount);
+    
+    Printv(function_dispatcher_code, t_dispatch_case.str(), 0);
+    
+    Delete(argcount);
+  }
+
+  return SWIG_OK;
+}
+
+int swig::JSCEmitter::emitFunctionDispatcher(Node *n, bool /*is_member*/) {
+
+  Template t_function(getTemplate("functionwrapper"));
+
+  Wrapper *wrapper = NewWrapper();
+  String *wrap_name = Swig_name_wrapper(Getattr(n, "name"));
+  Setattr(n, "wrap:name", wrap_name);
+
+  Wrapper_add_local(wrapper, "jsresult", "JSValueRef jsresult");
+
+  Append(wrapper->code, function_dispatcher_code);
+  Append(wrapper->code, getTemplate("function_dispatch_case_default").str());
+  
+  t_function.replace("${functionname}", wrap_name)
+      .replace("${LOCALS}", wrapper->locals)
+      .replace("${CODE}", wrapper->code);
+  
+  Wrapper_pretty_print(t_function.str(), f_wrappers);
+
+  DelWrapper(wrapper);
+  
   return SWIG_OK;
 }
 

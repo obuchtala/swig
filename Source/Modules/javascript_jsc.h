@@ -49,7 +49,9 @@ namespace swig {
 
     virtual int emitFunction(Node *n, bool is_member);
 
-    virtual int emitGetter(Node *n, bool is_member);
+  virtual int emitFunctionDispatcher(Node *n, bool is_member);
+
+  virtual int emitGetter(Node *n, bool is_member);
 
     virtual int emitSetter(Node *n, bool is_member);
 
@@ -98,6 +100,7 @@ namespace swig {
     String *ctor_dispatcher_code;
 
     String *initializer_code;
+    String *function_dispatcher_code;
 
     // state variables
     String *current_propertyname;

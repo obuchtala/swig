@@ -45,6 +45,19 @@ JSValueRef ${functionname}(JSContextRef context, JSObjectRef function, JSObjectR
 %}
 
 /* Added template for variable declaration */
+%fragment ("function_dispatch_case", "templates")
+%{if(argc == ${argcount}) {
+    jsresult = ${functionwrapper}(context, function, thisObject, argc, argv, exception);
+  } else %}
+
+%fragment ("function_dispatch_case_default", "templates")
+%{
+  {
+    // TODO: throw JS exception
+    throw "Invalid function arguments.";
+  }
+%}
+
 
 %fragment ("variabledecl", "templates")
 %{{"${propertyname}",${getname}, ${setname},kJSPropertyAttributeNone},%}
