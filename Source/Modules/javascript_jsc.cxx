@@ -351,7 +351,7 @@ int swig::JSCEmitter::exitClass(Node *n) {
   Wrapper_pretty_print(t_registerclass.str(), initializer_code);
   
     /* clean up all DOHs */
-  Delete(js_class_variables_code);
+  Delete(class_variables_code);
   Delete(current_class_functions);
   Delete(class_static_variables_code);
   Delete(class_static_functions_code);
@@ -425,7 +425,7 @@ int swig::JSCEmitter::emitDtor(Node *) {
 }
 
 int swig::JSCEmitter::emitGetter(Node *n, bool is_member) {
-  Template t_setter(getTemplate("getproperty"));
+  Template t_getter(getTemplate("getproperty"));
 
   String *name = Getattr(n, "wrap:name");
   String *wrap_name = Swig_name_wrapper(name);
@@ -441,15 +441,14 @@ int swig::JSCEmitter::emitGetter(Node *n, bool is_member) {
   marshalInputArgs(params, current_wrapper, Getter, is_member);
   marshalOutput(n, action, current_wrapper);
 
-  t_setter.replace("${getname}", wrap_name)
+  t_getter.replace("${getname}", wrap_name)
       .replace("${LOCALS}", current_wrapper->locals)
       .replace("${CODE}", current_wrapper->code);
 
-  Wrapper_pretty_print(t_setter.str(), f_wrappers);
+  Wrapper_pretty_print(t_getter.str(), f_wrappers);
 
   return SWIG_OK;
 }
-
 
 int swig::JSCEmitter::emitSetter(Node *n, bool is_member) {
   Template t_setter(getTemplate("setproperty"));
@@ -477,6 +476,54 @@ int swig::JSCEmitter::emitSetter(Node *n, bool is_member) {
   return SWIG_OK;
 }
 
+/* -----------------------------------------------------------------------------
+ * swig::JSEmitter::emitConstant() :  triggers code generation for constants
+ * ----------------------------------------------------------------------------- */
+
+int swig::JSCEmitter::emitConstant(Node *n) {
+  
+  // call the variable methods as a constants are
+  // registred in same way
+  enterVariable(n);
+      
+  current_wrapper = NewWrapper();
+  
+  String* action = NewString("");
+
+  String *name = Getattr(n, "name");
+  String *wrap_name = Swig_name_wrapper(name);
+  String *value = Getattr(n, "rawval");
+  if(value == NULL) {
+    value = Getattr(n, "rawvalue");
+  }
+  if(value == NULL) {
+    value = Getattr(n, "value");
+  }
+  
+  Template t_getter(getTemplate("getproperty"));
+
+  current_getter = wrap_name;
+  Setattr(n, "wrap:name", wrap_name);
+
+  Printf(action, "result = %s;", value);
+  Setattr(n, "wrap:action", action);
+
+  Wrapper_add_local(current_wrapper, "jsresult", "JSValueRef jsresult");
+  marshalOutput(n, action, current_wrapper);
+
+  t_getter.replace("${getname}", wrap_name)
+      .replace("${LOCALS}", current_wrapper->locals)
+      .replace("${CODE}", current_wrapper->code);
+
+  Wrapper_pretty_print(t_getter.str(), f_wrappers);
+
+  DelWrapper(current_wrapper);
+  current_wrapper = 0;
+
+  exitVariable(n);
+
+  return SWIG_OK;
+}
 
 int swig::JSCEmitter::emitFunction(Node *n, bool is_member) {
   Template t_function(getTemplate("functionwrapper"));
@@ -637,15 +684,6 @@ int swig::JSCEmitter::emitNamespaces() {
 
   return SWIG_OK;
 }
-
-
-int swig::JSCEmitter::declareCConst(Node *n) {
-  Printf(f_header, "%s %s = %s;\n", Getattr(n, "type"), Getattr(n, "sym:name"), Getattr(n, "rawvalue"));
-
-  return SWIG_OK;
-}
-
-
 
 swig::JSEmitter* swig_javascript_create_JSC_emitter()
 {

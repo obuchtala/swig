@@ -67,9 +67,9 @@ namespace swig {
 
     virtual Hash *createNamespaceEntry(const char *name, const char *parent);
 
-    virtual int emitNamespaces();
-
-  virtual int declareCConst(Node *n);
+  virtual int emitNamespaces();
+  
+  virtual int emitConstant(Node *n);
 
 private:
 

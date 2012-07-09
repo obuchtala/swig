@@ -117,7 +117,7 @@ namespace swig {
     /**
      * Invoked from constantWrapper after call to Language::constantWrapper.
      **/
-    virtual int emitConstant(Node *n);
+  virtual int emitConstant(Node *n) = 0;
 
     /**
      * Registers a given code snippet for a given key name.
@@ -146,9 +146,7 @@ namespace swig {
 
   virtual int emitSetter(Node *n, bool is_member) = 0;
   
-  virtual int declareCConst(Node *n) = 0;
-
-    bool isSetterMethod(Node *n);
+  bool isSetterMethod(Node *n);
 
     Node *getBaseClass(Node *n);
 

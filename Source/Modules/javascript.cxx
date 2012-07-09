@@ -31,6 +31,8 @@ public:
      **/
   virtual int fragmentDirective(Node *n);
 
+  virtual int constantDirective(Node *n);
+
   virtual void main(int argc, char *argv[]);
   virtual int top(Node *n);
 
@@ -130,7 +132,7 @@ int JAVASCRIPT::constantWrapper(Node *n) {
   if( Equal(Getattr(n, "kind"), "function") ) {
     return SWIG_OK;
   }
-  
+    
   //Language::constantWrapper(n);
   emitter->emitConstant(n);
 
@@ -165,6 +167,13 @@ int JAVASCRIPT::fragmentDirective(Node *n) {
     Swig_fragment_register(n);
   }
 
+  return SWIG_OK;
+}
+
+int JAVASCRIPT::constantDirective(Node *n) {
+  
+  Language::constantDirective(n);
+  
   return SWIG_OK;
 }
 

@@ -153,35 +153,6 @@ int swig::JSEmitter::emitWrapperFunction(Node *n) {
 }
 
 /* -----------------------------------------------------------------------------
- * swig::JSEmitter::emitConstant() :  triggers code generation for constants
- * ----------------------------------------------------------------------------- */
-
-int swig::JSEmitter::emitConstant(Node *n) {
-  
-    // TODO: extra handling for constants defined using the %constant keyword
-    if( Equal(Getattr(n, "storage"), "%constant") ) {
-      declareCConst(n);
-    }
-  
-    current_wrapper = NewWrapper();
-    String* action = NewString("");
-
-    Setattr(n, "wrap:name", Getattr(n, "sym:name"));
-    Printf(action, "result = %s;", Getattr(n, "name"));
-    Setattr(n, "wrap:action", action);
-
-    enterVariable(n);
-    emitGetter(n, false);
-    exitVariable(n);
-
-    DelWrapper(current_wrapper);
-    
-    current_wrapper = 0;
-
-  return SWIG_OK;
-}
-
-/* -----------------------------------------------------------------------------
  * __swigjs_str_ends_with() :  c string helper to check suffix match
  * ----------------------------------------------------------------------------- */
 
