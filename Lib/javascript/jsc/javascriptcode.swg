@@ -156,7 +156,7 @@ bool ${modulename}_initialize(JSGlobalContextRef context) {
     ${classname}_classRef = JSClassCreate(&${classname}_objectDefinition);%}
 
 %fragment ("register_class", "templates")
-%{jsc_registerClass(context, globalObject, "${classname}", &${classname}_classDefinition);%}
+%{jsc_registerClass(context, globalObject, "${classname}", &${classname_mangled}_classDefinition);%}
 
 %fragment ("jsc_register_global_function", "templates")
 %{jsc_registerFunction(${context}, ${context_object}, "${functionname}", ${functionwrapper});%}
