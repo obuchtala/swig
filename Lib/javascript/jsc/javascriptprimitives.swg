@@ -119,17 +119,25 @@
  JSStringRef $1_str = JSValueToStringCopy(context, $input, NULL);
  size_t $1_strsize = JSStringGetMaximumUTF8CStringSize($1_str);
  $1 = ($1_ltype) malloc($1_strsize * sizeof(char));
- JSStringGetUTF8CString($1_str, $1, $1_strsize);
+ JSStringGetUTF8CString($1_str, (char*) $1, $1_strsize);
 %}
 
 %typemap(out) char *
 %{
- JSStringRef jsstring = JSStringCreateWithUTF8CString($1);
+ JSStringRef jsstring = JSStringCreateWithUTF8CString((char*) $1);
  $result = JSValueMakeString(context, jsstring);
  JSStringRelease(jsstring);
 %}
 
-%typemap(arginit) char * ""
+%typemap(arginit) char * 
+%{
+// TODO: need arginit for char*
+%}
+
+%typemap(out) unsigned char *
+%{
+  // TODO: typemap out for unsigned char*
+%}
 
 %typemap(in) char *& ($*1_ltype temp = 0) %{
    temp = ($*1_ltype)$input;
@@ -153,9 +161,10 @@
    JSStringGetUTF8CString($1_str, $1, $1_strsize);
 %}
 
-%typemap(out) char[ANY], char[]
+%typemap(out) char[ANY], char[], 
+              unsigned char[ANY], unsigned char[]
 %{
- JSStringRef jsstring = JSStringCreateWithUTF8CString($1);
+ JSStringRef jsstring = JSStringCreateWithUTF8CString((char*) $1);
  $result = JSValueMakeString(context, jsstring);
  JSStringRelease(jsstring);
 %}
@@ -209,7 +218,7 @@
 %{
  SWIG_PRV_DATA *privatedata = new SWIG_PRV_DATA();
  privatedata->swigCMemOwn = false;
- privatedata->swigCObject = result;
+ privatedata->swigCObject = (void*) result;
  // DEBUG: JSObjectMake - case 4
  $result = JSObjectMake(context, _SwigObject_classRef, privatedata);
 %}
@@ -244,10 +253,12 @@
  * that cannot be overloaded in Javascript as more than one C++ type maps to a single Javascript type */
 // TODO
 
-
 // Default array handling
 %typemap(in) SWIGTYPE [] %{ $1 = ($1_ltype)$input; %}
-%typemap(out) SWIGTYPE [] %{ $result = $1; %}
+%typemap(out) SWIGTYPE [] %{ 
+  // TODO: fix this
+  $result = $1; 
+%}
 
 
 // Javascript specific directives
