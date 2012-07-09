@@ -1,8 +1,8 @@
-/* ----------------------------------------------------------------------------------------------
- * javascriptcode.swg
- *
- * Additional Javascript typemaps for generating code for classes, constants and variables
- * ----------------------------------------------------------------------------- ----------------*/
+/*********************************************************************
+   *{getnames}: gives name of the generated wrapper for the getproperty 
+   *{LOCALS}: declarations for input arguments
+   *{CODE} contains input marshalling, and the action
+*********************************************************************/
 
 %fragment ("getproperty", "templates")
 %{
@@ -14,6 +14,12 @@ JSValueRef ${getname}(JSContextRef context, JSObjectRef thisObject, JSStringRef 
 }
 %}
 
+/**********************************************************************
+   *{setnames}: gives name of the generated wrapper for the setproperty 
+   *{LOCALS}: declarations for input arguments
+   *{CODE} contains input marshalling, and the action
+**********************************************************************/
+
 %fragment ("setproperty", "templates")
 %{
 bool ${setname}(JSContextRef context, JSObjectRef thisObject, JSStringRef propertyName, JSValueRef value, JSValueRef* exception)
@@ -23,6 +29,11 @@ bool ${setname}(JSContextRef context, JSObjectRef thisObject, JSStringRef proper
 }
 %}
 
+/**********************************************************************
+   *{functionnames}: gives name of the generated wrapper for the function 
+   *{LOCALS}: declarations for input arguments
+   *{CODE} contains input marshalling, and the action
+**********************************************************************/
 %fragment ("functionwrapper", "templates")
 %{
 JSValueRef ${functionname}(JSContextRef context, JSObjectRef function, JSObjectRef thisObject, size_t argc, const JSValueRef argv[], JSValueRef* exception)
@@ -33,8 +44,13 @@ JSValueRef ${functionname}(JSContextRef context, JSObjectRef function, JSObjectR
 }
 %}
 
+/* Added template for variable declaration */
+
 %fragment ("variabledecl", "templates")
 %{{"${propertyname}",${getname}, ${setname},kJSPropertyAttributeNone},%}
+
+
+/* Added template for function declaration */
 
 %fragment ("functiondecl", "templates")
 %{{"${functionname}",${functionwrapper}, kJSPropertyAttributeNone},%}
@@ -53,6 +69,14 @@ JSStaticFunction ${namespace}_functions[] = {
 
 JSClassDefinition ${namespace}_classDefinition;
 %}
+
+/*************************************************
+ * classdefn:
+ *    this code template is used to define classes.
+ *
+ *  ${classname_mangled}:   the mangled name of the qualified class name, e.g., foo::A -> foo_A
+ * 
+  ***********************************************/
 
 %fragment ("classdefn", "templates")
 %{
