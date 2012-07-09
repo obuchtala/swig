@@ -207,25 +207,28 @@ int swig::JSCEmitter::exitFunction(Node *n) {
 int swig::JSCEmitter::enterVariable(Node *n) {
   current_getter = NULL_STR;
   current_setter = NULL_STR;
-  current_propertyname = Getattr(n, "name");
+  current_propertyname = Swig_scopename_last(Getattr(n, "name"));
   return SWIG_OK;
 }
 
 
 int swig::JSCEmitter::exitVariable(Node *n) {
+    
   Template t_variable(getTemplate("variabledecl"));
   t_variable.replace("${setname}", current_setter)
       .replace("${getname}", current_getter)
       .replace("${propertyname}", current_propertyname);
 
-  if (GetFlag(n, "ismember")) {
-    if (Equal(Getattr(n, "storage"), "static")) {
-      Printv(js_class_static_variables_code, t_variable.str(), 0);
+      
+   if (GetFlag(n, "ismember")) {
+    if (Equal(Getattr(n, "storage"),"static")||(Equal(Getattr(n, "nodeType"),"enumitem"))) {
+          
+       Printv(js_class_static_variables_code, t_variable.str(), 0);
 
     } else {
       Printv(js_class_variables_code, t_variable.str(), 0);
     }
-  } else {
+  }else {
     Printv(js_global_variables_code, t_variable.str(), 0);
   }
 
