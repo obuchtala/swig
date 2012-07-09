@@ -255,11 +255,12 @@
 
 // Default array handling
 %typemap(in) SWIGTYPE [] %{ $1 = ($1_ltype)$input; %}
-%typemap(out) SWIGTYPE [] %{ 
-  // TODO: fix this
-  $result = $1; 
+%typemap(out) SWIGTYPE [] %{
+ SWIG_PRV_DATA *result_privatedata = (SWIG_PRV_DATA *)malloc(sizeof(SWIG_PRV_DATA));
+ result_privatedata->swigCMemOwn = false;
+ result_privatedata->swigCObject = (void*) $1;
+ $result = JSObjectMake(context, _SwigObject_classRef, result_privatedata);
 %}
-
 
 // Javascript specific directives
 //TODO
