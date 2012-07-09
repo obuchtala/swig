@@ -125,7 +125,7 @@ int JAVASCRIPT::globalvariableHandler(Node *n) {
 
 int JAVASCRIPT::constantWrapper(Node *n) {
 
-  Language::constantWrapper(n);
+  //Language::constantWrapper(n);
   emitter->emitConstant(n);
 
   return SWIG_OK;
