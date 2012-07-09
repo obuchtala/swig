@@ -1,4 +1,4 @@
 print("Creating some objects:");
-c = new Circle(10);
+c = new example.Circle(10);
 print("area = " + c.area());
 
