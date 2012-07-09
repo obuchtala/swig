@@ -133,6 +133,7 @@ int swig::JSCEmitter::initialize(Node *n) {
     register_namespaces_code = NewString("");
     js_initializer_code = NewString("");
 
+
     namespaces = NewHash();
     Hash* global_namespace = createNamespaceEntry(Char(Getattr(n, "name")), "global");
     Setattr(namespaces, "::", global_namespace);
@@ -267,7 +268,7 @@ int swig::JSCEmitter::enterClass(Node *n) {
 }
 
 int swig::JSCEmitter::exitClass(Node *n) {
-    
+
   Template t_class(getTemplate("classdefn"));
       String *mangled_name = Swig_name_mangle(Getattr(n, "name"));
 
@@ -286,7 +287,6 @@ int swig::JSCEmitter::exitClass(Node *n) {
 
   /* adds the main constructor wrapper function */
   Template t_mainctor(getTemplate("mainctordefn"));
-
   t_mainctor.replace("${classname}", mangled_name)
       .replace("${DISPATCH_CASES}", js_ctor_dispatcher_code);
   Wrapper_pretty_print(t_mainctor.str(), f_wrappers);
@@ -298,20 +298,40 @@ int swig::JSCEmitter::exitClass(Node *n) {
   Wrapper_pretty_print(t_dtor.str(), f_wrappers);
 
   /* adds a class template statement to initializer function */
-  Template t_classtemplate(getTemplate("create_class_template"));
-  t_classtemplate.replace("${classname}", mangled_name);
+    Node* base_class = getBaseClass(n);
+    String *parentClassDefn = NewString("");
+    if(base_class!=NULL) {
+       Swig_print_node(base_class);
+       Template t_inherit(getTemplate("jsc_inherit"));
+       t_inherit.replace("${classname}", current_classname)
+       .replace("${base_classname}",Swig_name_mangle(Getattr(base_class, "name")));
+        Printv(parentClassDefn, t_inherit.str(),0);
+    }
+
+    Template t_classtemplate(getTemplate("create_class_template"));
+    t_classtemplate.replace("${classname}", mangled_name);
+    t_classtemplate.replace("${parent_class_defintion}", parentClassDefn);
+
   Wrapper_pretty_print(t_classtemplate.str(), js_initializer_code);
 
   /* adds a class registration statement to initializer function */
   Template t_registerclass(getTemplate("register_class"));
-
   t_registerclass.replace("${classname}", current_classname)
     .replace("${classname_mangled}", mangled_name)
     .replace("${namespace}", Getattr(current_namespace, "name"));
-
   Wrapper_pretty_print(t_registerclass.str(), js_initializer_code);
-
-  /* clean up all DOHs */
+  
+    
+   
+   
+   
+   
+   
+   
+   
+   
+    
+   /* clean up all DOHs */
   Delete(js_class_variables_code);
   Delete(js_class_functions_code);
   Delete(js_class_static_variables_code);
