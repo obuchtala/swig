@@ -59,38 +59,55 @@ protected:
 
   Parm *skipIgnoredArgs(Parm *p);
 
+  virtual int switchNamespace(Node *n);
+
+  virtual int createNamespace(String* scope);
+
+  virtual Hash* createNamespaceEntry(const char* name, const char* parent);
+
+  virtual int emitNamespaces();
+
 private:
 
-  File *f_wrap_cpp;
-  File *f_runtime;
-  File *f_header;
-  File *f_wrappers;
-  File *f_init;
+    File *f_wrap_cpp;
+    File *f_runtime;
+    File *f_header;
+    File *f_wrappers;
+    File *f_init;
 
-  String *NULL_STR;
+    String* NULL_STR;
+    const char* GLOBAL_STR;
 
-  // dynamically filled code parts
-  String *js_global_functions_code;
-  String *js_global_variables_code;
+    // contains context specific structs
+    // to allow generation different class definition tables
+    // which are switched on namespace change
+    Hash *namespaces;
+    Hash *current_namespace;
 
-  String *js_class_functions_code;
-  String *js_class_variables_code;
-  String *js_class_static_functions_code;
-  String *js_class_static_variables_code;
+    // dynamically filled code parts
 
-  String *js_ctor_wrappers;
-  String *js_ctor_dispatcher_code;
+    String *create_namespaces_code;
+    String *register_namespaces_code;
 
-  String *js_initializer_code;
+    String *js_class_functions_code;
+    String *js_class_variables_code;
+    String *js_class_static_functions_code;
+    String *js_class_static_variables_code;
+    
+    String *js_ctor_wrappers;
+    String *js_ctor_dispatcher_code;
 
-  // state variables
-  String *current_propertyname;
-  String *current_getter;
-  String *current_setter;
-  String *current_classname;
-  String *current_functionwrapper;
-  String *current_functionname;
+    String *js_initializer_code;
 
+    // state variables
+    String* current_propertyname;
+    String* current_getter;
+    String* current_setter;
+    String* current_classname;
+    String *current_functionwrapper;
+    String *current_functionname;
+
+    
 };
 
 } // namespace swig

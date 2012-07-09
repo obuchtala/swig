@@ -41,17 +41,17 @@ JSValueRef ${functionname}(JSContextRef context, JSObjectRef function, JSObjectR
 
 %fragment ("globaldefn", "templates")
 %{
-JSStaticValue global_values[] = {
+JSStaticValue ${namespace}_values[] = {
   ${jsglobalvariables}
   { 0, 0, 0, 0 }
 };
 
-JSStaticFunction global_functions[] = {
+JSStaticFunction ${namespace}_functions[] = {
   ${jsglobalfunctions}
   { 0, 0, 0 }
 };
 
-JSClassDefinition global_classDefinition;
+JSClassDefinition ${namespace}_classDefinition;
 %}
 
 %fragment ("classdefn", "templates")
@@ -134,21 +134,23 @@ JSObjectRef _wrap_create_${classname}${overloadext}(JSContextRef context, JSObje
 
 %fragment ("jsc_initializer", "templates") %{
 bool ${modulename}_initialize(JSGlobalContextRef context) {
-    JSObjectRef globalObject = JSContextGetGlobalObject(context);
+    JSObjectRef global_object = JSContextGetGlobalObject(context);
     
-    global_classDefinition.staticValues = global_values;
-    global_classDefinition.staticFunctions = global_functions;
-    jsc_registerClass(context, globalObject, "cvar", &global_classDefinition);
-    
+    /* Create objects for namespaces */
+    ${create_namespaces}
+
+    /* Create classes */
     ${initializercode}
+
+    /* Register namespaces */
+    ${register_namespaces}
 
     return true;
 }
 %}
 
 %fragment ("create_class_template", "templates")
-%{
-    ${classname}_classDefinition.staticFunctions = ${classname}_staticFunctions;
+%{  ${classname}_classDefinition.staticFunctions = ${classname}_staticFunctions;
     ${classname}_classDefinition.staticValues = ${classname}_staticValues;
     ${classname}_classDefinition.callAsConstructor = _wrap_create_${classname};
     ${classname}_objectDefinition.staticValues = ${classname}_values;
@@ -156,7 +158,17 @@ bool ${modulename}_initialize(JSGlobalContextRef context) {
     ${classname}_classRef = JSClassCreate(&${classname}_objectDefinition);%}
 
 %fragment ("register_class", "templates")
-%{jsc_registerClass(context, globalObject, "${classname}", &${classname_mangled}_classDefinition);%}
+%{jsc_registerClass(context, ${namespace}_object, "${classname}", &${classname_mangled}_classDefinition);%}
 
 %fragment ("jsc_register_global_function", "templates")
 %{jsc_registerFunction(${context}, ${context_object}, "${functionname}", ${functionwrapper});%}
+
+%fragment ("create_namespace", "templates")
+%{  ${namespace}_classDefinition.staticFunctions = ${namespace}_functions;
+    ${namespace}_classDefinition.staticValues = ${namespace}_values;
+    JSObjectRef ${namespace}_object = JSObjectMake(context, JSClassCreate(&${namespace}_classDefinition), NULL);
+%}
+
+%fragment ("register_namespace", "templates")
+%{ 
+jsc_registerNamespace(context, ${namespace}_object, ${parent_namespace}_object, "${namespace}"); %}

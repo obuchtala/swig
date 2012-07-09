@@ -2,11 +2,14 @@
 #include "swigmod.h"
 
 swig::JSCEmitter::JSCEmitter()
-:  JSEmitter(), NULL_STR(NewString("NULL")) {
+    : JSEmitter(),
+      NULL_STR(NewString("NULL"))
+{
 }
 
-swig::JSCEmitter::~JSCEmitter() {
-  Delete(NULL_STR);
+swig::JSCEmitter::~JSCEmitter()
+{
+    Delete(NULL_STR);
 }
 
 /* ---------------------------------------------------------------------
@@ -120,44 +123,54 @@ int swig::JSCEmitter::initialize(Node *n) {
   f_header = NewString("");
   f_wrappers = NewString("");
 
-  js_global_variables_code = NewString("");
-  js_global_functions_code = NewString("");
-  js_initializer_code = NewString("");
+    /* Initialization of members */
+    f_runtime = NewString("");
+    f_init = NewString("");
+    f_header = NewString("");
+    f_wrappers = NewString("");
 
-  /* Register file targets with the SWIG file handler */
-  Swig_register_filebyname("begin", f_wrap_cpp);
-  Swig_register_filebyname("header", f_header);
-  Swig_register_filebyname("wrapper", f_wrappers);
-  Swig_register_filebyname("runtime", f_runtime);
-  Swig_register_filebyname("init", f_init);
+    create_namespaces_code = NewString("");
+    register_namespaces_code = NewString("");
+    js_initializer_code = NewString("");
 
-  return SWIG_OK;
+    namespaces = NewHash();
+    Hash* global_namespace = createNamespaceEntry(Char(Getattr(n, "name")), "global");
+    Setattr(namespaces, "::", global_namespace);
+    current_namespace = global_namespace;
+
+    /* Register file targets with the SWIG file handler */
+    Swig_register_filebyname("begin", f_wrap_cpp);
+    Swig_register_filebyname("header", f_header);
+    Swig_register_filebyname("wrapper", f_wrappers);
+    Swig_register_filebyname("runtime", f_runtime);
+    Swig_register_filebyname("init", f_init);
+
+    return SWIG_OK;
 }
 
-int swig::JSCEmitter::dump(Node *n) {
-  /* Get the module name */
-  String *module = Getattr(n, "name");
+int swig::JSCEmitter::dump(Node *n)
+{
+     /* Get the module name */
+    String* module = Getattr(n,"name");
 
-  // write the swig banner
-  Swig_banner(f_wrap_cpp);
+    // write the swig banner
+    Swig_banner(f_wrap_cpp);
 
-  Printv(f_wrap_cpp, f_runtime, "\n", 0);
-  Printv(f_wrap_cpp, f_header, "\n", 0);
-  Printv(f_wrap_cpp, f_wrappers, "\n", 0);
+    Printv(f_wrap_cpp, f_runtime, "\n", 0);
+    Printv(f_wrap_cpp, f_header, "\n", 0);
+    Printv(f_wrap_cpp, f_wrappers, "\n", 0);
+    
+    emitNamespaces();
+    
+    // compose the initializer function using a template
+    Template initializer(getTemplate("jsc_initializer"));
+    initializer.replace("${modulename}",module)
+        .replace("${initializercode}",js_initializer_code)
+        .replace("${create_namespaces}", create_namespaces_code)
+        .replace("${register_namespaces}", register_namespaces_code);
+    Wrapper_pretty_print(initializer.str(), f_wrap_cpp);
 
-  // compose the initializer function using a template
-  Template globaldefinition(getTemplate("globaldefn"));
-  globaldefinition.replace("${jsglobalvariables}", js_global_variables_code)
-      .replace("${jsglobalfunctions}", js_global_functions_code);
-  Wrapper_pretty_print(globaldefinition.str(), f_wrap_cpp);
-
-
-  Template initializer(getTemplate("jsc_initializer"));
-  initializer.replace("${modulename}", module)
-      .replace("${initializercode}", js_initializer_code);
-  Wrapper_pretty_print(initializer.str(), f_wrap_cpp);
-
-  return SWIG_OK;
+    return SWIG_OK;
 }
 
 
@@ -168,15 +181,17 @@ int swig::JSCEmitter::close() {
   Delete(f_wrappers);
   Delete(f_init);
 
-  Delete(js_global_variables_code);
-  Delete(js_global_functions_code);
-  Delete(js_initializer_code);
+    Delete(create_namespaces_code);
+    Delete(register_namespaces_code);
+    Delete(js_initializer_code);
+    
+    Delete(namespaces);
 
-  /* files */
-  ::Close(f_wrap_cpp);
-  Delete(f_wrap_cpp);
-
-  return SWIG_OK;
+    /* files */
+    ::Close(f_wrap_cpp);
+    Delete(f_wrap_cpp);
+    
+    return SWIG_OK;
 }
 
 int swig::JSCEmitter::enterFunction(Node *n) {
@@ -190,15 +205,16 @@ int swig::JSCEmitter::exitFunction(Node *n) {
       .replace("${functionwrapper}", current_functionwrapper);
 
   if (GetFlag(n, "ismember")) {
+    
     if (Equal(Getattr(n, "storage"), "static")) {
       Printv(js_class_static_functions_code, t_function.str(), 0);
 
     } else {
-      Printv(js_class_functions_code, t_function.str(), 0);
+        Printv(js_class_functions_code, t_function.str(), 0);
     }
 
   } else {
-    Printv(js_global_functions_code, t_function.str(), 0);
+      Printv(Getattr(current_namespace, "functions"), t_function.str(), 0);
   }
 
   return SWIG_OK;
@@ -225,10 +241,10 @@ int swig::JSCEmitter::exitVariable(Node *n) {
        Printv(js_class_static_variables_code, t_variable.str(), 0);
 
     } else {
-      Printv(js_class_variables_code, t_variable.str(), 0);
+        Printv(js_class_variables_code, t_variable.str(), 0);
     }
-  }else {
-    Printv(js_global_variables_code, t_variable.str(), 0);
+  } else {
+       	Printv(Getattr(current_namespace, "values"), t_variable.str(), 0);
   }
 
   return SWIG_OK;
@@ -288,8 +304,10 @@ int swig::JSCEmitter::exitClass(Node *n) {
 
   /* adds a class registration statement to initializer function */
   Template t_registerclass(getTemplate("register_class"));
-  t_registerclass.replace("${classname}", current_classname);
-    t_registerclass.replace("${classname_mangled}", mangled_name);
+
+  t_registerclass.replace("${classname}", current_classname)
+    .replace("${classname_mangled}", mangled_name)
+    .replace("${namespace}", Getattr(current_namespace, "name"));
 
   Wrapper_pretty_print(t_registerclass.str(), js_initializer_code);
 
@@ -437,6 +455,100 @@ int swig::JSCEmitter::emitFunction(Node *n, bool is_member) {
   return SWIG_OK;
 }
 
-swig::JSEmitter *swig_javascript_create_JSC_emitter() {
-  return new swig::JSCEmitter();
+int swig::JSCEmitter::switchNamespace(Node *n)
+{
+    if(!GetFlag(n, "feature:nspace")) {
+        current_namespace = Getattr(namespaces, "::");
+    
+    } else {
+        
+        String* scope = Swig_scopename_prefix(Getattr(n, "name"));
+        
+        if (scope) {
+            // if the scope is not yet registered
+            // create all scopes/namespaces recursively
+            if(!Getattr(namespaces, scope)) {
+                createNamespace(scope);
+            }
+
+            current_namespace = Getattr(namespaces, scope);
+
+        } else {
+            current_namespace = Getattr(namespaces, "::");
+        }
+    }
+
+   return SWIG_OK;
+}
+
+int swig::JSCEmitter::createNamespace(String* scope) {
+
+    String* parent_scope = Swig_scopename_prefix(scope);
+
+    Hash* parent_namespace;
+    
+    if (parent_scope == 0) {
+        parent_namespace = Getattr(namespaces, "::");
+    } else if (!Getattr(namespaces, parent_scope)) {
+        createNamespace(parent_scope);
+        parent_namespace = Getattr(namespaces, parent_scope);
+    } else {
+        parent_namespace = Getattr(namespaces, parent_scope);
+    }
+    
+    assert(parent_namespace != 0);
+    
+    Hash* new_namespace = createNamespaceEntry(Char(scope), Char(Getattr(parent_namespace, "name")));
+    Setattr(namespaces, scope, new_namespace);
+
+    Delete(parent_scope);
+
+    return SWIG_OK;
+}
+
+ Hash* swig::JSCEmitter::createNamespaceEntry(const char* name, const char* parent)
+ {
+     Hash* entry = NewHash();
+     Setattr(entry, "name", NewString(name));
+     Setattr(entry, "parent", NewString(parent));
+     Setattr(entry, "functions", NewString(""));
+     Setattr(entry, "values", NewString(""));
+     
+     return entry;
+ }
+
+int swig::JSCEmitter::emitNamespaces()
+{
+    Iterator it;
+    for (it = First(namespaces); it.item; it= Next(it)) {
+        Hash* entry = it.item;
+        
+        String* name = Getattr(entry, "name");
+        String* parent = Getattr(entry, "parent");
+        String* functions = Getattr(entry, "functions");
+        String* variables = Getattr(entry, "values");
+
+        Template namespace_definition(getTemplate("globaldefn"));
+        namespace_definition.replace("${jsglobalvariables}", variables)
+            .replace("${jsglobalfunctions}", functions)
+            .replace("${namespace}", name);
+        Wrapper_pretty_print(namespace_definition.str(), f_wrap_cpp);
+        
+        Template t_createNamespace(getTemplate("create_namespace"));
+        t_createNamespace.replace("${namespace}", name);
+        Printv(create_namespaces_code, t_createNamespace.str(), 0);
+
+        Template t_registerNamespace(getTemplate("register_namespace"));
+        t_registerNamespace.replace("${namespace}", name)
+            .replace("${parent_namespace}", parent);    
+        Printv(register_namespaces_code, t_registerNamespace.str(), 0);
+    }
+
+    return SWIG_OK;
+}
+
+
+swig::JSEmitter* swig_javascript_create_JSC_emitter()
+{
+    return new swig::JSCEmitter();
 }

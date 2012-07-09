@@ -16,6 +16,21 @@ bool jsc_registerClass(JSGlobalContextRef& context, JSObjectRef& parentObject,
     return true;
 }
 
+bool jsc_registerNamespace(JSGlobalContextRef& context, 
+                           JSObjectRef& namespaceObj, JSObjectRef& parentNamespace,
+                           const char* name)
+{
+    JSStringRef js_name = JSStringCreateWithUTF8CString(name);
+    
+    JSObjectSetProperty(context, parentNamespace,
+                        js_name, namespaceObj,
+                        kJSPropertyAttributeNone, NULL);
+    JSStringRelease(js_name);
+    
+    return true;
+}
+
+
 bool jsc_registerFunction(JSGlobalContextRef context, JSObjectRef object, 
                         const char* functionName, JSObjectCallAsFunctionCallback callback)
 {

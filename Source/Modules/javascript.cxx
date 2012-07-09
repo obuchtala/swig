@@ -47,7 +47,8 @@ private:
 
 int JAVASCRIPT::functionWrapper(Node *n) {
 
-  Language::functionWrapper(n);
+  // note: the default implementation only prints a message
+  // Language::functionWrapper(n);
 
   emitter->emitWrapperFunction(n);
 
