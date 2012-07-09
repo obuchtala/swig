@@ -64,14 +64,14 @@ void swig::JSCEmitter::marshalInputArgs(ParmList *parms, Wrapper *wrapper, Marsh
       throw "Illegal state.";
     }
 
-    if ((tm = Getattr(p, "tmap:in")))   // Get typemap for this argument
+    tm = Getattr(p, "tmap:in"); // Get typemap for this argument
+    if ( tm != NULL )	
     {
       Replaceall(tm, "$input", arg);
       Setattr(p, "emit:input", arg);
       Printf(wrapper->code, "%s\n", tm);
     } else {
       Swig_warning(WARN_TYPEMAP_IN_UNDEF, input_file, line_number, "Unable to use type %s as a function argument.\n", SwigType_str(pt, 0));
-      p = nextSibling(p);
     }
     Delete(arg);
   }
