@@ -1,6 +1,6 @@
 %insert(runtime) %{
  
-bool jsc_registerClass(JSGlobalContextRef& context, JSObjectRef& parentObject,
+bool swigjsc_registerClass(JSGlobalContextRef& context, JSObjectRef& parentObject,
                              const char* className,
                              JSClassDefinition* definition) {
 
@@ -16,7 +16,7 @@ bool jsc_registerClass(JSGlobalContextRef& context, JSObjectRef& parentObject,
     return true;
 }
 
-bool jsc_registerNamespace(JSGlobalContextRef& context, 
+bool swigjsc_registerNamespace(JSGlobalContextRef& context, 
                            JSObjectRef& namespaceObj, JSObjectRef& parentNamespace,
                            const char* name)
 {
@@ -31,7 +31,7 @@ bool jsc_registerNamespace(JSGlobalContextRef& context,
 }
 
 
-bool jsc_registerFunction(JSGlobalContextRef context, JSObjectRef object, 
+bool swigjsc_registerFunction(JSGlobalContextRef context, JSObjectRef object, 
                         const char* functionName, JSObjectCallAsFunctionCallback callback)
 {
     JSStringRef js_functionName = JSStringCreateWithUTF8CString(functionName);

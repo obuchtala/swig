@@ -8,7 +8,7 @@ using namespace std;
 
 static JSValueRef jsc_printstring(JSContextRef context,JSObjectRef object, JSObjectRef globalobj, size_t argc, const JSValueRef	args[], JSValueRef* ex);
 static char* jsccreateStringWithContentsOfFile(const char* fileName);
-bool jsc_registerFunction(JSGlobalContextRef context, JSObjectRef object, const char* FunctionName,JSObjectCallAsFunctionCallback cbFunction);
+bool swigjsc_registerFunction(JSGlobalContextRef context, JSObjectRef object, const char* FunctionName,JSObjectCallAsFunctionCallback cbFunction);
 
 extern int example_initialize(JSGlobalContextRef context);
 
@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
     JSGlobalContextRef context = JSGlobalContextCreate(NULL);
     JSObjectRef globalObject = JSContextGetGlobalObject(context);
 
-    jsc_registerFunction(context, globalObject, "print", jsc_printstring); // Utility print function
+    swigjsc_registerFunction(context, globalObject, "print", jsc_printstring); // Utility print function
     
     
     // Call the initializer
