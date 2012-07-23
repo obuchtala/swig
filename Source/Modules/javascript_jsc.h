@@ -3,8 +3,6 @@
 
 #include "javascript_emitter.h"
 
-namespace swig {
-
   class JSCEmitter:public JSEmitter {
 
   private:
@@ -115,8 +113,6 @@ private:
 
     String *current_functionwrapper;
     String *current_functionname;
-
   };
 
-}                               // namespace swig
 #endif                          // JAVASCRIPT_JSC_H

@@ -6,7 +6,7 @@
  * JSEmitter()
  * ----------------------------------------------------------------------------- */
 
-swig::JSEmitter::JSEmitter()
+JSEmitter::JSEmitter()
 :  empty_string(NewString("")), debug(false) {
   templates = NewHash();
 }
@@ -15,24 +15,24 @@ swig::JSEmitter::JSEmitter()
  * ~JSEmitter()
  * ----------------------------------------------------------------------------- */
 
-swig::JSEmitter::~JSEmitter() {
+JSEmitter::~JSEmitter() {
   Delete(empty_string);
   Delete(templates);
 }
 
 /* -----------------------------------------------------------------------------
- * swig::JSEmitter::RegisterTemplate() :  Registers a code template
+ * JSEmitter::RegisterTemplate() :  Registers a code template
  * ----------------------------------------------------------------------------- */
 
-int swig::JSEmitter::registerTemplate(const String *name, const String *code) {
+int JSEmitter::registerTemplate(const String *name, const String *code) {
   return Setattr(templates, name, code);
 }
 
 /* -----------------------------------------------------------------------------
- * swig::JSEmitter::GetTemplate() :  Retrieves a registered a code template
+ * JSEmitter::GetTemplate() :  Retrieves a registered a code template
  * ----------------------------------------------------------------------------- */
 
-swig::Template swig::JSEmitter::getTemplate(const String *name) {
+Template JSEmitter::getTemplate(const String *name) {
   String *templ = Getattr(templates, name);
 
   if (!templ) {
@@ -45,13 +45,13 @@ swig::Template swig::JSEmitter::getTemplate(const String *name) {
   return t;
 }
 
-void swig::JSEmitter::enableDebug() {
+void JSEmitter::enableDebug() {
   debug = true;
 }
 
 
 /* -----------------------------------------------------------------------------
- * swig::JSEmitter::typemapLookup()
+ * JSEmitter::typemapLookup()
  * 
  *  n - for input only and must contain info for Getfile(n) and Getline(n) to work
  *  tmap_method - typemap method name
@@ -62,7 +62,7 @@ void swig::JSEmitter::enableDebug() {
  * return is never NULL, unlike Swig_typemap_lookup()
  * ----------------------------------------------------------------------------- */
 
-const String *swig::JSEmitter::typemapLookup(Node *n, const_String_or_char_ptr tmap_method, SwigType *type, int warning, Node *typemap_attributes) {
+const String *JSEmitter::typemapLookup(Node *n, const_String_or_char_ptr tmap_method, SwigType *type, int warning, Node *typemap_attributes) {
   Node *node = !typemap_attributes ? NewHash() : typemap_attributes;
   Setattr(node, "type", type);
   Setfile(node, Getfile(n));
@@ -81,10 +81,10 @@ const String *swig::JSEmitter::typemapLookup(Node *n, const_String_or_char_ptr t
 }
 
 /* -----------------------------------------------------------------------------
- * swig::JSEmitter::getBaseClass() :  the node of the base class or NULL
+ * JSEmitter::getBaseClass() :  the node of the base class or NULL
  * ----------------------------------------------------------------------------- */
 
-Node *swig::JSEmitter::getBaseClass(Node *n) {
+Node *JSEmitter::getBaseClass(Node *n) {
   // retrieve the first base class that is not %ignored
   List *baselist = Getattr(n, "bases");
   if (baselist) {
@@ -100,10 +100,10 @@ Node *swig::JSEmitter::getBaseClass(Node *n) {
 }
 
  /* -----------------------------------------------------------------------------
-  * swig::JSEmitter::emitWrapperFunction() :  dispatches emitter functions
+  * JSEmitter::emitWrapperFunction() :  dispatches emitter functions
   * ----------------------------------------------------------------------------- */
 
-int swig::JSEmitter::emitWrapperFunction(Node *n) {
+int JSEmitter::emitWrapperFunction(Node *n) {
   int ret = SWIG_OK;
 
   current_wrapper = NewWrapper();
@@ -172,19 +172,19 @@ int __swigjs_str_ends_with(const char *str, const char *suffix) {
 
 
 /* -----------------------------------------------------------------------------
- * swig::JSEmitter::isSetterMethod() :  helper to check if a method is a setter function
+ * JSEmitter::isSetterMethod() :  helper to check if a method is a setter function
  * ----------------------------------------------------------------------------- */
 
-bool swig::JSEmitter::isSetterMethod(Node *n) {
+bool JSEmitter::isSetterMethod(Node *n) {
   String *symname = Getattr(n, "sym:name");
   return (__swigjs_str_ends_with((char *) Data(symname), "_set") != 0);
 }
 
 /* -----------------------------------------------------------------------------
- * swig::Template::Template() :  creates a Template class for given template code
+ * Template::Template() :  creates a Template class for given template code
  * ----------------------------------------------------------------------------- */
 
-swig::Template::Template(const String *code_) {
+Template::Template(const String *code_) {
 
   if (!code_) {
     Printf(stdout, "Template code was null. Illegal input for template.");
@@ -195,7 +195,7 @@ swig::Template::Template(const String *code_) {
   templateName = NewString("");
 }
 
-swig::Template::Template(const String *code_, const String *templateName_, bool debug_) {
+Template::Template(const String *code_, const String *templateName_, bool debug_) {
 
   if (!code_) {
     Printf(stdout, "Template code was null. Illegal input for template.");
@@ -209,19 +209,19 @@ swig::Template::Template(const String *code_, const String *templateName_, bool 
 
 
 /* -----------------------------------------------------------------------------
- * swig::Template::~Template() :  cleans up of Template.
+ * Template::~Template() :  cleans up of Template.
  * ----------------------------------------------------------------------------- */
 
-swig::Template::~Template() {
+Template::~Template() {
   Delete(code);
   Delete(templateName);
 }
 
 /* -----------------------------------------------------------------------------
- * String* swig::Template::str() :  retrieves the current content of the template.
+ * String* Template::str() :  retrieves the current content of the template.
  * ----------------------------------------------------------------------------- */
 
-String *swig::Template::str() {
+String *Template::str() {
   if (debug) {
     String *pre_code = NewString("");
     String *post_code = NewString("");
@@ -240,7 +240,7 @@ String *swig::Template::str() {
 }
 
 /* -----------------------------------------------------------------------------
- * Template&  swig::Template::replace(const String* pattern, const String* repl) :
+ * Template&  Template::replace(const String* pattern, const String* repl) :
  * 
  *  replaces all occurances of a given pattern with a given replacement.
  * 
@@ -249,7 +249,7 @@ String *swig::Template::str() {
  *  - returns a reference to the Template to allow chaining of methods.
  * ----------------------------------------------------------------------------- */
 
-swig::Template & swig::Template::replace(const String *pattern, const String *repl) {
+Template & Template::replace(const String *pattern, const String *repl) {
   ::Replaceall(code, pattern, repl);
   return *this;
 }

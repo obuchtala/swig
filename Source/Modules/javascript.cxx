@@ -6,7 +6,7 @@
 
 #include "javascript_emitter.h"
 
-extern swig::JSEmitter * swig_javascript_create_JSC_emitter();
+extern JSEmitter * swig_javascript_create_JSC_emitter();
 
 /* ********************************************************************
  * JAVASCRIPT
@@ -38,7 +38,7 @@ public:
 
 private:
 
-  swig::JSEmitter * emitter;
+  JSEmitter * emitter;
 };
 
 /* ---------------------------------------------------------------------
@@ -216,15 +216,15 @@ void JAVASCRIPT::main(int argc, char *argv[]) {
     if (argv[i]) {
       if (strcmp(argv[i], "-v8") == 0) {
         Swig_mark_arg(i);
-        mode = swig::JSEmitter::V8;
+        mode = JSEmitter::V8;
         SWIG_library_directory("javascript/v8");
       } else if (strcmp(argv[i], "-jsc") == 0) {
         Swig_mark_arg(i);
-        mode = swig::JSEmitter::JavascriptCore;
+        mode = JSEmitter::JavascriptCore;
         SWIG_library_directory("javascript/jsc");
       } else if (strcmp(argv[i], "-qt") == 0) {
         Swig_mark_arg(i);
-        mode = swig::JSEmitter::QtScript;
+        mode = JSEmitter::QtScript;
         SWIG_library_directory("javascript/qt");
       } else if (strcmp(argv[i], "-debug-templates") == 0) {
         Swig_mark_arg(i);
@@ -234,17 +234,17 @@ void JAVASCRIPT::main(int argc, char *argv[]) {
   }
 
   switch (mode) {
-  case swig::JSEmitter::V8:
+  case JSEmitter::V8:
     {
       // TODO: emitter = create_v8_emitter();
       break;
     }
-  case swig::JSEmitter::JavascriptCore:
+  case JSEmitter::JavascriptCore:
     {
       emitter = swig_javascript_create_JSC_emitter();
       break;
     }
-  case swig::JSEmitter::QtScript:
+  case JSEmitter::QtScript:
     {
       // TODO: emitter = create_qtscript_emitter();
       break;

@@ -3,8 +3,6 @@
 
 #include "swigmod.h"
 
-namespace swig {
-
 /**
  *  A class that wraps a code snippet used as template for code generation.
  */
@@ -166,6 +164,5 @@ namespace swig {
     bool debug;
   };
 
-}                               // namespace swig
 
 #endif                          // JAVASCRIPT_EMITTER_H

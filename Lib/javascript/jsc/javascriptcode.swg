@@ -4,7 +4,7 @@
   *{CODE}: contains input marshalling, and the action
 *********************************************************************/
 
-%fragment ("getproperty", "templates")
+%fragment ("JS_getproperty", "templates")
 %{
 JSValueRef ${getname}(JSContextRef context, JSObjectRef thisObject, JSStringRef propertyName, JSValueRef* exception)
 {
@@ -20,7 +20,7 @@ JSValueRef ${getname}(JSContextRef context, JSObjectRef thisObject, JSStringRef 
   *{CODE}: contains input marshalling, and the action
 **********************************************************************/
 
-%fragment ("setproperty", "templates")
+%fragment ("JS_setproperty", "templates")
 %{
 bool ${setname}(JSContextRef context, JSObjectRef thisObject, JSStringRef propertyName, JSValueRef value, JSValueRef* exception)
 {
@@ -34,7 +34,7 @@ bool ${setname}(JSContextRef context, JSObjectRef thisObject, JSStringRef proper
   *{LOCALS}: declarations for input arguments
   *{CODE} contains input marshalling, and the action
 ************************************************************************************/
-%fragment ("functionwrapper", "templates")
+%fragment ("JS_functionwrapper", "templates")
 %{
 JSValueRef ${functionname}(JSContextRef context, JSObjectRef function, JSObjectRef thisObject, size_t argc, const JSValueRef argv[], JSValueRef* exception)
 {
@@ -48,12 +48,12 @@ JSValueRef ${functionname}(JSContextRef context, JSObjectRef function, JSObjectR
 function_dispatch_case: This template is used for the function which is overloaded  
 ***************************************************************************************/
 
-%fragment ("function_dispatch_case", "templates")
+%fragment ("JS_function_dispatch_case", "templates")
 %{if(argc == ${argcount}) {
     jsresult = ${functionwrapper}(context, function, thisObject, argc, argv, exception);
   } else %}
 
-%fragment ("function_dispatch_case_default", "templates")
+%fragment ("JS_function_dispatch_case_default", "templates")
 %{
   {
     // TODO: throw JS exception
@@ -63,16 +63,16 @@ function_dispatch_case: This template is used for the function which is overload
 
 /* Added template for function declaration */
 
-%fragment ("variabledecl", "templates")
+%fragment ("JS_variabledecl", "templates")
 %{{"${propertyname}",${getname}, ${setname},kJSPropertyAttributeNone},%}
 
 
 /* Added template for function declaration */
 
-%fragment ("functiondecl", "templates")
+%fragment ("JS_functiondecl", "templates")
 %{{"${functionname}",${functionwrapper}, kJSPropertyAttributeNone},%}
 
-%fragment ("globaldefn", "templates")
+%fragment ("JS_globaldefn", "templates")
 %{
 JSStaticValue ${namespace}_values[] = {
   ${jsglobalvariables}
@@ -93,7 +93,7 @@ JSClassDefinition ${namespace}_classDefinition;
  * ${classname_mangled}:the mangled name of the qualified class name, e.g., foo::A -> foo_A
  *****************************************************************************************/
 
-%fragment ("class_definition", "templates")
+%fragment ("JS_class_definition", "templates")
 %{
 JSClassDefinition ${classname_mangled}_classDefinition;
 
@@ -108,7 +108,7 @@ JSClassRef ${classname_mangled}_classRef;
  * ${classname_mangled}: The mangled name of the qualified class name, e.g., foo::A -> foo_A
 ***********************************************************************/
 
-%fragment ("class_tables", "templates")
+%fragment ("JS_class_tables", "templates")
 %{
 JSStaticValue ${classname_mangled}_staticValues[] = {
   ${jsstaticclassvariables}
@@ -137,7 +137,7 @@ JSStaticFunction ${classname_mangled}_functions[] = {
  * ${classname_mangled}: The mangled name of the qualified class name, e.g., foo::A -> foo_A
 ***********************************************************************/
 
-%fragment ("destructordefn", "templates")
+%fragment ("JS_destructordefn", "templates")
 %{
 void _wrap_${classname_mangled}_finalize(JSObjectRef thisObject)
 {
@@ -154,7 +154,7 @@ void _wrap_${classname_mangled}_finalize(JSObjectRef thisObject)
 ***********************************************************************/
 
 
-%fragment ("mainctordefn", "templates")
+%fragment ("JS_mainctordefn", "templates")
 %{
 JSObjectRef _wrap_create_${classname_mangled}(JSContextRef context, JSObjectRef ctorObject,
     size_t argc, const JSValueRef argv[], JSValueRef* exception)
@@ -175,13 +175,13 @@ JSObjectRef _wrap_create_${classname_mangled}(JSContextRef context, JSObjectRef 
 ctor_dispatch_case: This template is used for the constructor which is overloaded  
 ***************************************************************************************/
 
-%fragment ("ctor_dispatch_case", "templates")
+%fragment ("JS_ctor_dispatch_case", "templates")
 %{if(argc == ${argcount}) {
     thisObject = _wrap_create_${classname_mangled}${overloadext}(context, thisObject, argc, argv, exception);
   } else %}
   
   
-%fragment ("ctordefn", "templates")
+%fragment ("JS_ctordefn", "templates")
 %{
 JSObjectRef _wrap_create_${classname_mangled}${overloadext}(JSContextRef context, JSObjectRef thisObject, size_t argc, const JSValueRef argv[], JSValueRef* exception)
 {
@@ -201,7 +201,7 @@ JSObjectRef _wrap_create_${classname_mangled}${overloadext}(JSContextRef context
 initializer:This template is dynamic growing and aggregates everything 
 **********************************************************************/
 
-%fragment ("initializer", "templates") %{
+%fragment ("JS_initializer", "templates") %{
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -238,7 +238,7 @@ bool ${modulename}_initialize(JSGlobalContextRef context) {
   *${classname_mangled}:  The mangled name of the qualified class name, e.g., foo::A -> foo_A
 *****************************************************************************************/
 
-%fragment ("create_class_template", "templates")
+%fragment ("JS_create_class_template", "templates")
 %{ ${classname_mangled}_classDefinition.staticFunctions = ${classname_mangled}_staticFunctions;
     ${classname_mangled}_classDefinition.staticValues = ${classname_mangled}_staticValues;
     ${classname_mangled}_classDefinition.callAsConstructor = _wrap_create_${classname_mangled};
@@ -254,24 +254,24 @@ bool ${modulename}_initialize(JSGlobalContextRef context) {
   *${classname_mangled}:  The mangled name of the qualified class name, e.g., foo::A -> foo_A
 *****************************************************************************************/
 
-%fragment ("register_class", "templates")
-%{swigjsc_registerClass(context, ${namespace_mangled}_object, "${classname}", &${classname_mangled}_classDefinition);%}
+%fragment ("JS_register_class", "templates")
+%{JS_registerClass(context, ${namespace_mangled}_object, "${classname}", &${classname_mangled}_classDefinition);%}
 
 /* register global function */
-%fragment ("register_global_function", "templates")
-%{swigjsc_registerFunction(${context}, ${context_object}, "${functionname}", ${functionwrapper});%}
+%fragment ("JS_register_global_function", "templates")
+%{JS_registerFunction(${context}, ${context_object}, "${functionname}", ${functionwrapper});%}
 
 
 /* create and register namespaces */
 
-%fragment ("create_namespace", "templates")
+%fragment ("JS_create_namespace", "templates")
 %{ ${namespace}_classDefinition.staticFunctions = ${namespace}_functions;
     ${namespace}_classDefinition.staticValues = ${namespace}_values;
     JSObjectRef ${namespace}_object = JSObjectMake(context, JSClassCreate(&${namespace}_classDefinition), NULL);
 %}
 
-%fragment ("register_namespace", "templates")
+%fragment ("JS_register_namespace", "templates")
 %{
-swigjsc_registerNamespace(context, ${namespace_mangled}_object, ${parent_namespace}_object, "${namespace}"); %}
+JS_registerNamespace(context, ${namespace_mangled}_object, ${parent_namespace}_object, "${namespace}"); %}
 
 
