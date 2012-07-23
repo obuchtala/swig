@@ -347,7 +347,7 @@ int swig::JSCEmitter::exitClass(Node *n) {
   Template t_registerclass(getTemplate("register_class"));
   t_registerclass.replace("${classname}", current_classname)
     .replace("${classname_mangled}", current_classname_mangled)
-    .replace("${namespace}", Getattr(current_namespace, "name"));
+    .replace("${namespace_mangled}", Getattr(current_namespace, "name_mangled"));
   Wrapper_pretty_print(t_registerclass.str(), initializer_code);
   
     /* clean up all DOHs */
@@ -648,10 +648,14 @@ int swig::JSCEmitter::createNamespace(String *scope) {
 
 Hash *swig::JSCEmitter::createNamespaceEntry(const char *name, const char *parent) {
   Hash *entry = NewHash();
-  Setattr(entry, "name", NewString(name));
+  String *_name = NewString(name);
+  Setattr(entry, "name", Swig_scopename_last(_name));
+  Setattr(entry, "name_mangled", Swig_name_mangle(_name));
   Setattr(entry, "parent", NewString(parent));
   Setattr(entry, "functions", NewString(""));
   Setattr(entry, "values", NewString(""));
+
+  Delete(_name);
 
   return entry;
 }
@@ -665,20 +669,23 @@ int swig::JSCEmitter::emitNamespaces() {
     String *parent = Getattr(entry, "parent");
     String *functions = Getattr(entry, "functions");
     String *variables = Getattr(entry, "values");
+    String *name_mangled = Getattr(entry, "name_mangled");
+    String *parent_mangled = Swig_name_mangle(parent);
 
     Template namespace_definition(getTemplate("globaldefn"));
     namespace_definition.replace("${jsglobalvariables}", variables)
         .replace("${jsglobalfunctions}", functions)
-        .replace("${namespace}", name);
+        .replace("${namespace}", name_mangled);
     Wrapper_pretty_print(namespace_definition.str(), f_wrap_cpp);
 
     Template t_createNamespace(getTemplate("create_namespace"));
-    t_createNamespace.replace("${namespace}", name);
+    t_createNamespace.replace("${namespace}", name_mangled);
     Printv(create_namespaces_code, t_createNamespace.str(), 0);
 
     Template t_registerNamespace(getTemplate("register_namespace"));
-    t_registerNamespace.replace("${namespace}", name)
-        .replace("${parent_namespace}", parent);
+    t_registerNamespace.replace("${namespace_mangled}", name_mangled)
+        .replace("${namespace}", name)
+        .replace("${parent_namespace}", parent_mangled);
     Printv(register_namespaces_code, t_registerNamespace.str(), 0);
   }
 

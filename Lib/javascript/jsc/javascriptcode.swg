@@ -246,7 +246,7 @@ bool ${modulename}_initialize(JSGlobalContextRef context) {
 *****************************************************************************************/
 
 %fragment ("register_class", "templates")
-%{swigjsc_registerClass(context, ${namespace}_object, "${classname}", &${classname_mangled}_classDefinition);%}
+%{swigjsc_registerClass(context, ${namespace_mangled}_object, "${classname}", &${classname_mangled}_classDefinition);%}
 
 /* register global function */
 %fragment ("register_global_function", "templates")
@@ -263,6 +263,6 @@ bool ${modulename}_initialize(JSGlobalContextRef context) {
 
 %fragment ("register_namespace", "templates")
 %{
-swigjsc_registerNamespace(context, ${namespace}_object, ${parent_namespace}_object, "${namespace}"); %}
+swigjsc_registerNamespace(context, ${namespace_mangled}_object, ${parent_namespace}_object, "${namespace}"); %}
 
 
