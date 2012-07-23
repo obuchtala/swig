@@ -548,12 +548,17 @@ javascript_cpp: $(SRCS)
 	$(JSCXXSHARED) $(CCSHARED) $(CFLAGS) $(OBJS) $(IOBJS) $(JS_DLNK) $(LIBS) $(CPP_DLLIBS) -o $(JS_LIBPREFIX)$(TARGET)$(JSSO)
 
 # ----------------------------------------------------------------
-# Compile runme.cxx files and run
+# Compile a javascript executable 
+# ----------------------------------------------------------------
+javascript_exe: $(SRCS)
+	$(CXX) $(CXXFLAGS) $(JS_INCLUDE) $(JSCXXSRCS) $(LIBS) $(JS_DLNK) -L. $(JS_LIBPREFIX)$(TARGET)$(JSSO) -g -o $(JAVASCRIPT_EXE)
+
+# ----------------------------------------------------------------
+# Run the Compile a javascript executable 
 # ----------------------------------------------------------------
 
 javascript_run: $(SRCS)
-	$(CXX) $(JS_INCLUDE) $(JSCXXSRCS) $(LIBS) $(JS_DLNK) -L. $(JS_LIBPREFIX)$(TARGET)$(JSSO) -o runme
-	env LD_LIBRARY_PATH=.:$$LD_LIBRARY_PATH ./runme
+	env LD_LIBRARY_PATH=.:$$LD_LIBRARY_PATH $(JAVASCRIPT_EXE) -l $(JAVASCRIPT_MODULE) $(JS_SCRIPT)
 
 # -----------------------------------------------------------------
 # Cleaning the javascript examples
