@@ -53,7 +53,7 @@
 
     virtual int emitSetter(Node *n, bool is_member);
 
-    void marshalInputArgs(ParmList *parms, Wrapper *wrapper, MarshallingMode mode, bool is_member);
+    void marshalInputArgs(ParmList *parms, Wrapper *wrapper, MarshallingMode mode, bool is_member, bool is_static = false);
 
     void marshalOutput(Node *n, String *actioncode, Wrapper *wrapper);
 

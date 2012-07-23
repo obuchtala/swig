@@ -28,12 +28,12 @@ Parm *JSCEmitter::skipIgnoredArgs(Parm *p) {
  * supplied typemaps.
  * --------------------------------------------------------------------- */
 
-void JSCEmitter::marshalInputArgs(ParmList *parms, Wrapper *wrapper, MarshallingMode mode, bool is_member) {
+void JSCEmitter::marshalInputArgs(ParmList *parms, Wrapper *wrapper, MarshallingMode mode, bool is_member, bool is_static) {
   String *tm;
   Parm *p;
 
   int startIdx = 0;
-  if (is_member)
+  if (is_member && !is_static)
     startIdx = 1;
   
 
@@ -45,7 +45,7 @@ void JSCEmitter::marshalInputArgs(ParmList *parms, Wrapper *wrapper, Marshalling
     switch (mode) {
     case Getter:
     case Function:
-      if (is_member && i == 0) {
+      if (is_member && !is_static && i == 0) {
         Printv(arg, "thisObject", 0);
       } else {
         Printf(arg, "argv[%d]", i - startIdx);
@@ -53,14 +53,14 @@ void JSCEmitter::marshalInputArgs(ParmList *parms, Wrapper *wrapper, Marshalling
 
       break;
     case Setter:
-      if (is_member && i == 0) {
+      if (is_member && !is_static && i == 0) {
         Printv(arg, "thisObject", 0);
       } else {
         Printv(arg, "value", 0);
-      }
+      } 
       break;
     case Ctor:
-      Printf(arg, "argv[%d]", i);
+      Printf(arg, "argv[%d]");
       break;
     default:
       throw "Illegal state.";
@@ -428,6 +428,7 @@ int JSCEmitter::emitDtor(Node *) {
 
 int JSCEmitter::emitGetter(Node *n, bool is_member) {
   Template t_getter(getTemplate("JS_getproperty"));
+  bool is_static = Equal(Getattr(n, "storage"), "static");
 
   String *name = Getattr(n, "wrap:name");
   String *wrap_name = Swig_name_wrapper(name);
@@ -454,6 +455,7 @@ int JSCEmitter::emitGetter(Node *n, bool is_member) {
 
 int JSCEmitter::emitSetter(Node *n, bool is_member) {
   Template t_setter(getTemplate("JS_setproperty"));
+  bool is_static = Equal(Getattr(n, "storage"), "static");
 
   String *name = Getattr(n, "wrap:name");
   String *wrap_name = Swig_name_wrapper(name);
@@ -529,6 +531,7 @@ int JSCEmitter::emitConstant(Node *n) {
 
 int JSCEmitter::emitFunction(Node *n, bool is_member) {
   Template t_function(getTemplate("JS_functionwrapper"));
+  bool is_static = Equal(Getattr(n, "storage"), "static");
 
   bool is_overloaded = GetFlag(n, "sym:overloaded");
   String *name = Getattr(n, "sym:name");
