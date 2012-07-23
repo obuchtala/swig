@@ -4,6 +4,7 @@ import itertools
 import re
 
 log_file = None
+GDB_FLATTENED_CHILDREN_WORKAROUND = False
 
 def print_(msg):
     global log_file;
@@ -235,6 +236,25 @@ class SwigHashIterator:
     self.is_first = True
     raise StopIteration      
 
+class AlternateKeyValueIterator():
+
+  def __init__(self, iterable):
+    self.it = iterable.__iter__()
+    self._next = None
+
+  def __iter__(self):
+    return self
+
+  def next(self):
+    if self._next == None:
+      key, value = self.it.next()
+      self._next = value
+      return ("", key)
+    else:
+      value = self._next
+      self._next = None
+      return ("", value)
+
 class NopIterator:
   
   def __init__(self):
@@ -266,6 +286,7 @@ class SwigHashPrinter:
     return str(self.typename)
         
   def children(self):
+    global GDB_FLATTENED_CHILDREN_WORKAROUND
     
     if not self.valid:
       print_("SwigHashPrinter: Invalid state.\n")
@@ -273,6 +294,8 @@ class SwigHashPrinter:
     
     try:
       it = SwigHashIterator(self.val)
+      if GDB_FLATTENED_CHILDREN_WORKAROUND:
+        return AlternateKeyValueIterator(it)
       return it
     except Exception as err:
       print_("SwigHashPrinter: Error during creation of children iterator. \n %s \n" %(str(err)))
@@ -337,5 +360,9 @@ def build_swig_printer():
     swig_printer.add('Hash *', SwigHashPrinter)
     swig_printer.add('Node *', SwigHashPrinter)
     print_("Loaded swig printers\n");
+
+def enableGdbPrintWorkaround():
+  global GDB_FLATTENED_CHILDREN_WORKAROUND
+  GDB_FLATTENED_CHILDREN_WORKAROUND = True
 
 build_swig_printer()
