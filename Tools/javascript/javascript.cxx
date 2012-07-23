@@ -20,6 +20,8 @@ bool jsc_registerFunction(JSGlobalContextRef context, JSObjectRef object, const 
 typedef void* HANDLE;
 typedef int (*JSCIntializer)(JSGlobalContextRef context);
 
+void jsc_printError(JSContextRef, JSValueRef, const std::string&);
+
 void print_usage() {
     std::cout << "javascript [-l module] <js-file>" << std::endl;
 }
@@ -84,43 +86,35 @@ int main(int argc, char* argv[]) {
       it != module_initializers.end(); ++it) {
         JSCIntializer init_function = *it;
         init_function(context);
-        // TODO: check return value
     }
     
     // Evaluate the javascript
-    char*	szString = jsccreateStringWithContentsOfFile(scriptPath.c_str());
-    JSStringRef Script;
+    char*	scriptContent = jsccreateStringWithContentsOfFile(scriptPath.c_str());
+    JSStringRef jsScript;
     
-    if(!szString) {
+    if(!scriptContent) {
         printf("FAIL: runme script could not be loaded.\n");
         failed = 1;
     }
     else {
-        Script = JSStringCreateWithUTF8CString(szString);
-        
         JSValueRef ex;
-        JSValueRef Result = JSEvaluateScript(context,Script,NULL,NULL,0,&ex);
+        jsScript = JSStringCreateWithUTF8CString(scriptContent);
+        JSValueRef jsResult = JSEvaluateScript(context, jsScript, 0, 0, 0, &ex);
         
-        if (Result) 
-            printf("runme.js executed successfully\n");
-        
-        else {
-            printf("exception encountered in the script\n");
-            JSStringRef exIString;
-            exIString = JSValueToStringCopy(context, ex, NULL);
-            char stringUTF8[256];
-            JSStringGetUTF8CString(exIString, stringUTF8, 256);
-            printf(":%s\n",stringUTF8);
-            JSStringRelease(exIString);
+        if (!jsResult && ex) {
+            jsc_printError(context, ex, scriptPath);
             failed = 1;
         }
     }
-    if (szString != NULL)
-        free(szString);
-    
-    JSStringRelease(Script);
-    globalObject = 0;
+
+    if (scriptContent != NULL) {
+        free(scriptContent);
+    }
+        
+    JSStringRelease(jsScript);
+
     JSGlobalContextRelease(context);
+    globalObject = 0;
 
     for(std::vector<HANDLE>::iterator it = loaded_modules.begin();
       it != loaded_modules.end(); ++it) {
@@ -132,7 +126,8 @@ int main(int argc, char* argv[]) {
         printf("FAIL: Some tests failed.\n");
         return 1;
     }
-}    
+}
+
 static JSValueRef jsc_printstring(JSContextRef context,JSObjectRef object, JSObjectRef globalobj, size_t argc, const JSValueRef	args[], JSValueRef* ex)
 {
 	if (argc > 0)
@@ -187,4 +182,33 @@ bool jsc_registerFunction(JSGlobalContextRef context, JSObjectRef object,
                         kJSPropertyAttributeNone, NULL);
     JSStringRelease(js_functionName);
     return true;
+}
+
+void jsc_printError(JSContextRef ctx, JSValueRef err, const std::string& sourceUrl)
+{
+  char *buffer;
+    
+  JSStringRef string = JSValueToStringCopy(ctx, err, 0);
+  size_t length = JSStringGetLength(string);
+  
+  buffer   = (char*) malloc(length+1);
+  JSStringGetUTF8CString(string, buffer, length+1);
+  std::string errMsg(buffer);
+  JSStringRelease(string);
+  free(buffer);
+
+  JSObjectRef errObj = JSValueToObject(ctx, err, 0);
+  
+  if(errObj == 0) {
+    return;
+  }
+  // Note: usually you would also retrieve the property "sourceURL"
+  //       though, it happened that this was always ""
+  JSStringRef lineKey = JSStringCreateWithUTF8CString("line");
+  JSValueRef jsLine = JSObjectGetProperty(ctx, errObj, lineKey, 0);
+  int line = (int) JSValueToNumber(ctx, jsLine, 0);  
+  JSStringRelease(lineKey);
+
+  std::cerr << sourceUrl << ":" << line << ":" << errMsg << std::endl;
+    
 }
