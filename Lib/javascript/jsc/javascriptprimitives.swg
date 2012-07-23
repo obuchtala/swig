@@ -222,17 +222,9 @@
  // DEBUG: JSObjectMake - case 4
  $result = JSObjectMake(context, _SwigObject_classRef, privatedata);
 %}
-
 %typemap(arginit) SWIGTYPE *
 %{
- // Sanity check if the call is not on the global object
- if (!JSValueIsEqual(context,
-                   JSValueToObject(context,thisObject,NULL),
-                     JSValueToObject(context,JSContextGetGlobalObject(context), NULL),
-                   NULL)) {
-   SWIG_PRV_DATA* $1_swigprivatedata = (SWIG_PRV_DATA*)JSObjectGetPrivate(thisObject);
-   $1 = ($1_ltype)$1_swigprivatedata->swigCObject;
- }
+ // TODO: arginit SWIGTYPE*
 %}
 
 %typemap(in) SWIGTYPE (CLASS::*)
