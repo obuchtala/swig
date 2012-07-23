@@ -25,6 +25,7 @@ TARGET     =
 CC         = @CC@
 CXX        = @CXX@
 CFLAGS     = @PLATFLAGS@
+
 prefix     = @prefix@
 exec_prefix= @exec_prefix@
 SRCS       =
@@ -528,6 +529,7 @@ JSSO =@JSCORESO@
 JSLDSHARED = @JSCORELDSHARED@
 JSCXXSHARED = @JSCORECXXSHARED@
 JSCFLAGS = @JSCORECFLAGS@
+JSCXXFLAGS = @JSCXXFLAGS@
 
 # ----------------------------------------------------------------
 # Build a javascript dynamically loadable module (C)
@@ -535,8 +537,8 @@ JSCFLAGS = @JSCORECFLAGS@
 
 javascript: $(SRCS)
 	$(SWIG) -javascript -jsc -debug-templates $(SWIGOPT) $(INTERFACEPATH)
-	$(CC) -c $(CCSHARED) $(CFLAGS) $(JSCFLAGS) $(SRCS) $(ISRCS) $(INCLUDES) $(JS_INCLUDE)
-	$(JSLDSHARED) $(CCSHARED) $(CFLAGS) $(OBJS) $(IOBJS) $(JS_DLNK) $(LIBS) -o $(JS_LIBPREFIX)$(TARGET)$(JSSO)
+	$(CC) -c $(CCSHARED) $(JSCFLAGS) $(SRCS) $(ISRCS) $(INCLUDES) $(JS_INCLUDE)
+	$(JSLDSHARED) $(CCSHARED) $(JSCFLAGS) $(OBJS) $(IOBJS) $(JS_DLNK) $(LIBS) -o $(JS_LIBPREFIX)$(TARGET)$(JSSO)
 
 # ----------------------------------------------------------------
 # Build a javascript dynamically loadable module (C++)
@@ -544,14 +546,14 @@ javascript: $(SRCS)
 
 javascript_cpp: $(SRCS)
 	$(SWIG) -javascript -jsc -c++ -debug-templates $(SWIGOPT) $(INTERFACEPATH)
-	$(CXX) -c $(CCSHARED) $(CFLAGS) $(JSCFLAGS) $(SRCS) $(CXXSRCS) $(ICXXSRCS) $(INCLUDES) $(JS_INCLUDE)
-	$(JSCXXSHARED) $(CCSHARED) $(CFLAGS) $(OBJS) $(IOBJS) $(JS_DLNK) $(LIBS) $(CPP_DLLIBS) -o $(JS_LIBPREFIX)$(TARGET)$(JSSO)
+	$(CXX) -c $(CCSHARED) $(JSCXXFLAGS) $(SRCS) $(CXXSRCS) $(ICXXSRCS) $(INCLUDES) $(JS_INCLUDE)
+	$(JSCXXSHARED) $(CCSHARED) $(OBJS) $(IOBJS) $(JS_DLNK) $(LIBS) $(CPP_DLLIBS) -o $(JS_LIBPREFIX)$(TARGET)$(JSSO)
 
 # ----------------------------------------------------------------
 # Compile a javascript executable 
 # ----------------------------------------------------------------
 javascript_exe: $(SRCS)
-	$(CXX) $(CXXFLAGS) $(JS_INCLUDE) $(JSCXXSRCS) $(LIBS) $(JS_DLNK) -g -o $(JAVASCRIPT_EXE)
+	$(CXX) $(CXXFLAGS) $(JS_INCLUDE) $(JSCXXSRCS) $(LIBS) $(JS_DLNK) -o $(JAVASCRIPT_EXE)
 
 # ----------------------------------------------------------------
 # Run the Compile a javascript executable 

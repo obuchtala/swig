@@ -11,6 +11,7 @@ top_srcdir   = @top_srcdir@
 top_builddir = @top_builddir@
 JS_INCLUDE   = @JSCOREINC@
 JS_DLNK      = @JSCOREDYNAMICLINKING@
+JSCXXFLAGS  = @JSCXXFLAGS@
 
 C_TEST_CASES =
 
@@ -29,7 +30,7 @@ include $(srcdir)/../common.mk
 # Custom tests - tests with additional commandline options
 
 javascript_exe:
-	$(CXX) $(CXXFLAGS) $(JS_INCLUDE) $(JAVASCRIPT_EXE_SRC) $(LIBS) $(JS_DLNK) -g -o $(JAVASCRIPT_EXE)
+	$(CXX) $(JSCXXFLAGS) $(JS_INCLUDE) $(JAVASCRIPT_EXE_SRC) $(LIBS) $(JS_DLNK) -o $(JAVASCRIPT_EXE)
 
 # Rules for the different types of tests
 %.cpptest: javascript_exe

@@ -1176,6 +1176,16 @@ case $host in
 *) JSCORELIBRARYPREFIX="lib";;
 esac
 
+if "$JS_NO_WARNINGS" == "1"; then
+case $host in
+*-*-darwin* | *-*-linux* | *-*-cygwin* | *-*-mingw*) 
+  echo "HHHHHHHHHHHHHHHHHHHHHHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+  JSCXXFLAGS="`echo $CXXFLAGS | sed 's/-Wall//g'`"
+  ;;
+*)
+  JSCXXFLAGS="$CXXFLAGS"
+esac
+fi
 
 # library output
 case $host in
@@ -1190,7 +1200,6 @@ case $host in
     JSCORECXXSHARED='$(CXXSHARED)'
     ;;
 esac
-
 fi
 
 AC_SUBST(JSCOREINC)
@@ -1200,6 +1209,7 @@ AC_SUBST(JSCORECFLAGS)
 AC_SUBST(JSCORESO)
 AC_SUBST(JSCORELDSHARED)
 AC_SUBST(JSCORECXXSHARED)
+AC_SUBST(JSCXXFLAGS)
 
 #----------------------------------------------------------------
 # Look for gcj
