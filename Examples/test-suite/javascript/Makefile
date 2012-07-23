@@ -3,7 +3,7 @@
 #######################################################################
 
 LANGUAGE     = javascript
-JAVASCRIPT   = @JAVASCRIPT@
+JAVASCRIPT   = ../../../Tools/javascript/javascript
 SCRIPTSUFFIX = _runme.js
 srcdir       = .
 top_srcdir   = ../../..
@@ -38,7 +38,7 @@ include $(srcdir)/../common.mk
 # a file is found which has _runme.js appended after the testcase name.
 run_testcase = \
 	if [ -f $(srcdir)/$(SCRIPTPREFIX)$*$(SCRIPTSUFFIX) ]; then \
-	  env LD_LIBRARY_PATH=.:$$LD_LIBRARY_PATH $(RUNTOOL) $(JAVASCRIPT) $(srcdir)/$(SCRIPTPREFIX)$*$(SCRIPTSUFFIX); \
+	  env LD_LIBRARY_PATH=.:$$LD_LIBRARY_PATH $(RUNTOOL) $(JAVASCRIPT) -l $* $(srcdir)/$(SCRIPTPREFIX)$*$(SCRIPTSUFFIX); \
 	fi
 
 # Clean
