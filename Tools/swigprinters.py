@@ -8,9 +8,9 @@ log_file = None
 def print_(msg):
     global log_file;
     
-    if False:
+    if True:
       if log_file == None:
-        log_file = open('~/swig_gdb.log', 'w')
+        log_file = open('swig_gdb.log', 'w')
       log_file.write(msg)
 
     print(msg)
@@ -35,158 +35,205 @@ class SwigStringPrinter:
 
   def to_string(self):
     ret = "<invalid>"
+
+    # Conversion taken from Swig Internals manual:
+    # http://peregrine.hpc.uwm.edu/Head-node-docs/swig/2.0.4/Devel/internals.html#7
+    # (*(struct String *)(((DohBase *)s)->data)).str
+    
+    dohbase = None;
+    str_data = None;
+    char_ptr = None;
     
     try:
-      # Conversion taken from Swig Internals manual:
-      # http://peregrine.hpc.uwm.edu/Head-node-docs/swig/2.0.4/Devel/internals.html#7
-      # (*(struct String *)(((DohBase *)s)->data)).str
       dohbase = self.val.reinterpret_cast(self.t_doh_base_ptr).dereference()
-      s = dohbase['data'].reinterpret_cast(self.t_swigstr_ptr).dereference()
-      char_ptr = s['str']
-      #if char_ptr.is_lazy is True:
-      #  char_ptr.fetch_lazy ()
-      ret = char_ptr.string()
-
-    except Exception as exc:
-      pass
+    except Exception as err:
+      print_("SwigStringPrinter: Could not dereference DOHBase*\n");
+      return ret;
+      
+    try:
+      str_data = dohbase['data'].reinterpret_cast(self.t_swigstr_ptr).dereference()
+    except Exception as err:
+      print_("SwigStringPrinter: Could not dereference struct String*\n");
+      return ret;
+      
+    try:
+      char_ptr = str_data['str']
+    except Exception as err:
+      print_("SwigStringPrinter: Could not access field (struct String).str\n");
+      return ret;
+      
+    if char_ptr.is_lazy is True:
+      char_ptr.fetch_lazy ()
     
+    try:
+      ret = char_ptr.string()
+    except Exception as err:
+      print_("SwigStringPrinter: Could not convert const char* to string\n");
+      return ret;
+        
     return ret
 
 class SwigHashIterator:
-    def __init__(self, val):
+  def __init__(self, val):
 
-      try:
-        self.t_doh_base_ptr = gdb.lookup_type("DohBase").pointer()
+    try:
+      self.valid = False
+      
+      self.t_doh_base_ptr = gdb.lookup_type("DohBase").pointer()
+      self.val = val.reinterpret_cast(self.t_doh_base_ptr)
 
-        self.val = val.reinterpret_cast(self.t_doh_base_ptr)
-        self.valid = False
-        self.hashtable = None
-        self.hashsize = None
-        self.nitems = None
-        self.next_ = 0
-        self.address = 0
-        self.pos = 0;
-        
-        self.t_struct_hash_ptr = gdb.lookup_type("struct Hash").pointer()
-        self.t_string_ptr = gdb.lookup_type("String").pointer()
-        self.t_node_ptr = gdb.lookup_type("Node").pointer()
-        self.t_hash_ptr = gdb.lookup_type("Hash").pointer()
-        self.t_file_ptr = gdb.lookup_type("File").pointer()
+      self.hashtable = None
+      self.hashsize = None
+      self.nitems = None
 
-        self.valid = self.sanity_check()
-        self.address = self.val.dereference().address
+      self.t_struct_hash_ptr = gdb.lookup_type("struct Hash").pointer()
+      self.t_struct_hash_node_ptr = gdb.lookup_type("struct HashNode").pointer()
 
-      except Exception as err:
-        print_("SwigHashIterator: Construction failed.\n %s.\n"%(str(err)))
-    
-    def __iter__(self):
-      return self
+      self.next_ = 0
+      self.address = 0
+      self.pos = 0;
+      self.retrieve_hash_fields()
 
-    def next(self):
+      self._current = 0
+      self.item = 0
+      self.key = 0
+      self._index = 0
+      
+      self.t_string_ptr = gdb.lookup_type("String").pointer()
+      self.t_node_ptr = gdb.lookup_type("Node").pointer()
+      self.t_hash_ptr = gdb.lookup_type("Hash").pointer()
+      self.t_file_ptr = gdb.lookup_type("File").pointer()
 
-      if not self.valid:
+      self.address = self.val.dereference().address
+
+      self.is_first = True
+      self.valid = True
+
+    except Exception as err:
+      print_("SwigHashIterator: Construction failed.\n %s.\n"%(str(err)))
+  
+  def __iter__(self):
+    return self
+      
+  def Hash_firstiter(self):
+    self._current = 0;
+    self.item = 0;
+    self.key = 0;
+    self._index = 0;    
+
+    while (self._index < self.hashsize) and (self.hashtable[self._index] == 0):
+      self._index = self._index+1;
+
+    if self._index >= self.hashsize:
+      self.stop();
+
+    self._current = self.hashtable[self._index]
+    self._current = self._current.reinterpret_cast(self.t_struct_hash_node_ptr);
+    self.item = self._current['object'];
+    self.key = self._current['key'];
+
+    #Actually save the next slot in the hash.  This makes it possible to
+    # delete the item being iterated over without trashing the universe */
+    self._current = self._current['next'];
+  
+  
+  def Hash_nextiter(self):
+    if self._current == 0:
+      self._index = self._index + 1
+      while (self._index < self.hashsize) and (self.hashtable[self._index] == 0):
+        self._index = self._index + 1
+
+      if self._index >= self.hashsize:
+        self.item = 0;
+        self.key = 0;
+        self._current = 0;
         self.stop()
-            
-      while self.pos < self.hashsize:
 
-        node_ptr = None
-        try:
-          if self.next_ == 0:
-            node_ptr = self.hashtable[self.pos]
-            self.pos = self.pos + 1
-            if node_ptr == 0:
-              continue
-          else:
-            node_ptr = self.next_
-            self.next_ = 0
+      self._current = self.hashtable[self._index];
 
-        except Exception as err:
-          print_("SwigHashIterator(%s): Exception during proceeding to next:\n %s" % (str(self.address), str(err)) )
-          self.stop();
+    self._current = self._current.reinterpret_cast(self.t_struct_hash_node_ptr);
+    self.key = self._current['key'];
+    self.item = self._current['object'];
 
-        node = None
-        key = None
-        key_str = None
-        obj = None
-        
-        try:
-          node = node_ptr.dereference()
-          
-        except Exception as err:
-          print_("SwigHashIterator(%s): Exception during dereferencing next:\n %s" % (str(self.address), str(err)) )
-          #self.stop()
-          continue
+    # Store the next node to iterator on
+    self._current = self._current['next'];
+    
 
-        try:
-          self.next_ = node['next']
-          key = node['key']
-          obj = node['object']
-          
-          if key == 0:
-            continue
+  def next(self):
 
-        except Exception as err:
-          print_("SwigHashIterator(%s): Exception during accessing hash node fields:\n %s" % (str(self.address), str(err)) )
-          #self.stop()
-          continue
-
-        try:
-          string_printer = SwigStringPrinter("String *", key)
-          key_str = string_printer.to_string()
-          
-        except Exception as err:
-          print_("SwigHashIterator(%s): Exception during extracting key string:\n %s" % (str(self.address), str(err)) )
-          #self.stop()
-          continue
-
-        try:
-          obj = self.cast_doh(obj)
-          
-        except Exception as err:
-          print_("SwigHashIterator(%s): Exception during casting of value doh:\n %s" % (str(self.address), str(err)) )
-          #self.stop()
-          continue
-
-        return (key_str, obj)
-
+    if not self.valid:
+      self.stop()
+      
+    if self.is_first:
+      self.is_first = False
+      try:
+        self.Hash_firstiter()
+      except StopIteration:
+        raise StopIteration
+      except Exception as err:
+        print_("Error during iteration to first node: \n %s \n" %(str(err)))
+        self.stop()
+    else:
+      try:
+        self.Hash_nextiter()
+      except StopIteration:
+        raise StopIteration
+      except Exception as err:
+        print_("Error during iteration to first node: \n %s \n" %(str(err)))
+        self.stop()
+      
+    key_str = "<err>"
+    item = 0
+    try:
+      string_printer = SwigStringPrinter("String *", self.key)
+      key_str = string_printer.to_string()
+    except Exception as err:
+      print_("SwigHashIterator(%s): Exception during extracting key string:\n %s\n" % (str(self.address), str(err)) )
       self.stop()
 
-    def cast_doh(self, doh):
-              
-      if doh == 0:
-        return doh
-        
-      val_base = doh.reinterpret_cast(self.t_doh_base_ptr).dereference()
-      val_type = val_base['type'].dereference()
-      val_typestr = val_type['objname'].string()
-
-      if "String" == val_typestr:
-        doh = doh.reinterpret_cast(self.t_string_ptr)
-      elif "File" == val_typestr:
-        doh = doh.reinterpret_cast(self.t_file_ptr)
-      # BUG: GDB Pyhton can not handle cyclic references yet
-      #      so these casts are deactivated
-      #elif "Hash" == val_typestr:
-      #  doh = doh.reinterpret_cast(self.t_hash_ptr)
-      #elif "Node" == val_typestr:
-      #  doh = doh.reinterpret_cast(self.t_node_ptr)
-
-      return doh
+    try:
+      item = self.cast_doh(self.item)
       
-    def sanity_check(self):
-      try:
-        doh_base = self.val.dereference()
-        hash_ = doh_base['data'].reinterpret_cast(self.t_struct_hash_ptr).dereference()
-        self.hashtable = hash_['hashtable']
-        self.hashsize = int(hash_['hashsize'])
-        self.nitems = int(hash_['nitems'])
-      except:
-        return False
-        
-      return True
+    except Exception as err:
+      print_("SwigHashIterator(%s): Exception during casting of value doh:\n %s\n" % (str(self.address), str(err)) )
+      self.stop()
+
+    return (key_str, item)
+
+  def cast_doh(self, doh):
+                
+    if doh == 0:
+      return doh
     
-    def stop(self):
-      raise StopIteration      
+    val_base = doh.reinterpret_cast(self.t_doh_base_ptr).dereference()
+    val_type = val_base['type'].dereference()
+    val_typestr = val_type['objname'].string()
+    
+    #print_("Trying DOH cast: %s\n" %(val_typestr))
+
+    if "String" == val_typestr:
+      doh = doh.reinterpret_cast(self.t_string_ptr)
+    elif "File" == val_typestr:
+      doh = doh.reinterpret_cast(self.t_file_ptr)
+    # BUG: GDB Pyhton can not handle cyclic references yet
+    #      so these casts are deactivated
+    #elif "Hash" == val_typestr:
+    #  doh = doh.reinterpret_cast(self.t_hash_ptr)
+    #elif "Node" == val_typestr:
+    #  doh = doh.reinterpret_cast(self.t_node_ptr)
+
+    return doh
+
+  def retrieve_hash_fields(self):
+    doh_base = self.val.dereference()
+    hash_ = doh_base['data'].reinterpret_cast(self.t_struct_hash_ptr).dereference()
+    self.hashtable = hash_['hashtable']
+    self.hashsize = int(hash_['hashsize'])
+    self.nitems = int(hash_['nitems'])      
+  
+  def stop(self):
+    self.is_first = True
+    raise StopIteration      
 
 class NopIterator:
   
