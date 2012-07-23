@@ -23,6 +23,11 @@ CPP_TEST_CASES = \
 	cpp_enum \
 	cpp_namespace
 
+SKIP_CPP_CASES = @SKIP_CPP_CASES@
+SKIP_C_CASES = @SKIP_C_CASES@
+SKIP_CPP_STD_CASES = @SKIP_CPP_STD_CASES@
+SKIP_MULTI_CPP_CASES = @SKIP_MULTI_CPP_CASES@
+
 include $(srcdir)/../common.mk
 
 # Overridden variables here
