@@ -12,8 +12,14 @@ top_builddir = @top_builddir@
 JS_INCLUDE   = @JSCOREINC@
 JS_DLNK      = @JSCOREDYNAMICLINKING@
 
-#CPP_TEST_CASES =
-#C_TEST_CASES +=
+C_TEST_CASES =
+
+CPP_TEST_CASES = \
+	abstract_access \
+	abstract_typedef \
+	abstract_typedef2 \
+	cpp_enum \
+	cpp_namespace
 
 include $(srcdir)/../common.mk
 
