@@ -289,7 +289,7 @@ int swig::JSCEmitter::exitVariable(Node *n) {
 
 int swig::JSCEmitter::enterClass(Node *n) {
       
-  current_classname = Swig_scopename_last(Getattr(n, "name"));
+  current_classname = Getattr(n, "sym:name");
   current_classname_mangled = SwigType_manglestr(Getattr(n, "name"));
   current_classtype = NewString(Getattr(n, "classtype"));
     
