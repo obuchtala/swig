@@ -202,6 +202,10 @@ initializer:This template is dynamic growing and aggregates everything
 **********************************************************************/
 
 %fragment ("initializer", "templates") %{
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 bool ${modulename}_initialize(JSGlobalContextRef context) {
     JSObjectRef global_object = JSContextGetGlobalObject(context);
     
@@ -221,6 +225,11 @@ bool ${modulename}_initialize(JSGlobalContextRef context) {
 
     return true;
 }
+
+#ifdef __cplusplus
+}
+#endif
+
 %}
 
 /*****************************************************************************************
