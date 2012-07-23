@@ -25,7 +25,6 @@ void print_usage() {
 }
 
 int main(int argc, char* argv[]) {
-    cout<<"main called\n";
 
     std::string scriptPath;
     
@@ -113,6 +112,7 @@ int main(int argc, char* argv[]) {
             JSStringGetUTF8CString(exIString, stringUTF8, 256);
             printf(":%s\n",stringUTF8);
             JSStringRelease(exIString);
+            failed = 1;
         }
     }
     if (szString != NULL)
@@ -132,11 +132,7 @@ int main(int argc, char* argv[]) {
         printf("FAIL: Some tests failed.\n");
         return 1;
     }
-    
-    printf("PASS: Program exited normally.\n");
-    return 0;
-}
-
+}    
 static JSValueRef jsc_printstring(JSContextRef context,JSObjectRef object, JSObjectRef globalobj, size_t argc, const JSValueRef	args[], JSValueRef* ex)
 {
 	if (argc > 0)
