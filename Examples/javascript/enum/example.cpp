@@ -3,7 +3,7 @@
 #include "example.h"
 #include <stdio.h>
 
-/*void Foo::enum_test(speed s) {
+void Foo::enum_test(speed s) {
   if (s == IMPULSE) {
     printf("IMPULSE speed\n");
   } else if (s == WARP) {
@@ -34,4 +34,4 @@ void enum_test(color c, Foo::speed s) {
   } else {
     printf("speed = Unknown speed!\n");
   }
-}*/
+}
