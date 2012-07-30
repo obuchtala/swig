@@ -20,9 +20,22 @@ CPP_TEST_CASES = \
 	abstract_typedef \
 	abstract_typedef2 \
 	abstract_virtual \
-	cpp_enum \
+	class_ignore \
+  class_scope_weird \
+  cpp_enum \
 	cpp_namespace \
 	cpp_static \
+	ret_by_value \
+	struct_value \
+	typedef_class \
+	typedef_inherit \
+	typedef_scope \
+	typemap_arrays \
+	typemap_delete \
+	typemap_ns_using \
+	using1 \
+	using2
+
 
 SKIP_CPP_CASES = @SKIP_CPP_CASES@
 SKIP_C_CASES = @SKIP_C_CASES@
