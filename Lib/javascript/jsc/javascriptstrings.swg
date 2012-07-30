@@ -5,20 +5,37 @@
 SWIGINTERN int
 SWIG_JSC_AsCharPtrAndSize(JSContextRef context, JSValueRef valRef, char** cptr, size_t* psize, int *alloc)
 {
-  if(!JSValueIsString(context, valRef)) {
-    return SWIG_TypeError;
+  if(JSValueIsString(context, valRef)) {
+    JSStringRef js_str = JSValueToStringCopy(context, valRef, NULL);
+    size_t len = JSStringGetMaximumUTF8CStringSize(js_str);
+    size_t abs_len = JSStringGetLength(js_str);
+    char* cstr = (char*) malloc(len * sizeof(char));
+    JSStringGetUTF8CString(js_str, cstr, len);
+    
+    if(alloc) *alloc = SWIG_NEWOBJ;
+    if(psize) *psize = abs_len + 1;
+    if(cptr) *cptr = cstr;
+    
+    return SWIG_OK;
+  } else {
+    if(JSValueIsObject(context, valRef)) {
+      JSObjectRef obj = JSValueToObject(context, valRef, NULL);
+      // try if the object is a wrapped char[]
+      swig_type_info* pchar_descriptor = SWIG_pchar_descriptor();
+      if (pchar_descriptor) {
+        void* vptr = 0;
+        if (SWIG_ConvertPtr(obj, &vptr, pchar_descriptor, 0) == SWIG_OK) {
+          if (cptr) *cptr = (char *) vptr;
+          if (psize) *psize = vptr ? (strlen((char *)vptr) + 1) : 0;
+          if (alloc) *alloc = SWIG_OLDOBJ;
+          return SWIG_OK;
+        }
+      }
+      return SWIG_TypeError;
+    } else {
+      return SWIG_TypeError;
+    }
   }
-  
-  JSStringRef js_str = JSValueToStringCopy(context, valRef, NULL);
-  size_t len = JSStringGetMaximumUTF8CStringSize(js_str);
-  char* cstr = (char*) malloc(len * sizeof(char));
-  JSStringGetUTF8CString(js_str, cstr, len);
-  
-  if(alloc) *alloc = SWIG_NEWOBJ;
-  if(psize) *psize = len;
-  if(cptr) *cptr = cstr;
-  
-  return SWIG_OK;
 }
 }
 
@@ -83,12 +100,12 @@ SWIG_JSC_As##CharName##Array(JSContextRef context, SWIG_Object obj, Char *val, s
     if ((csize == size + 1) && cptr && !(cptr[csize-1])) --csize;
     if (csize <= size) {
       if (val) {
-	if (csize) memcpy(val, cptr, csize*sizeof(Char));
-	if (csize < size) memset(val + csize, 0, (size - csize)*sizeof(Char));
+        if (csize) memcpy(val, cptr, csize*sizeof(Char));
+        if (csize < size) memset(val + csize, 0, (size - csize)*sizeof(Char));
       }
       if (alloc == SWIG_NEWOBJ) {
-	SWIG_DeleteCharArray(cptr);
-	res = SWIG_DelNewMask(res);
+        SWIG_DeleteCharArray(cptr);
+        res = SWIG_DelNewMask(res);
       }      
       return res;
     }
@@ -111,21 +128,21 @@ SWIG_From_dec(Char)(JSContextRef context, Char c)
 }
 
 %fragment(SWIG_AsVal_frag(Char),"header",
-	  fragment="SWIG_As"#CharName"Array",
-	  fragment=FragLimits,
-	  fragment=SWIG_AsVal_frag(long)) {
+          fragment="SWIG_As"#CharName"Array",
+          fragment=FragLimits,
+          fragment=SWIG_AsVal_frag(long)) {
 SWIGINTERN int
 SWIG_AsVal_dec(Char)(JSContextRef context, SWIG_Object obj, Char *val)
 {    
   int res = SWIG_As##CharName##Array(obj, val, 1);
   if (!SWIG_IsOK(res)) {
     long v;
-    res = SWIG_AddCast(SWIG_AsVal(long)(obj, &v));
+    res = SWIG_AddCast(SWIG_AsVal(long)(context, obj, &v));
     if (SWIG_IsOK(res)) {
       if ((CHAR_MIN <= v) && (v <= CHAR_MAX)) {
-	if (val) *val = %numeric_cast(v, Char);
+        if (val) *val = %numeric_cast(v, Char);
       } else {
-	res = SWIG_OverflowError;
+        res = SWIG_OverflowError;
       }
     }
   }
@@ -134,15 +151,15 @@ SWIG_AsVal_dec(Char)(JSContextRef context, SWIG_Object obj, Char *val)
 }
 
 %_typemap_string(StringCode, 
-		 Char,
-		 SWIG_AsCharPtrAndSize,
-		 SWIG_FromCharPtrAndSize,
-		 SWIG_CharPtrLen,
-		 SWIG_As##CharName##Ptr,
-		 SWIG_From##CharName##Ptr,
-		 SWIG_As##CharName##Array,
-		 SWIG_NewCopyCharArray,
-		 SWIG_DeleteCharArray)
+                 Char,
+                 SWIG_AsCharPtrAndSize,
+                 SWIG_FromCharPtrAndSize,
+                 SWIG_CharPtrLen,
+                 SWIG_As##CharName##Ptr,
+                 SWIG_From##CharName##Ptr,
+                 SWIG_As##CharName##Array,
+                 SWIG_NewCopyCharArray,
+                 SWIG_DeleteCharArray)
 
 %enddef
 

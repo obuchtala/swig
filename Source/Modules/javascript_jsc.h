@@ -111,7 +111,7 @@ private:
     String* current_classname;
     String* current_classname_mangled;
     String* current_classtype;
-
+    String* current_classtype_mangled;
     String *current_functionwrapper;
     String *current_functionname;
   };

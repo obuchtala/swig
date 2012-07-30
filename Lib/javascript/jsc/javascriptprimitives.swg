@@ -97,6 +97,29 @@ SWIG_AsVal_dec(double)(JSContextRef context, JSValueRef obj, double *val)
 }
 }
 
+
+/* size_t */
+
+%fragment(SWIG_From_frag(size_t),"header",fragment=SWIG_From_frag(unsigned long)) {
+SWIGINTERNINLINE JSValueRef
+SWIG_From_dec(size_t)(JSContextRef context, size_t value)
+{    
+  return SWIG_From(unsigned long)(context, %numeric_cast(value, unsigned long));
+}
+}
+
+%fragment(SWIG_AsVal_frag(size_t),"header",fragment=SWIG_AsVal_frag(unsigned long)) {
+SWIGINTERNINLINE int
+SWIG_AsVal_dec(size_t)(JSContextRef context, JSValueRef obj, size_t *val)
+{
+  unsigned long v;
+  int res = SWIG_AsVal(unsigned long)(context, obj, val ? &v : 0);
+  if (SWIG_IsOK(res) && val) *val = %numeric_cast(v, size_t);
+  return res;
+}
+}
+
+
 // Primitive types
 %typemap(in) char,
             signed char,

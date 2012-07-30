@@ -309,6 +309,11 @@ int JSCEmitter::enterClass(Node *n) {
   current_classname = Getattr(n, "sym:name");
   current_classname_mangled = SwigType_manglestr(Getattr(n, "name"));
   current_classtype = NewString(Getattr(n, "classtype"));
+
+  String *type = SwigType_manglestr(Getattr(n, "classtypeobj"));
+  current_classtype_mangled = NewString("");
+  Printf(current_classtype_mangled, "p%s", type);
+  Delete(type);
     
   Template t_class_defn = getTemplate("JS_class_definition");
   t_class_defn.replace("${classname_mangled}", current_classname_mangled);
@@ -320,15 +325,13 @@ int JSCEmitter::enterClass(Node *n) {
   class_static_functions_code = NewString("");
   ctor_wrappers = NewString("");
   ctor_dispatcher_code = NewString("");
+  
   return SWIG_OK;
 }
 
 int JSCEmitter::exitClass(Node *n) {    
   
   String *mangled_name = SwigType_manglestr(Getattr(n, "name"));
-  SwigType *type = Copy(Getattr(n, "classtypeobj"));
-  SwigType_add_pointer(type);
-  String *mangled_type = SwigType_manglestr(type);
   
   Template t_class_tables(getTemplate("JS_class_tables"));
   t_class_tables.replace("${classname_mangled}", mangled_name)
@@ -360,18 +363,20 @@ int JSCEmitter::exitClass(Node *n) {
   }
 
   t_classtemplate.replace("${classname_mangled}", mangled_name)
-      .replace("${base_classname}", base_name_mangled);
+    .replace("${classtype_mangled}", current_classtype_mangled)
+    .replace("${base_classname}", base_name_mangled);
   Wrapper_pretty_print(t_classtemplate.str(), initializer_code);
   
   String *clientdata = NewString("");
   Printv(clientdata, mangled_name, "_classRef", 0);
-  SwigType_remember_clientdata(type, clientdata);
+  SwigType_remember_clientdata(current_classtype_mangled, clientdata);
 
   /* adds a class registration statement to initializer function */
   Template t_registerclass(getTemplate("JS_register_class"));
   t_registerclass.replace("${classname}", current_classname)
     .replace("${classname_mangled}", current_classname_mangled)
     .replace("${namespace_mangled}", Getattr(current_namespace, "name_mangled"));
+    
   Wrapper_pretty_print(t_registerclass.str(), initializer_code);
   
     /* clean up all DOHs */
@@ -381,8 +386,6 @@ int JSCEmitter::exitClass(Node *n) {
   Delete(class_static_functions_code);
   Delete(ctor_wrappers);
   Delete(mangled_name);
-  Delete(type);
-  Delete(mangled_type);
   Delete(ctor_dispatcher_code);
   class_variables_code = 0;
   current_class_functions = 0;
@@ -394,6 +397,7 @@ int JSCEmitter::exitClass(Node *n) {
   Delete(current_classname);
   Delete(current_classname_mangled);
   Delete(current_classtype);
+  Delete(current_classtype_mangled);
 
   return SWIG_OK;
 }
@@ -422,7 +426,8 @@ int JSCEmitter::emitCtor(Node *n) {
   t_ctor.replace("${classname_mangled}", mangled_name)
       .replace("${overloadext}", overname)
       .replace("${LOCALS}", current_wrapper->locals)
-      .replace("${CODE}", current_wrapper->code);
+      .replace("${CODE}", current_wrapper->code)
+      .replace("${type_mangled}", current_classtype_mangled);
 
   Wrapper_pretty_print(t_ctor.str(), ctor_wrappers);
 

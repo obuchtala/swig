@@ -159,7 +159,7 @@ void _wrap_${classname_mangled}_finalize(JSObjectRef thisObject)
 JSObjectRef _wrap_create_${classname_mangled}(JSContextRef context, JSObjectRef ctorObject,
     size_t argc, const JSValueRef argv[], JSValueRef* exception)
 {
-    JSObjectRef thisObject = JSObjectMake(context, ${classname_mangled}_classRef, NULL);
+    JSObjectRef thisObject;
     
     ${DISPATCH_CASES}
     {
@@ -187,14 +187,8 @@ JSObjectRef _wrap_create_${classname_mangled}${overloadext}(JSContextRef context
 {
     ${LOCALS}
     ${CODE}
-    
-    SWIG_PRV_DATA *swigprivatedata = new SWIG_PRV_DATA();
-    swigprivatedata->swigCMemOwn = true;
-    swigprivatedata->swigCObject = result;
-    
-    JSObjectSetPrivate(thisObject, swigprivatedata);
 
-    return thisObject;
+    return SWIG_JSC_NewPointerObj(context, result, SWIGTYPE_${type_mangled}, SWIG_POINTER_OWN);    
 }
 %}
 /**********************************************************************
@@ -207,6 +201,8 @@ extern "C" {
 #endif
 
 bool ${modulename}_initialize(JSGlobalContextRef context) {
+    SWIG_InitializeModule(0);
+
     JSObjectRef global_object = JSContextGetGlobalObject(context);
     
     /* Initialize the base swig type object */
@@ -222,8 +218,6 @@ bool ${modulename}_initialize(JSGlobalContextRef context) {
 
     /* Register namespaces */
     ${register_namespaces}
-
-    SWIG_InitializeModule(0);
 
     return true;
 }
@@ -247,8 +241,8 @@ bool ${modulename}_initialize(JSGlobalContextRef context) {
     ${classname_mangled}_objectDefinition.staticValues = ${classname_mangled}_values;
     ${classname_mangled}_objectDefinition.staticFunctions = ${classname_mangled}_functions;
     ${classname_mangled}_objectDefinition.parentClass = ${base_classname}_classRef;
-    ${classname_mangled}_classRef = JSClassCreate(&${classname_mangled}_objectDefinition);%}
-
+    ${classname_mangled}_classRef = JSClassCreate(&${classname_mangled}_objectDefinition);
+    SWIGTYPE_${classtype_mangled}->clientdata = ${classname_mangled}_classRef;%}
 
 /*****************************************************************************************
   *register_class:
