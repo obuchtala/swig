@@ -35,6 +35,11 @@ void SWIG_Javascript_Raise(JSContextRef context, JSValueRef *exception, const ch
  *exception = JSValueMakeString(context, jsstring);
  JSStringRelease(jsstring);
 }
+
+void SWIG_JSC_exception(JSContextRef context, JSValueRef *exception, int code, const char* msg) {
+  SWIG_Javascript_Raise(context, exception, msg);
+}
+
 %}
 
 %insert(runtime) %{
@@ -51,15 +56,6 @@ void SWIG_Javascript_Raise(JSContextRef context, JSValueRef *exception, const ch
  *exception = JSValueMakeString(context, message);
  JSStringRelease(message);
 }
-%}
-
-%insert(runtime) %{
-
-void SWIG_JSC_exception(JSContextRef context, JSValueRef *exception, int code, const char* msg) {
-
-  throw msg;
-}
-
 %}
 
 %insert(runtime) %{
@@ -116,7 +112,7 @@ JSClassRef _SwigObject_classRef;
 
 
 %insert(runtime) %{
-int SWIG_JSC_ConvertPtr(JSContextRef context, JSObjectRef objRef, void** ptr, swig_type_info *info, int flags) {
+int SWIG_JSC_ConvertInstancePtr(JSContextRef context, JSObjectRef objRef, void** ptr, swig_type_info *info, int flags) {
   SWIG_PRV_DATA *cdata = (SWIG_PRV_DATA *) JSObjectGetPrivate(objRef);
   if(cdata == NULL) {
     return SWIG_ERROR;
@@ -155,7 +151,7 @@ int SWIG_JSC_ConvertPtr(JSContextRef context, JSValueRef valRef, void** ptr, swi
     return SWIG_ERROR;
   }
     
-  return SWIG_JSC_ConvertPtr(context, objRef, ptr, info, flags);
+  return SWIG_JSC_ConvertInstancePtr(context, objRef, ptr, info, flags);
 }
 
 JSObjectRef SWIG_JSC_NewPointerObj(JSContextRef context, void *ptr, swig_type_info *info, int flags) {
@@ -169,7 +165,7 @@ JSObjectRef SWIG_JSC_NewPointerObj(JSContextRef context, void *ptr, swig_type_in
   
   JSObjectRef result = JSObjectMake(context, classRef, NULL);
   
-  SWIG_PRV_DATA* cdata = new SWIG_PRV_DATA();
+  SWIG_PRV_DATA* cdata = (SWIG_PRV_DATA*) malloc(sizeof(SWIG_PRV_DATA));
   cdata->swigCObject = ptr;  
   cdata->swigCMemOwn = (flags & SWIG_POINTER_OWN) ? 1 : 0;
   cdata->info = info;
@@ -181,4 +177,8 @@ JSObjectRef SWIG_JSC_NewPointerObj(JSContextRef context, void *ptr, swig_type_in
 
 #define SWIG_ConvertPtr(obj, ptr, info, flags)    SWIG_JSC_ConvertPtr(context, obj, ptr, info, flags)
 #define SWIG_NewPointerObj(ptr, info, flags)      SWIG_JSC_NewPointerObj(context, ptr, info, flags)
+
+#define SWIG_ConvertInstance(obj, pptr, type, flags)    SWIG_JSC_ConvertInstancePtr(context, obj, pptr, type, flags)
+#define SWIG_NewInstanceObj(thisvalue, type, flags)     SWIG_JSC_NewPointerObj(context, thisvalue, type, flags)
+
 %}

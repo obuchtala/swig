@@ -366,10 +366,14 @@ int JSCEmitter::exitClass(Node *n) {
     .replace("${classtype_mangled}", current_classtype_mangled)
     .replace("${base_classname}", base_name_mangled);
   Wrapper_pretty_print(t_classtemplate.str(), initializer_code);
-  
+
+/*  
   String *clientdata = NewString("");
   Printv(clientdata, mangled_name, "_classRef", 0);
   SwigType_remember_clientdata(current_classtype_mangled, clientdata);
+*/
+
+  SwigType_remember_clientdata(current_classtype_mangled, NewString("0"));
 
   /* adds a class registration statement to initializer function */
   Template t_registerclass(getTemplate("JS_register_class"));
@@ -542,7 +546,7 @@ int JSCEmitter::emitConstant(Node *n) {
   current_getter = wrap_name;
   Setattr(n, "wrap:name", wrap_name);
 
-  Printf(action, "result = %s;", value);
+  Printf(action, "result = %s;\n", value);
   Setattr(n, "wrap:action", action);
 
   Wrapper_add_local(current_wrapper, "jsresult", "JSValueRef jsresult");

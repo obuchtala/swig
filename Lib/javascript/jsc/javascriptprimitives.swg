@@ -169,7 +169,9 @@ SWIG_AsVal_dec(size_t)(JSValueRef obj, size_t *val)
             unsigned long long,
             float,
             double
-%{ $result = JSValueMakeNumber(context, $1); %}
+%{ 
+  $result = JSValueMakeNumber(context, $1);
+%}
 
 %typemap(out) const bool &,             bool &,
              const char &,              char &,
@@ -185,7 +187,9 @@ SWIG_AsVal_dec(size_t)(JSValueRef obj, size_t *val)
              const unsigned long long &,unsigned long long &,
              const float &,             float &,
              const double &,              double &
-%{ $result = JSValueMakeNumber(context,*$1); %}
+%{ 
+  $result = JSValueMakeNumber(context,*$1); 
+%}
 
 
 %typemap(in) short *,
@@ -237,7 +241,9 @@ SWIG_AsVal_dec(size_t)(JSValueRef obj, size_t *val)
 
 
 %typemap(out) void
-%{ $result = JSValueMakeUndefined(context); %}
+%{ 
+  $result = JSValueMakeUndefined(context); 
+%}
 
 
 %typemap(in) char *
@@ -296,7 +302,9 @@ SWIG_AsVal_dec(size_t)(JSValueRef obj, size_t *val)
 %}
 
 %typemap(freearg) char *, char *&, char[ANY], char[] //TODO: Not working: A memory leak
-%{ free($1); %}
+%{ 
+  free($1); 
+%}
 
 
 /* Typemaps for composite types */

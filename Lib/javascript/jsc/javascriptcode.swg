@@ -142,8 +142,8 @@ JSStaticFunction ${classname_mangled}_functions[] = {
 void _wrap_${classname_mangled}_finalize(JSObjectRef thisObject)
 {
   SWIG_PRV_DATA* t = (SWIG_PRV_DATA*)JSObjectGetPrivate(thisObject);
-  if(t && t->swigCMemOwn) delete (${type}*)(t->swigCObject);
-  if(t) delete t;
+  if(t && t->swigCMemOwn) free ((${type}*)t->swigCObject);
+  if(t) free(t);
 }
 %}
 
@@ -241,7 +241,7 @@ bool ${modulename}_initialize(JSGlobalContextRef context) {
     ${classname_mangled}_objectDefinition.staticValues = ${classname_mangled}_values;
     ${classname_mangled}_objectDefinition.staticFunctions = ${classname_mangled}_functions;
     ${classname_mangled}_objectDefinition.parentClass = ${base_classname}_classRef;
-    ${classname_mangled}_classRef = JSClassCreate(&${classname_mangled}_objectDefinition);
+    JSClassRef ${classname_mangled}_classRef = JSClassCreate(&${classname_mangled}_objectDefinition);
     SWIGTYPE_${classtype_mangled}->clientdata = ${classname_mangled}_classRef;%}
 
 /*****************************************************************************************

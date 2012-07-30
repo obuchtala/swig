@@ -1,13 +1,11 @@
 %insert(runtime) %{
  
-bool JS_registerClass(JSGlobalContextRef& context, JSObjectRef& parentObject,
+bool JS_registerClass(JSGlobalContextRef context, JSObjectRef parentObject,
                              const char* className,
                              JSClassDefinition* definition) {
 
     JSStringRef js_className = JSStringCreateWithUTF8CString(className);
-    
     JSObjectRef classObject = JSObjectMake(context, JSClassCreate(definition), NULL);
-
     JSObjectSetProperty(context, parentObject,
                         js_className, classObject,
                         kJSPropertyAttributeNone, NULL);
@@ -16,12 +14,11 @@ bool JS_registerClass(JSGlobalContextRef& context, JSObjectRef& parentObject,
     return true;
 }
 
-bool JS_registerNamespace(JSGlobalContextRef& context, 
-                           JSObjectRef& namespaceObj, JSObjectRef& parentNamespace,
+bool JS_registerNamespace(JSGlobalContextRef context, 
+                           JSObjectRef namespaceObj, JSObjectRef parentNamespace,
                            const char* name)
 {
     JSStringRef js_name = JSStringCreateWithUTF8CString(name);
-    
     JSObjectSetProperty(context, parentNamespace,
                         js_name, namespaceObj,
                         kJSPropertyAttributeNone, NULL);
