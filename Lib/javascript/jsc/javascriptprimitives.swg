@@ -2,7 +2,7 @@
 
 %fragment(SWIG_From_frag(bool),"header") {
 SWIGINTERNINLINE 
-JSValueRef SWIG_From_dec(bool)(JSContextRef context, bool value)
+JSValueRef SWIG_From_dec(bool)(bool value)
 {
   return JSValueMakeBoolean(context, value);
 }
@@ -11,7 +11,7 @@ JSValueRef SWIG_From_dec(bool)(JSContextRef context, bool value)
 %fragment(SWIG_AsVal_frag(bool),"header",
           fragment=SWIG_AsVal_frag(long)) {
 SWIGINTERN
-int SWIG_AsVal_dec(bool)(JSContextRef context, JSValueRef obj, bool *val)
+int SWIG_AsVal_dec(bool)(JSValueRef obj, bool *val)
 {
   if(!JSValueIsBoolean(context, obj)) {
     return SWIG_ERROR;
@@ -23,7 +23,7 @@ int SWIG_AsVal_dec(bool)(JSContextRef context, JSValueRef obj, bool *val)
 
 %fragment(SWIG_From_frag(int),"header") {
 SWIGINTERNINLINE JSValueRef
-  SWIG_From_dec(int)(JSContextRef context, int value)
+  SWIG_From_dec(int)(int value)
 {
   return JSValueMakeNumber(context, value);
 }
@@ -36,7 +36,7 @@ SWIGINTERNINLINE JSValueRef
 %fragment(SWIG_AsVal_frag(long),"header",
           fragment="SWIG_CanCastAsInteger") {
 SWIGINTERN int
-SWIG_AsVal_dec(long)(JSContextRef context, JSValueRef obj, long* val)
+SWIG_AsVal_dec(long)(JSValueRef obj, long* val)
 {
   if (!JSValueIsNumber(context, obj)) {
     return SWIG_TypeError;
@@ -52,7 +52,7 @@ SWIG_AsVal_dec(long)(JSContextRef context, JSValueRef obj, long* val)
 %fragment(SWIG_From_frag(unsigned long),"header",
           fragment=SWIG_From_frag(long)) {
 SWIGINTERNINLINE JSValueRef 
-SWIG_From_dec(unsigned long)(JSContextRef context, unsigned long value)
+SWIG_From_dec(unsigned long)(unsigned long value)
 {
   return (value > LONG_MAX) ?
     JSValueMakeNumber(context, value) : JSValueMakeNumber(context, %numeric_cast(value,long)); 
@@ -62,7 +62,7 @@ SWIG_From_dec(unsigned long)(JSContextRef context, unsigned long value)
 %fragment(SWIG_AsVal_frag(unsigned long),"header",
           fragment="SWIG_CanCastAsInteger") {
 SWIGINTERN int
-SWIG_AsVal_dec(unsigned long)(JSContextRef context, JSValueRef obj, unsigned long *val) 
+SWIG_AsVal_dec(unsigned long)(JSValueRef obj, unsigned long *val) 
 {
   if(!JSValueIsNumber(context, obj)) {
     return SWIG_TypeError;
@@ -81,12 +81,16 @@ SWIG_AsVal_dec(unsigned long)(JSContextRef context, JSValueRef obj, unsigned lon
 }
 
 %fragment(SWIG_From_frag(double),"header") {
-  %define_as(SWIG_From_dec(double),          JSValueMakeNumber)
+SWIGINTERN JSValueRef
+SWIG_From_dec(double) (double val)
+{
+  return JSValueMakeNumber(context, val);
+}
 }
 
 %fragment(SWIG_AsVal_frag(double),"header") {
 SWIGINTERN int
-SWIG_AsVal_dec(double)(JSContextRef context, JSValueRef obj, double *val)
+SWIG_AsVal_dec(double)(JSValueRef obj, double *val)
 {
   if(!JSValueIsNumber(context, obj)) {
     return SWIG_TypeError;
@@ -102,18 +106,18 @@ SWIG_AsVal_dec(double)(JSContextRef context, JSValueRef obj, double *val)
 
 %fragment(SWIG_From_frag(size_t),"header",fragment=SWIG_From_frag(unsigned long)) {
 SWIGINTERNINLINE JSValueRef
-SWIG_From_dec(size_t)(JSContextRef context, size_t value)
+SWIG_From_dec(size_t)(size_t value)
 {    
-  return SWIG_From(unsigned long)(context, %numeric_cast(value, unsigned long));
+  return SWIG_From(unsigned long)(%numeric_cast(value, unsigned long));
 }
 }
 
 %fragment(SWIG_AsVal_frag(size_t),"header",fragment=SWIG_AsVal_frag(unsigned long)) {
 SWIGINTERNINLINE int
-SWIG_AsVal_dec(size_t)(JSContextRef context, JSValueRef obj, size_t *val)
+SWIG_AsVal_dec(size_t)(JSValueRef obj, size_t *val)
 {
   unsigned long v;
-  int res = SWIG_AsVal(unsigned long)(context, obj, val ? &v : 0);
+  int res = SWIG_AsVal(unsigned long)(obj, val ? &v : 0);
   if (SWIG_IsOK(res) && val) *val = %numeric_cast(v, size_t);
   return res;
 }
@@ -253,7 +257,7 @@ SWIG_AsVal_dec(size_t)(JSContextRef context, JSValueRef obj, size_t *val)
 
 %typemap(arginit) char * 
 %{
-// TODO: need arginit for char*
+// TODO: arginit for char* ?
 %}
 
 %typemap(out) unsigned char *
@@ -376,9 +380,6 @@ SWIG_AsVal_dec(size_t)(JSContextRef context, JSValueRef obj, size_t *val)
  result_privatedata->swigCObject = (void*) $1;
  $result = JSObjectMake(context, _SwigObject_classRef, result_privatedata);
 %}
-
-// Javascript specific directives
-//TODO
 
 // Some ANSI C typemaps */
 %apply unsigned long { size_t };

@@ -1,4 +1,9 @@
 
+#define SWIG_FROM_DECL_ARGS SWIG_JSC_FROM_DECL_ARGS
+#define SWIG_FROM_CALL_ARGS SWIG_JSC_FROM_CALL_ARGS
+#define SWIG_AS_DECL_ARGS SWIG_JSC_AS_DECL_ARGS
+#define SWIG_AS_CALL_ARGS SWIG_JSC_AS_CALL_ARGS
+
 %include <javascriptfragments.swg>
 
 /* Include fundamental fragemt definitions */
@@ -19,6 +24,8 @@
  
 /* override some of the macros in global valtypes.swg */
 %include <javascriptvaltypes.swg>
+
+%include <javascriptstrings.swg>
 
 /* Include the unified typemap library */
 %include <typemaps/swigtypemaps.swg>

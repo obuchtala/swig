@@ -6,16 +6,11 @@
 
 %include <typemaps/swigmacros.swg>
 
+%include <javascripttypemaps.swg>
+
 %include <javascriptruntime.swg>
 
-%include <javascriptstrings.swg>
-
 %include <javascripthelpers.swg>
-
-/* ------------------------------------------------------------
- *  Typemap specializations
- * ------------------------------------------------------------ */
-%include <javascripttypemaps.swg>
 
 %include <javascriptkw.swg>
 

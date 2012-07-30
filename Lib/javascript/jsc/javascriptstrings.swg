@@ -121,7 +121,7 @@ SWIG_JSC_As##CharName##Array(JSContextRef context, SWIG_Object obj, Char *val, s
 
 %fragment(SWIG_From_frag(Char),"header",fragment=#SWIG_FromCharPtrAndSize) {
 SWIGINTERNINLINE SWIG_Object
-SWIG_From_dec(Char)(JSContextRef context, Char c) 
+SWIG_From_dec(Char)(Char c) 
 { 
   return SWIG_JSC_FromCharPtrAndSize(context, &c,1);
 }
@@ -132,12 +132,12 @@ SWIG_From_dec(Char)(JSContextRef context, Char c)
           fragment=FragLimits,
           fragment=SWIG_AsVal_frag(long)) {
 SWIGINTERN int
-SWIG_AsVal_dec(Char)(JSContextRef context, SWIG_Object obj, Char *val)
+SWIG_AsVal_dec(Char)(SWIG_Object obj, Char *val)
 {    
   int res = SWIG_As##CharName##Array(obj, val, 1);
   if (!SWIG_IsOK(res)) {
     long v;
-    res = SWIG_AddCast(SWIG_AsVal(long)(context, obj, &v));
+    res = SWIG_AddCast(SWIG_AsVal(long)(obj, &v));
     if (SWIG_IsOK(res)) {
       if ((CHAR_MIN <= v) && (v <= CHAR_MAX)) {
         if (val) *val = %numeric_cast(v, Char);
