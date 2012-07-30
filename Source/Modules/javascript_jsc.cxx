@@ -60,7 +60,7 @@ void JSCEmitter::marshalInputArgs(ParmList *parms, Wrapper *wrapper, Marshalling
       } 
       break;
     case Ctor:
-      Printf(arg, "argv[%d]");
+      Printf(arg, "argv[%d]",i);
       break;
     default:
       throw "Illegal state.";
