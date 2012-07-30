@@ -9,18 +9,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 %}
+
+%insert(runtime) "swigrun.swg";         /* SWIG API */
+%insert(runtime) "swigerrors.swg";      /* SWIG errors */   
+
+#define SWIG_Error(code, msg)     "/* TODO: SWIG_Error(code, msg) */" 
+#define SWIG_fail                 /* TODO: goto fail ?*/
 
 %insert(runtime) %{
 typedef struct {
   bool swigCMemOwn;
   void *swigCObject;
 }SWIG_PRV_DATA; 
-%}
-
-%insert(runtime) %{
-/* Contract support */
-#define SWIG_contract_assert(expr, msg) if (!(expr)) { throw "contract violated: msg"; } else
 %}
 
 %insert(runtime) %{
@@ -81,4 +83,55 @@ JSClassDefinition _SwigObject_objectDefinition;
 
 JSClassRef _SwigObject_classRef;
 
+%}
+
+
+%insert(runtime) %{
+int SWIG_JSC_ConvertPtr(JSContextRef context, JSObjectRef objRef, void** ptr, swig_type_info *info, int flags) {
+  SWIG_PRV_DATA *cdata = (SWIG_PRV_DATA *) JSObjectGetPrivate(objRef);
+  if(cdata == NULL) {
+    return SWIG_ERROR;
+  }
+  *ptr = cdata->swigCObject;
+  
+  if(flags & SWIG_POINTER_DISOWN) {
+    cdata->swigCMemOwn = false;
+  }
+  
+  return SWIG_OK;
+}
+
+int SWIG_JSC_ConvertPtr(JSContextRef context, JSValueRef valRef, void** ptr, swig_type_info *info, int flags) {
+  if(!JSValueIsObject(context, valRef)) {
+    return SWIG_TypeError;
+  }
+  JSObjectRef objRef = JSValueToObject(context, valRef, NULL);
+  if(!objRef)
+    return SWIG_ERROR;
+    
+  return SWIG_JSC_ConvertPtr(context, objRef, ptr, info, flags);
+}
+
+JSObjectRef SWIG_JSC_NewPointerObj(JSContextRef context, void *ptr, swig_type_info *info, int flags) {
+
+  JSClassRef classRef;
+  if(info->clientdata == NULL) {
+    classRef = _SwigObject_classRef;
+  } else {
+    classRef = (JSClassRef) info->clientdata;
+  }
+  
+  JSObjectRef result = JSObjectMake(context, classRef, NULL);
+  
+  SWIG_PRV_DATA* cdata = new SWIG_PRV_DATA();
+  cdata->swigCObject = ptr;  
+  cdata->swigCMemOwn = (flags & SWIG_POINTER_OWN) ? 1 : 0;
+  
+  JSObjectSetPrivate(result, cdata);
+
+  return result;
+}
+
+#define SWIG_ConvertPtr(obj, ptr, info, flags)    SWIG_JSC_ConvertPtr(context, obj, ptr, info, flags)
+#define SWIG_NewPointerObj(ptr, info, flags)      SWIG_JSC_NewPointerObj(context, ptr, info, flags)
 %}

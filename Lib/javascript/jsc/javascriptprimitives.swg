@@ -1,3 +1,102 @@
+
+
+%fragment(SWIG_From_frag(bool),"header") {
+SWIGINTERNINLINE 
+JSValueRef SWIG_From_dec(bool)(JSContextRef context, bool value)
+{
+  return JSValueMakeBoolean(context, value);
+}
+}
+
+%fragment(SWIG_AsVal_frag(bool),"header",
+          fragment=SWIG_AsVal_frag(long)) {
+SWIGINTERN
+int SWIG_AsVal_dec(bool)(JSContextRef context, JSValueRef obj, bool *val)
+{
+  if(!JSValueIsBoolean(context, obj)) {
+    return SWIG_ERROR;
+  }
+  if (val) *val = JSValueToBoolean(context, obj, NULL);
+  return SWIG_OK;
+}
+}
+
+%fragment(SWIG_From_frag(int),"header") {
+SWIGINTERNINLINE JSValueRef
+  SWIG_From_dec(int)(JSContextRef context, int value)
+{
+  return JSValueMakeNumber(context, value);
+}
+}
+
+%fragment(SWIG_From_frag(long),"header") {
+  %define_as(SWIG_From_dec(long),           JSValueMakeNumber)
+}
+
+%fragment(SWIG_AsVal_frag(long),"header",
+          fragment="SWIG_CanCastAsInteger") {
+SWIGINTERN int
+SWIG_AsVal_dec(long)(JSContextRef context, JSValueRef obj, long* val)
+{
+  if (!JSValueIsNumber(context, obj)) {
+    return SWIG_TypeError;
+  }
+  if(val) *val = (long) JSValueToNumber(context, obj, NULL);
+  
+  return SWIG_OK;
+}
+}
+
+/* unsigned long */
+
+%fragment(SWIG_From_frag(unsigned long),"header",
+          fragment=SWIG_From_frag(long)) {
+SWIGINTERNINLINE JSValueRef 
+SWIG_From_dec(unsigned long)(JSContextRef context, unsigned long value)
+{
+  return (value > LONG_MAX) ?
+    JSValueMakeNumber(context, value) : JSValueMakeNumber(context, %numeric_cast(value,long)); 
+}
+}
+
+%fragment(SWIG_AsVal_frag(unsigned long),"header",
+          fragment="SWIG_CanCastAsInteger") {
+SWIGINTERN int
+SWIG_AsVal_dec(unsigned long)(JSContextRef context, JSValueRef obj, unsigned long *val) 
+{
+  if(!JSValueIsNumber(context, obj)) {
+    return SWIG_TypeError;
+  }
+  
+  long longVal = (long) JSValueToNumber(context, obj, NULL);
+  
+  if(longVal < 0) {
+      return SWIG_OverflowError;
+  }
+  
+  if(val) *val = longVal; 
+  
+  return SWIG_OK;
+}
+}
+
+%fragment(SWIG_From_frag(double),"header") {
+  %define_as(SWIG_From_dec(double),          JSValueMakeNumber)
+}
+
+%fragment(SWIG_AsVal_frag(double),"header") {
+SWIGINTERN int
+SWIG_AsVal_dec(double)(JSContextRef context, JSValueRef obj, double *val)
+{
+  if(!JSValueIsNumber(context, obj)) {
+    return SWIG_TypeError;
+  }
+  if(val) *val = JSValueToNumber(context, obj, NULL);
+  
+  return SWIG_OK;
+}
+}
+
 // Primitive types
 %typemap(in) char,
             signed char,
@@ -176,6 +275,7 @@
 /* Typemaps for composite types */
 %typemap(in) SWIGTYPE ($&1_type argp)    // Objects passed by value, convert to a pointer
 %{
+ // DEBUG: typemap(in) SWIGTYPE ($&1_type argp) 
  JSObjectRef o$1 = JSValueToObject(context,$input, NULL);
  SWIG_PRV_DATA *$1_privatedata = (SWIG_PRV_DATA *)JSObjectGetPrivate(o$1);
  argp = ($&1_ltype)$1_privatedata->swigCObject;
