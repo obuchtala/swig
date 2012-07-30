@@ -1,15 +1,28 @@
+/* File : example.c */
 #include <iostream>
 #include "example.h"
+#define M_PI 3.14159265358979323846
 
-#define M_PI 3.14159
-
-Circle::Circle(): radius(1.0) {}
-
-Circle::Circle(double r): radius(r) {
-    std::cout << "created Circle with r=" << radius << std::endl;
+/* Move the shape to a new location */
+void Shape::move(double dx, double dy) {
+  x += dx;
+  y += dy;
 }
 
-double Circle::area() {
-    std::cout << "Circle::area called, r=" << radius << std::endl;
-    return M_PI*radius*radius;
+int Shape::nshapes = 0;
+
+double Circle::area(void) {
+  return M_PI*radius*radius;
+}
+
+double Circle::perimeter(void) {
+  return 2*M_PI*radius;
+}
+
+double Square::area(void) {
+  return width*width;
+}
+
+double Square::perimeter(void) {
+  return 4*width;
 }
