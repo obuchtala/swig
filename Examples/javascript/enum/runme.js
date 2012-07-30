@@ -18,7 +18,7 @@ print("\nTesting use of enums with functions\n");
 example.enum_test(example.RED, example.Foo.IMPULSE);
 example.enum_test(example.BLUE,  example.Foo.WARP);
 example.enum_test(example.GREEN, example.Foo.LUDICROUS);
-example.Foo.enum_test(1234,5678);
+example.enum_test(1234,5678);
 
 print("\nTesting use of enum with class method");
 f = new example.Foo();
@@ -26,23 +26,6 @@ f = new example.Foo();
 f.enum_test(example.Foo.IMPULSE);
 f.enum_test(example.Foo.WARP);
 f.enum_test(example.Foo.LUDICROUS);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // enum value BLUE of enum color is accessed as property of cconst
 print("example.BLUE= " + example.BLUE);
