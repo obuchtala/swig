@@ -16,7 +16,7 @@ int SWIG_AsVal_dec(bool)(JSContextRef context, JSValueRef obj, bool *val)
   if(!JSValueIsBoolean(context, obj)) {
     return SWIG_ERROR;
   }
-  if (val) *val = JSValueToBoolean(context, obj, NULL);
+  if (val) *val = JSValueToBoolean(context, obj);
   return SWIG_OK;
 }
 }
