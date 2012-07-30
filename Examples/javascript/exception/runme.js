@@ -41,7 +41,7 @@ catch(error){
   }
 }
 
-for (var i=0; i<4; i++) {
+for (var i=1; i<4; i++) {
   try{
       t.multi(i);
       throw -1;

@@ -1,6 +1,6 @@
 TOP = ../..
 SWIG = $(TOP)/../preinst-swig
-SRCS = example.cpp
+SRCS =
 JSCXXSRCS = $(TOP)/../Tools/javascript/javascript.cxx
 JAVASCRIPT_EXE = $(TOP)/../Tools/javascript/javascript
 JAVASCRIPT_MODULE = example
