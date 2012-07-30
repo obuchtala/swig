@@ -63,7 +63,7 @@ SWIG_JSC_From##CharName##Ptr(JSContextRef context, const Char *cptr)
 
 %fragment("SWIG_From"#CharName"Array","header",fragment=#SWIG_FromCharPtrAndSize) {
 SWIGINTERNINLINE SWIG_Object 
-SWIG_From##CharName##Array(JSContextRef context, const Char *cptr, size_t size)
+SWIG_JSC_From##CharName##Array(JSContextRef context, const Char *cptr, size_t size)
 { 
   return SWIG_JSC_FromCharPtrAndSize(context, cptr, size);
 }
@@ -75,7 +75,7 @@ SWIG_From##CharName##Array(JSContextRef context, const Char *cptr, size_t size)
 
 %fragment("SWIG_As" #CharName "Array","header",fragment=#SWIG_AsCharPtrAndSize) {
 SWIGINTERN int
-SWIG_As##CharName##Array(JSContextRef context, SWIG_Object obj, Char *val, size_t size)
+SWIG_JSC_As##CharName##Array(JSContextRef context, SWIG_Object obj, Char *val, size_t size)
 { 
   Char* cptr = 0; size_t csize = 0; int alloc = SWIG_OLDOBJ;
   int res = SWIG_JSC_AsCharPtrAndSize(context, obj, &cptr, &csize, &alloc);
@@ -96,6 +96,8 @@ SWIG_As##CharName##Array(JSContextRef context, SWIG_Object obj, Char *val, size_
   }
   return SWIG_TypeError;
 }
+
+#define SWIG_As##CharName##Array(obj, val, size) SWIG_JSC_As##CharName##Array(context, obj, val, size)
 }
 
 /* Char */

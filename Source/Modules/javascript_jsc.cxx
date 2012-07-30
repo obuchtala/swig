@@ -136,12 +136,6 @@ int JSCEmitter::initialize(Node *n) {
   f_header = NewString("");
   f_wrappers = NewString("");
 
-  /* Initialization of members */
-  f_runtime = NewString("");
-  f_init = NewString("");
-  f_header = NewString("");
-  f_wrappers = NewString("");
-
   create_namespaces_code = NewString("");
   register_namespaces_code = NewString("");
   initializer_code = NewString("");
@@ -184,7 +178,9 @@ int JSCEmitter::dump(Node *n) {
       .replace("${initializercode}", initializer_code)
       .replace("${create_namespaces}", create_namespaces_code)
       .replace("${register_namespaces}", register_namespaces_code);
-  Wrapper_pretty_print(initializer.str(), f_wrap_cpp);
+  Wrapper_pretty_print(initializer.str(), f_init);
+
+  Printv(f_wrap_cpp, f_init, "\n", 0);
 
   return SWIG_OK;
 }

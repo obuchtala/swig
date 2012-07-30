@@ -20,3 +20,5 @@
 %include <javascriptkw.swg>
 
 %include <javascriptcode.swg>
+
+%include <javascriptinit.swg>

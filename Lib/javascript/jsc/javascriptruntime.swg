@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <limits.h>
 %}
 
 %insert(runtime) "swigrun.swg";         /* SWIG API */

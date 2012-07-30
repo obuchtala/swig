@@ -223,6 +223,8 @@ bool ${modulename}_initialize(JSGlobalContextRef context) {
     /* Register namespaces */
     ${register_namespaces}
 
+    SWIG_InitializeModule(0);
+
     return true;
 }
 
