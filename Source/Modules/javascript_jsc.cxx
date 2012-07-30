@@ -71,6 +71,13 @@ void JSCEmitter::marshalInputArgs(ParmList *parms, Wrapper *wrapper, Marshalling
     {
       Replaceall(tm, "$input", arg);
       Setattr(p, "emit:input", arg);
+
+      if (Getattr(p, "wrap:disown") || (Getattr(p, "tmap:in:disown"))) {
+        Replaceall(tm, "$disown", "SWIG_POINTER_DISOWN");
+      } else {
+        Replaceall(tm, "$disown", "0");
+      }
+
       Printf(wrapper->code, "%s\n", tm);
     } else {
       Swig_warning(WARN_TYPEMAP_IN_UNDEF, input_file, line_number, "Unable to use type %s as a function argument.\n", SwigType_str(pt, 0));
@@ -95,6 +102,13 @@ void JSCEmitter::marshalOutput(Node *n, String *actioncode, Wrapper *wrapper) {
     Replaceall(tm, "$result", "jsresult");
     // TODO: May not be the correct way
     Replaceall(tm, "$objecttype", Swig_scopename_last(SwigType_str(SwigType_strip_qualifiers(type), 0)));
+    
+    if (GetFlag(n, "feature:new")) {
+      Replaceall(tm, "$owner", "SWIG_POINTER_OWN");
+    } else {
+      Replaceall(tm, "$owner", "0");
+    }
+
     Printf(wrapper->code, "%s", tm);
     if (Len(tm))
       Printf(wrapper->code, "\n");
@@ -155,9 +169,12 @@ int JSCEmitter::dump(Node *n) {
   // write the swig banner
   Swig_banner(f_wrap_cpp);
 
+  SwigType_emit_type_table(f_runtime, f_wrappers);
+
   Printv(f_wrap_cpp, f_runtime, "\n", 0);
   Printv(f_wrap_cpp, f_header, "\n", 0);
   Printv(f_wrap_cpp, f_wrappers, "\n", 0);
+
 
   emitNamespaces();
 
@@ -311,6 +328,9 @@ int JSCEmitter::enterClass(Node *n) {
 int JSCEmitter::exitClass(Node *n) {    
   
   String *mangled_name = SwigType_manglestr(Getattr(n, "name"));
+  SwigType *type = Copy(Getattr(n, "classtypeobj"));
+  SwigType_add_pointer(type);
+  String *mangled_type = SwigType_manglestr(type);
   
   Template t_class_tables(getTemplate("JS_class_tables"));
   t_class_tables.replace("${classname_mangled}", mangled_name)
@@ -344,6 +364,10 @@ int JSCEmitter::exitClass(Node *n) {
   t_classtemplate.replace("${classname_mangled}", mangled_name)
       .replace("${base_classname}", base_name_mangled);
   Wrapper_pretty_print(t_classtemplate.str(), initializer_code);
+  
+  String *clientdata = NewString("");
+  Printv(clientdata, mangled_name, "_classRef", 0);
+  SwigType_remember_clientdata(type, clientdata);
 
   /* adds a class registration statement to initializer function */
   Template t_registerclass(getTemplate("JS_register_class"));
@@ -359,6 +383,8 @@ int JSCEmitter::exitClass(Node *n) {
   Delete(class_static_functions_code);
   Delete(ctor_wrappers);
   Delete(mangled_name);
+  Delete(type);
+  Delete(mangled_type);
   Delete(ctor_dispatcher_code);
   class_variables_code = 0;
   current_class_functions = 0;
@@ -441,7 +467,7 @@ int JSCEmitter::emitGetter(Node *n, bool is_member) {
   Wrapper_add_local(current_wrapper, "jsresult", "JSValueRef jsresult");
 
   String *action = emit_action(n);
-  marshalInputArgs(params, current_wrapper, Getter, is_member);
+  marshalInputArgs(params, current_wrapper, Getter, is_member, is_static);
   marshalOutput(n, action, current_wrapper);
 
   t_getter.replace("${getname}", wrap_name)
@@ -468,7 +494,7 @@ int JSCEmitter::emitSetter(Node *n, bool is_member) {
   Wrapper_add_local(current_wrapper, "jsresult", "JSValueRef jsresult");
 
   String *action = emit_action(n);
-  marshalInputArgs(params, current_wrapper, Setter, is_member);
+  marshalInputArgs(params, current_wrapper, Setter, is_member, is_static);
   marshalOutput(n, action, current_wrapper);
 
   t_setter.replace("${setname}", wrap_name)
@@ -550,7 +576,7 @@ int JSCEmitter::emitFunction(Node *n, bool is_member) {
   Wrapper_add_local(current_wrapper, "jsresult", "JSValueRef jsresult");
 
   String *action = emit_action(n);
-  marshalInputArgs(params, current_wrapper, Function, is_member);
+  marshalInputArgs(params, current_wrapper, Function, is_member, is_static);
   marshalOutput(n, action, current_wrapper);
 
   t_function.replace("${functionname}", wrap_name)
