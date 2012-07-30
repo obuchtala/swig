@@ -20,9 +20,10 @@ CPP_TEST_CASES = \
 	abstract_typedef \
 	abstract_typedef2 \
 	abstract_virtual \
+	array_member \
 	class_ignore \
-  class_scope_weird \
-  cpp_enum \
+	class_scope_weird \
+	cpp_enum \
 	cpp_namespace \
 	cpp_static \
 	ret_by_value \
