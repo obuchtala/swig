@@ -106,6 +106,7 @@ private:
     String* current_propertyname;
     String* current_getter;
     String* current_setter;
+    bool is_immutable;
 
     String* current_classname;
     String* current_classname_mangled;

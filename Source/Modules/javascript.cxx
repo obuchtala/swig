@@ -95,6 +95,11 @@ int JAVASCRIPT::globalfunctionHandler(Node *n) {
 
 int JAVASCRIPT::variableHandler(Node *n) {
 
+  if(!is_assignable(n)
+      // HACK: don't know why this is assignable? But does not compile
+      || Equal(Getattr(n, "type"), "a().char") ) {
+    SetFlag(n, "wrap:immutable");
+  }
   emitter->enterVariable(n);
 
   Language::variableHandler(n);

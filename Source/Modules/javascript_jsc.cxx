@@ -276,6 +276,8 @@ int JSCEmitter::enterVariable(Node *n) {
   current_getter = NULL_STR;
   current_setter = NULL_STR;
   current_propertyname = Swig_scopename_last(Getattr(n, "name"));
+  is_immutable = GetFlag(n, "wrap:immutable");
+
   return SWIG_OK;
 }
 
@@ -476,6 +478,10 @@ int JSCEmitter::emitGetter(Node *n, bool is_member) {
 }
 
 int JSCEmitter::emitSetter(Node *n, bool is_member) {
+
+  // skip variable that are immutable
+  if(is_immutable) return SWIG_OK;
+
   Template t_setter(getTemplate("JS_setproperty"));
   bool is_static = Equal(Getattr(n, "storage"), "static");
 
