@@ -30,7 +30,11 @@ SWIGINTERNINLINE JSValueRef
 }
 
 %fragment(SWIG_From_frag(long),"header") {
-  %define_as(SWIG_From_dec(long),           JSValueMakeNumber)
+SWIGINTERNINLINE JSValueRef
+  SWIG_From_dec(long)(long value)
+{
+  return JSValueMakeNumber(context, value);
+}
 }
 
 %fragment(SWIG_AsVal_frag(long),"header",

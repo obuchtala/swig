@@ -20,26 +20,11 @@
 #define SWIG_Error(code, msg)     SWIG_JSC_exception(context, exception, code, msg)
 #define SWIG_exception(code, msg) SWIG_JSC_exception(context, exception, code, msg)
 #define SWIG_fail                 /* TODO: goto fail ?*/
-//#define SWIG_Raise(obj, type, desc) SWIG_Javascript_Raise(context, exception, type)
-
 
 #define SWIG_JSC_FROM_DECL_ARGS(arg1)              (JSContextRef context, arg1)
 #define SWIG_JSC_FROM_CALL_ARGS(arg1)              (context, arg1)
 #define SWIG_JSC_AS_DECL_ARGS(arg1, arg2)          (JSContextRef context, arg1, arg2)
 #define SWIG_JSC_AS_CALL_ARGS(arg1, arg2)          (context, arg1, arg2)
-%}
-
-%insert(runtime) %{
-void SWIG_Javascript_Raise(JSContextRef context, JSValueRef *exception, const char* descr) {
- JSStringRef jsstring = JSStringCreateWithUTF8CString(descr);
- *exception = JSValueMakeString(context, jsstring);
- JSStringRelease(jsstring);
-}
-
-void SWIG_JSC_exception(JSContextRef context, JSValueRef *exception, int code, const char* msg) {
-  SWIG_Javascript_Raise(context, exception, msg);
-}
-
 %}
 
 %insert(runtime) %{
@@ -51,11 +36,17 @@ typedef struct {
 %}
 
 %insert(runtime) %{
+
 void SWIG_Javascript_Raise(JSContextRef context, JSValueRef *exception, const char* type) {
  JSStringRef message = JSStringCreateWithUTF8CString(type);
  *exception = JSValueMakeString(context, message);
  JSStringRelease(message);
 }
+
+void SWIG_JSC_exception(JSContextRef context, JSValueRef *exception, int code, const char* msg) {
+  SWIG_Javascript_Raise(context, exception, msg);
+}
+
 %}
 
 %insert(runtime) %{
