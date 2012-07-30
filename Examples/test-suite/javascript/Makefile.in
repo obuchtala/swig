@@ -13,7 +13,8 @@ JS_INCLUDE   = @JSCOREINC@
 JS_DLNK      = @JSCOREDYNAMICLINKING@
 JSCXXFLAGS  = @JSCXXFLAGS@
 
-C_TEST_CASES =
+C_TEST_CASES = \
+	preproc
 
 CPP_TEST_CASES = \
 	abstract_access \
@@ -21,12 +22,15 @@ CPP_TEST_CASES = \
 	abstract_typedef2 \
 	abstract_virtual \
 	array_member \
+	arrays_global \
 	char_binary \
 	class_ignore \
 	class_scope_weird \
 	cpp_enum \
 	cpp_namespace \
 	cpp_static \
+	namespace_virtual_method \
+	overload_copy \
 	ret_by_value \
 	struct_value \
 	typedef_class \
@@ -34,10 +38,10 @@ CPP_TEST_CASES = \
 	typedef_scope \
 	typemap_arrays \
 	typemap_delete \
+	typemap_namespace \
 	typemap_ns_using \
 	using1 \
 	using2
-
 
 SKIP_CPP_CASES = @SKIP_CPP_CASES@
 SKIP_C_CASES = @SKIP_C_CASES@
