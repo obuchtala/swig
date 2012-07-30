@@ -21,6 +21,7 @@ CPP_TEST_CASES = \
 	abstract_typedef2 \
 	abstract_virtual \
 	array_member \
+	char_binary \
 	class_ignore \
 	class_scope_weird \
 	cpp_enum \
