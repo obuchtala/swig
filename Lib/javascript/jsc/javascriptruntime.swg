@@ -19,6 +19,8 @@
 #define SWIG_Error(code, msg)     SWIG_JSC_exception(context, exception, code, msg)
 #define SWIG_exception(code, msg) SWIG_JSC_exception(context, exception, code, msg)
 #define SWIG_fail                 /* TODO: goto fail ?*/
+//#define SWIG_Raise(obj, type, desc) SWIG_Javascript_Raise(context, exception, type)
+
 
 %insert(runtime) %{
 typedef struct {
@@ -26,6 +28,14 @@ typedef struct {
   void *swigCObject;
   swig_type_info *info;
 }SWIG_PRV_DATA; 
+%}
+
+%insert(runtime) %{
+void SWIG_Javascript_Raise(JSContextRef context, JSValueRef *exception, const char* type) {
+ JSStringRef message = JSStringCreateWithUTF8CString(type);
+ *exception = JSValueMakeString(context, message);
+ JSStringRelease(message);
+}
 %}
 
 %insert(runtime) %{

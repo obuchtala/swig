@@ -13,10 +13,10 @@
 /* append output */
 #define SWIG_AppendOutput(result, obj)  "/* TODO: SWIG_Javascript_AppendOutput(result, obj) */"
 
-#define SWIG_SetConstant(name, obj) "/* TODO: SWIG_Javaqscript_SetConstant(d, name,obj) */"
+#define SWIG_SetConstant(name, obj) "/* TODO: SWIG_Javascript_SetConstant(d, name,obj) */"
 
-#define SWIG_Raise(obj, type, desc) "/* TODO: SWIG_Javascript_Raise(obj, type, desc) */"
-
+#define SWIG_Raise(obj, type, desc)  SWIG_Javascript_Raise(context, exception, type)
+ 
 /* override some of the macros in global valtypes.swg */
 %include <javascriptvaltypes.swg>
 
