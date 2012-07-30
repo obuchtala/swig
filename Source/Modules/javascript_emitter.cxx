@@ -49,6 +49,9 @@ void JSEmitter::enableDebug() {
   debug = true;
 }
 
+void JSEmitter::setStaticFlag(bool _is_static) {
+  is_static = _is_static;
+}
 
 /* -----------------------------------------------------------------------------
  * JSEmitter::typemapLookup()

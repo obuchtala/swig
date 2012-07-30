@@ -67,7 +67,7 @@ void JSCEmitter::marshalInputArgs(ParmList *parms, Wrapper *wrapper, Marshalling
     }
 
     tm = Getattr(p, "tmap:in"); // Get typemap for this argument
-    if ( tm != NULL )	
+    if ( tm != NULL )
     {
       Replaceall(tm, "$input", arg);
       Setattr(p, "emit:input", arg);
@@ -564,7 +564,13 @@ int JSCEmitter::emitConstant(Node *n) {
 
 int JSCEmitter::emitFunction(Node *n, bool is_member) {
   Template t_function(getTemplate("JS_functionwrapper"));
-  bool is_static = Equal(Getattr(n, "storage"), "static");
+
+  // Note: there is an inconsistency in SWIG with static member functions
+  //       that do not have storage:static
+  //       in these cases the context (staticmemberfunctionHandler) is
+  //       exploited and a flag is set temporarily
+  //       TODO: this could be done in general with is_member and is_static
+  bool is_static = JSEmitter::is_static || Equal(Getattr(n, "storage"), "static");
 
   bool is_overloaded = GetFlag(n, "sym:overloaded");
   String *name = Getattr(n, "sym:name");

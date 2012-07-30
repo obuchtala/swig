@@ -23,6 +23,7 @@ public:
   virtual int globalfunctionHandler(Node *n);
   virtual int variableHandler(Node *n);
   virtual int globalvariableHandler(Node *n);
+  virtual int staticmemberfunctionHandler(Node *n);
   virtual int classHandler(Node *n);
   virtual int functionWrapper(Node *n);
   virtual int constantWrapper(Node *n);
@@ -86,6 +87,15 @@ int JAVASCRIPT::globalfunctionHandler(Node *n) {
   Language::globalfunctionHandler(n);
   return SWIG_OK;
 }
+
+int JAVASCRIPT::staticmemberfunctionHandler(Node *n) {
+  // workaround: storage=static is not set for static member functions
+  emitter->setStaticFlag(true);
+  Language::staticmemberfunctionHandler(n);  
+  emitter->setStaticFlag(false);
+  return SWIG_OK;
+}
+
 
 /* ---------------------------------------------------------------------
  * variableHandler()

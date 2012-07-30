@@ -131,6 +131,8 @@
     Template getTemplate(const String *name);
 
     void enableDebug();
+    
+    void setStaticFlag(bool is_static);
 
   protected:
 
@@ -142,9 +144,9 @@
 
     virtual int emitGetter(Node *n, bool is_member) = 0;
 
-  virtual int emitSetter(Node *n, bool is_member) = 0;
+    virtual int emitSetter(Node *n, bool is_member) = 0;
   
-  bool isSetterMethod(Node *n);
+    bool isSetterMethod(Node *n);
 
     Node *getBaseClass(Node *n);
 
@@ -161,6 +163,8 @@
 
     Wrapper *current_wrapper;
 
+    bool is_static;
+    
     bool debug;
   };
 
