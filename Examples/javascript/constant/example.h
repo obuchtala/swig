@@ -4,3 +4,5 @@
 #define    CCONST2     '\n'
 #define    SCONST      "Hello World"
 #define    SCONST2     "\"Hello World\""
+#define    EXTERN      extern
+#define    FOO         (ICONST + BAR)
