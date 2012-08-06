@@ -19,9 +19,6 @@ print("e   =" + e);
 f = a.plus(b).times(c.plus(b.times(e))).plus(a.uminus());
 print("f   =" + f);
 
-zero = new example.Complex(0,0);
-f = a.plus(b).times(c.plus(b.times(e))).plus(zero.minus(a));
-print("f   =" + f);
 
 
 
