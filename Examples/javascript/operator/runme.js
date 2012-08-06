@@ -1,20 +1,28 @@
 // Operator overloading example
 
-a = example.Complex(2,3);
-b = example.Complex(-5,10);
+a = new example.Complex(2,3);
+b = new example.Complex(-5,10);
 
 print ("a   =" + a);
 print ("b   =" + b);
 
-c = a + b;
-print("c   =" + c);
-print("a*b =" + a*b);
-print("a-c =" + a-c);
+c = a.plus(b);
 
-e = example.ComplexCopy(a-c);
+print("c   =" + c);
+print("a*b =" + a.times(b));
+print("a-c =" + a.minus(c));
+
+e = example.Complex.copy(a.minus(c));
 print("e   =" + e);
 
 // Big expression
-f = ((a+b)*(c+b*e)) + (-a);
+f = a.plus(b).times(c.plus(b.times(e))).plus(a.uminus());
 print("f   =" + f);
+
+zero = new example.Complex(0,0);
+f = a.plus(b).times(c.plus(b.times(e))).plus(zero.minus(a));
+print("f   =" + f);
+
+
+
 
