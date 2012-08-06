@@ -17,7 +17,8 @@ Change ~/.gdbinit to be able to use swig pretty printers:
 from swigprinters import register_swig_printers, enableGdbPrintWorkaround, \
   setChildrenRecursionLevel
 
-enableGdbPrintWorkaround()
+#enableGdbPrintWorkaround()
+#setChildrenRecursionLevel(2)
 register_swig_printers (None)
 
 end

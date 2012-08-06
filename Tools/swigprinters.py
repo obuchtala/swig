@@ -56,19 +56,19 @@ class SwigStringPrinter:
       dohbase = self.val.reinterpret_cast(self.t_doh_base_ptr).dereference()
     except Exception as err:
       print_("SwigStringPrinter: Could not dereference DOHBase*\n");
-      return ret;
+      return "<invalid>";
       
     try:
       str_data = dohbase['data'].reinterpret_cast(self.t_swigstr_ptr).dereference()
     except Exception as err:
       print_("SwigStringPrinter: Could not dereference struct String*\n");
-      return ret;
+      return "<invalid>";
       
     try:
       char_ptr = str_data['str']
     except Exception as err:
       print_("SwigStringPrinter: Could not access field (struct String).str\n");
-      return ret;
+      return "<invalid>";
       
     if char_ptr.is_lazy is True:
       char_ptr.fetch_lazy ()
@@ -77,7 +77,7 @@ class SwigStringPrinter:
       ret = char_ptr.string()
     except Exception as err:
       print_("SwigStringPrinter: Could not convert const char* to string\n");
-      return ret;
+      return "<invalid>";
         
     return ret
 
@@ -557,8 +557,9 @@ def build_swig_printer():
     swig_printer.add('const List *', SwigListPrinter)
     swig_printer.add('ParmList *', SwigDelegatingPrinter)
     swig_printer.add('const ParmList *', SwigDelegatingPrinter)
-    swig_printer.add('DOH *', SwigDelegatingPrinter)
-    swig_printer.add('const DOH *', SwigDelegatingPrinter)
+    swig_printer.add('File *', SwigDelegatingPrinter)
+    #swig_printer.add('DOH *', SwigDelegatingPrinter)
+    #swig_printer.add('const DOH *', SwigDelegatingPrinter)
     
     print_("Loaded swig printers\n");
 
