@@ -9,9 +9,9 @@ c = example.new_intp();
 example.intp_assign(a,37);
 example.intp_assign(b,42);
 
-print(" a = " + intp_value(a) + "\n");
-print(" b = " + intp_value(b) + "\n");
-print(" c = " + intp_value(c) + "\n");
+print(" a = " + example.intp_value(a) + "\n");
+print(" b = " + example.intp_value(b) + "\n");
+print(" c = " + example.intp_value(c) + "\n");
 
 //// Call the add() function with some pointers
 example.add(a, b, c);
@@ -29,14 +29,10 @@ example.delete_intp(c);
 //// Now try the typemap library
 //// This should be much easier. Now how it is no longer
 //// necessary to manufacture pointers.
+//"OUTPUT" Mapping is not supported
 
-print("Trying the typemap library");
-r = example.sub(37,42);
-print("37 - 42 =" + r);
+//print("Trying the typemap library");
+//r = example.subtract(37,42);
+//print("37 - 42 =" + r);
 
-//Now try the version with multiple return values
-
-print("Testing multiple return values");
-q,r = example.divide(42,37, r);
-print("42/37 =" + q + "remainder =" + r);
 
