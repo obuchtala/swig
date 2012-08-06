@@ -5,6 +5,7 @@ import re
 
 log_file = None
 GDB_FLATTENED_CHILDREN_WORKAROUND = False
+CHILDREN_MAX_RECURSION_LEVEL = 0
 
 def print_(msg):
     global log_file;
@@ -15,7 +16,7 @@ def print_(msg):
       log_file.write(msg)
 
     print(msg)
-    
+  
 class SwigStringPrinter:
   """
     Pretty print Swig String* types.
@@ -74,37 +75,160 @@ class SwigStringPrinter:
         
     return ret
 
-class SwigHashIterator:
+class SwigIterator:
+  
+  def __init__(self):
+    
+    self.t_doh_base_ptr = gdb.lookup_type("DohBase").pointer()
+    self.t_string_ptr = gdb.lookup_type("String").pointer()
+    self.t_node_ptr = gdb.lookup_type("Node").pointer()
+    self.t_hash_ptr = gdb.lookup_type("Hash").pointer()
+    self.t_file_ptr = gdb.lookup_type("File").pointer()
+
+  def cast_doh(self, doh):
+                
+    if doh == 0:
+      return doh
+    
+    val_base = doh.reinterpret_cast(self.t_doh_base_ptr).dereference()
+    val_type = val_base['type'].dereference()
+    val_typestr = val_type['objname'].string()
+    
+    if "String" == val_typestr:
+      doh = doh.reinterpret_cast(self.t_string_ptr)
+    elif "File" == val_typestr:
+      doh = doh.reinterpret_cast(self.t_file_ptr)
+    # BUG: GDB Pyhton can not handle cyclic references yet
+    #      so these casts are deactivated
+    elif "Hash" == val_typestr:
+      doh = doh.reinterpret_cast(self.t_hash_ptr)
+    elif "Node" == val_typestr:
+      doh = doh.reinterpret_cast(self.t_node_ptr)
+
+    return doh
+
+class SwigListIterator(SwigIterator):
+
   def __init__(self, val):
+    SwigIterator.__init__(self);
 
     try:
       self.valid = False
-      
-      self.t_doh_base_ptr = gdb.lookup_type("DohBase").pointer()
-      self.val = val.reinterpret_cast(self.t_doh_base_ptr)
 
-      self.hashtable = None
-      self.hashsize = None
-      self.nitems = None
+      self.val = val.reinterpret_cast(self.t_doh_base_ptr)
+      val_base = self.val.dereference()
+      val_type = val_base['type'].dereference()
+      val_typestr = val_type['objname'].string()
+      #print_("SwigListIterator: constructing iterator for value of type %s"%val_typestr)
+
+      self.t_struct_list_ptr = gdb.lookup_type("struct List").pointer()
+
+      doh_base = self.val.dereference()
+      self.l = doh_base['data'].reinterpret_cast(self.t_struct_list_ptr).dereference()
+
+      self.address = 0
+      self._index = 0
+      self.key = 0
+      self.item = 0
+
+      self.address = self.val.dereference().address
+
+      self.is_first = True
+      self.valid = True
+
+    except Exception as err:
+      print_("SwigListIterator: Construction failed.\n %s.\n"%(str(err)))
+
+  def __iter__(self):
+    return self
+
+  def List_first(self):
+    
+    self.object = None;
+    self._index = 0
+    self.key = 0
+    self.nitems = int(self.l['nitems'])
+    self.items = self.l['items']
+    
+    if self.nitems > 0:
+        self.item = self.items[0]
+    else:
+      self.stop()
+  
+  def List_next(self):
+    self._index = self._index + 1
+    if self._index >= self.nitems:
+      self.stop()
+    else:
+      self.item = self.items[self._index]
+      
+  def next(self):
+
+    if not self.valid:
+      self.stop()
+      
+    if self.is_first:
+      self.is_first = False
+      try:
+        self.List_first()
+      except StopIteration:
+        raise StopIteration
+      except Exception as err:
+        print_("Error during iteration to first node: \n %s \n" %(str(err)))
+        self.stop()
+    else:
+      try:
+        self.List_next()
+      except StopIteration:
+        raise StopIteration
+      except Exception as err:
+        print_("Error during iteration to first node: \n %s \n" %(str(err)))
+        self.stop()
+      
+    key_str = "[%d]"%self._index
+    item = 0
+
+    try:
+      item = self.cast_doh(self.item)
+    except Exception as err:
+      print_("SwigListIterator(%s): Exception during casting of value doh:\n %s\n" % (str(self.address), str(err)) )
+      self.stop()
+
+    return (key_str, item)
+
+  def stop(self):
+    self.is_first = True
+    self.item = 0
+    self.key = 0
+    raise StopIteration      
+
+class SwigHashIterator(SwigIterator):
+
+  def __init__(self, val):
+    SwigIterator.__init__(self);
+
+    try:
+      self.valid = False
+            
+      self.val = val.reinterpret_cast(self.t_doh_base_ptr)
 
       self.t_struct_hash_ptr = gdb.lookup_type("struct Hash").pointer()
       self.t_struct_hash_node_ptr = gdb.lookup_type("struct HashNode").pointer()
 
+      doh_base = self.val.dereference()
+      hash_ = doh_base['data'].reinterpret_cast(self.t_struct_hash_ptr).dereference()
+      self.hashtable = hash_['hashtable']
+      self.hashsize = int(hash_['hashsize'])
+      self.nitems = int(hash_['nitems'])      
+
       self.next_ = 0
       self.address = 0
       self.pos = 0;
-      self.retrieve_hash_fields()
-
       self._current = 0
       self.item = 0
       self.key = 0
       self._index = 0
       
-      self.t_string_ptr = gdb.lookup_type("String").pointer()
-      self.t_node_ptr = gdb.lookup_type("Node").pointer()
-      self.t_hash_ptr = gdb.lookup_type("Hash").pointer()
-      self.t_file_ptr = gdb.lookup_type("File").pointer()
-
       self.address = self.val.dereference().address
 
       self.is_first = True
@@ -133,8 +257,6 @@ class SwigHashIterator:
     self.item = self._current['object'];
     self.key = self._current['key'];
 
-    #Actually save the next slot in the hash.  This makes it possible to
-    # delete the item being iterated over without trashing the universe */
     self._current = self._current['next'];
   
   
@@ -156,7 +278,6 @@ class SwigHashIterator:
     self.key = self._current['key'];
     self.item = self._current['object'];
 
-    # Store the next node to iterator on
     self._current = self._current['next'];
     
 
@@ -200,37 +321,6 @@ class SwigHashIterator:
       self.stop()
 
     return (key_str, item)
-
-  def cast_doh(self, doh):
-                
-    if doh == 0:
-      return doh
-    
-    val_base = doh.reinterpret_cast(self.t_doh_base_ptr).dereference()
-    val_type = val_base['type'].dereference()
-    val_typestr = val_type['objname'].string()
-    
-    #print_("Trying DOH cast: %s\n" %(val_typestr))
-
-    if "String" == val_typestr:
-      doh = doh.reinterpret_cast(self.t_string_ptr)
-    elif "File" == val_typestr:
-      doh = doh.reinterpret_cast(self.t_file_ptr)
-    # BUG: GDB Pyhton can not handle cyclic references yet
-    #      so these casts are deactivated
-    #elif "Hash" == val_typestr:
-    #  doh = doh.reinterpret_cast(self.t_hash_ptr)
-    #elif "Node" == val_typestr:
-    #  doh = doh.reinterpret_cast(self.t_node_ptr)
-
-    return doh
-
-  def retrieve_hash_fields(self):
-    doh_base = self.val.dereference()
-    hash_ = doh_base['data'].reinterpret_cast(self.t_struct_hash_ptr).dereference()
-    self.hashtable = hash_['hashtable']
-    self.hashsize = int(hash_['hashsize'])
-    self.nitems = int(hash_['nitems'])      
   
   def stop(self):
     self.is_first = True
@@ -241,6 +331,7 @@ class AlternateKeyValueIterator():
   def __init__(self, iterable):
     self.it = iterable.__iter__()
     self._next = None
+    self.count = -1
 
   def __iter__(self):
     return self
@@ -249,11 +340,12 @@ class AlternateKeyValueIterator():
     if self._next == None:
       key, value = self.it.next()
       self._next = value
-      return ("", key)
+      self.count = self.count + 1
+      return ("[%d]"%self.count, key)
     else:
       value = self._next
       self._next = None
-      return ("", value)
+      return ("[%d]"%self.count, value)
 
 class NopIterator:
   
@@ -265,6 +357,40 @@ class NopIterator:
     
   def next(self):
     raise StopIteration
+
+class SwigListPrinter:
+  """
+    Pretty print Swig List* types (also ParmList*).
+  """
+    
+  def __init__ (self, typename, val):
+    
+    self.typename = typename
+    self.val = val
+    
+    it = SwigListIterator(val)
+    self.valid = it.valid
+    self.address = it.address
+      
+     
+  def display_hint(self):
+    return 'array'
+
+  def to_string(self):
+    return "%s(%s)" % (str(self.typename), str(self.address))
+        
+  def children(self):
+        
+    if not self.valid:
+      print_("SwigListPrinter: Invalid state.\n")
+      return NopIterator()
+    
+    try:
+      it = SwigListIterator(self.val)
+      return it
+    except Exception as err:
+      print_("SwigListPrinter: Error during creation of children iterator. \n %s \n" %(str(err)))
+      raise err
 
 class SwigHashPrinter:
   """
@@ -278,18 +404,23 @@ class SwigHashPrinter:
     it = SwigHashIterator(val)
     self.valid = it.valid
     self.address = it.address
-     
+    self.level = 0;
+         
   def display_hint(self):
     return 'map'
 
   def to_string(self):
-    return str(self.typename)
+    return "%s(%s)" % (str(self.typename), str(self.address))
         
   def children(self):
     global GDB_FLATTENED_CHILDREN_WORKAROUND
+    global CHILDREN_MAX_RECURSION_LEVEL
     
     if not self.valid:
       print_("SwigHashPrinter: Invalid state.\n")
+      return NopIterator()
+      
+    if self.level > CHILDREN_MAX_RECURSION_LEVEL:
       return NopIterator()
     
     try:
@@ -300,6 +431,49 @@ class SwigHashPrinter:
     except Exception as err:
       print_("SwigHashPrinter: Error during creation of children iterator. \n %s \n" %(str(err)))
       raise err
+      
+class SwigSimplePrinter:
+  def __init__ (self, typename, val):
+    self.typename = typename
+    self.val = val
+    
+  def display_hint(self):
+    return "string"
+
+  def to_string(self):
+    return "%s(%s)"%(self.typename, str(self.val.address))
+  
+class SwigDelegatingPrinter:
+
+  def __init__ (self, typename, val):
+      t_doh_base_ptr = gdb.lookup_type("DohBase").pointer()
+      val_base = val.reinterpret_cast(t_doh_base_ptr).dereference()
+      val_type = val_base['type'].dereference()
+      val_typestr = val_type['objname'].string()
+      self.has_children = False
+      
+      if val_typestr == "Hash":
+        self.delegate = SwigHashPrinter(typename, val)
+        self.has_children = True
+      elif val_typestr == "List":
+        self.delegate = SwigListPrinter(typename, val)
+        self.has_children = True
+      elif val_typestr == "String":
+        self.delegate = SwigStringPrinter(typename, val)
+      else:
+        self.delegate = SwigSimplePrinter(typename, val)
+
+  def display_hint(self):
+    return self.delegate.display_hint()
+
+  def to_string(self):
+    return self.delegate.to_string()
+
+  def children(self):
+    if not self.has_children:
+      return NopIterator()
+      
+    return self.delegate.children()
 
 class RxPrinter(object):
     def __init__(self, name, function):
@@ -357,12 +531,29 @@ def build_swig_printer():
 
     swig_printer = Printer("swig")
     swig_printer.add('String *', SwigStringPrinter)
+    swig_printer.add('const String *', SwigStringPrinter)
+    swig_printer.add('SwigType *', SwigStringPrinter)
     swig_printer.add('Hash *', SwigHashPrinter)
+    swig_printer.add('const Hash *', SwigHashPrinter)
     swig_printer.add('Node *', SwigHashPrinter)
+    swig_printer.add('const Node *', SwigHashPrinter)
+    swig_printer.add('Parm *', SwigHashPrinter)
+    swig_printer.add('const Parm *', SwigHashPrinter)
+    swig_printer.add('List *', SwigListPrinter)
+    swig_printer.add('const List *', SwigListPrinter)
+    swig_printer.add('ParmList *', SwigDelegatingPrinter)
+    swig_printer.add('const ParmList *', SwigDelegatingPrinter)
+    swig_printer.add('DOH *', SwigDelegatingPrinter)
+    swig_printer.add('const DOH *', SwigDelegatingPrinter)
+    
     print_("Loaded swig printers\n");
 
 def enableGdbPrintWorkaround():
   global GDB_FLATTENED_CHILDREN_WORKAROUND
   GDB_FLATTENED_CHILDREN_WORKAROUND = True
+
+def setChildrenRecursionLevel(level):
+  global CHILDREN_MAX_RECURSION_LEVEL
+  CHILDREN_MAX_RECURSION_LEVEL = level
 
 build_swig_printer()
