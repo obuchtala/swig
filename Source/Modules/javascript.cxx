@@ -63,16 +63,18 @@ int JAVASCRIPT::functionWrapper(Node *n) {
  *
  * Function handler for generating wrappers for functions 
  * --------------------------------------------------------------------- */
-
 int JAVASCRIPT::functionHandler(Node *n) {
 
-  emitter->enterFunction(n);
+ if (GetFlag(n, "isextension") == 1)
+   SetFlag(n, "ismember");
 
-  Language::functionHandler(n);
+ emitter->enterFunction(n);
 
-  emitter->exitFunction(n);
+ Language::functionHandler(n);
 
-  return SWIG_OK;
+ emitter->exitFunction(n);
+
+ return SWIG_OK;
 }
 
 /* ---------------------------------------------------------------------
