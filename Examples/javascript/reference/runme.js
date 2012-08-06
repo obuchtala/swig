@@ -57,11 +57,11 @@ print("Making sure we don't leak memory.\n");
 for (i = 0; i < 1000000; i++) {
     c = va.get(i % 10);
 }
-
+//---------TODO---------
 //----- Clean up -----
-print("Cleaning up\n");
+//print("Cleaning up\n");
 
-example.delete_VectorArray(va);
-example.delete_Vector(a);
-example.delete_Vector(b);
+//example.delete_VectorArray(va);
+//example.delete_Vector(a);
+//example.delete_Vector(b);
 
