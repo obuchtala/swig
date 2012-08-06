@@ -14,11 +14,7 @@ public:
 
 %}
 
-// Rename the application operator to __call.
-// Note: this is normally automatic, but if you had to do it yourself
-// you would use this directive:
-//
-// %rename(__call)	*::operator();	// the fn call operator
+%rename(call)	*::operator();	// the fn call operator
 
 // Instantiate a few versions
 %template(intSum) Sum<int>;

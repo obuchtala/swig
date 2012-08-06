@@ -8,8 +8,8 @@ b = new example.doubleSum(100.0);
 // javascript function.
 
 for (i=1;i<=100;i++) 
-    a(i);                // Note: function call
-    b(math.sqrt(i));     // Note: function call
+    a.call(i);                // Note: function call
+    b.call(Math.sqrt(i));     // Note: function call
 
 print(a.result());
 print(b.result());
