@@ -29,10 +29,14 @@ CPP_TEST_CASES = \
 	cpp_enum \
 	cpp_namespace \
 	cpp_static \
+	director_alternating \
+	enum_template \
 	namespace_virtual_method \
 	overload_copy \
+	preproc_include \
 	ret_by_value \
 	struct_value \
+	template_static \
 	typedef_class \
 	typedef_inherit \
 	typedef_scope \
