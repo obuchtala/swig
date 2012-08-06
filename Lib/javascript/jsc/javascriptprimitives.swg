@@ -224,13 +224,14 @@ SWIG_AsVal_dec(size_t)(JSValueRef obj, size_t *val)
             float *,
             double *
 %{
- SWIG_PRV_DATA *privatedata = new SWIG_PRV_DATA();
- privatedata->swigCMemOwn = false;
- privatedata->swigCObject = result;
+ //SWIG_PRV_DATA *privatedata = new SWIG_PRV_DATA();
+ //privatedata->swigCMemOwn = false;
+ //privatedata->swigCObject = result;
  // DEBUG: JSObjectMake - case 1
  // TODO: this needs to be fixed
  // $result = JSObjectMake(context, $1_mangle_classRef, privatedata);
- $result = JSValueMakeUndefined(context);
+  //  $result = JSValueMakeUndefined(context);
+    $result = SWIG_JSC_NewPointerObj(context, $1, SWIGTYPE$1_mangle , SWIG_POINTER_OWN);
 %}
 
 %typemap(in) bool
