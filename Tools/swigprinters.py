@@ -7,6 +7,12 @@ log_file = None
 GDB_FLATTENED_CHILDREN_WORKAROUND = False
 CHILDREN_MAX_RECURSION_LEVEL = 0
 
+# workaround: don't cast the following DOHs to it's actual type
+# to avoid infinite pretty-print loops
+cast_black_list = {
+  'Hash': set(['parentNode', 'symtab', 'csymtab', 'sym:symtab', 'inherit', 'nextSibling', 'previousSibling'])
+}
+
 def print_(msg):
     global log_file;
     
@@ -84,15 +90,23 @@ class SwigIterator:
     self.t_node_ptr = gdb.lookup_type("Node").pointer()
     self.t_hash_ptr = gdb.lookup_type("Hash").pointer()
     self.t_file_ptr = gdb.lookup_type("File").pointer()
+    self.t_void_ptr = gdb.lookup_type("void").pointer()
 
-  def cast_doh(self, doh):
+  def cast_doh(self, doh, name = None):
                 
     if doh == 0:
       return doh
+      
+    doh = doh.reinterpret_cast(self.t_doh_base_ptr);
     
-    val_base = doh.reinterpret_cast(self.t_doh_base_ptr).dereference()
+    val_base = doh.dereference()
     val_type = val_base['type'].dereference()
     val_typestr = val_type['objname'].string()
+    
+    if not name == None and val_typestr in cast_black_list:
+      blacklist = cast_black_list[val_typestr]
+      if name in blacklist:
+        return doh
     
     if "String" == val_typestr:
       doh = doh.reinterpret_cast(self.t_string_ptr)
@@ -314,7 +328,7 @@ class SwigHashIterator(SwigIterator):
       self.stop()
 
     try:
-      item = self.cast_doh(self.item)
+      item = self.cast_doh(self.item, key_str)
       
     except Exception as err:
       print_("SwigHashIterator(%s): Exception during casting of value doh:\n %s\n" % (str(self.address), str(err)) )
