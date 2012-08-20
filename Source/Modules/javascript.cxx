@@ -244,6 +244,7 @@ private:
     File *f_init;
 
     String *NULL_STR;
+    String *VETO_SET;
     const char *GLOBAL_STR;
 
     // contains context specific structs
@@ -538,11 +539,12 @@ Template & Template::replace(const String *pattern, const String *repl) {
 }
 
 JSCEmitter::JSCEmitter()
-:  JSEmitter(), NULL_STR(NewString("NULL")) {
+:  JSEmitter(), NULL_STR(NewString("NULL")), VETO_SET(NewString("JS_veto_set_variable")) {
 }
 
 JSCEmitter::~JSCEmitter() {
   Delete(NULL_STR);
+  Delete(VETO_SET);
 }
 
 /* ---------------------------------------------------------------------
@@ -810,7 +812,7 @@ int JSCEmitter::exitFunction(Node *n) {
 
 int JSCEmitter::enterVariable(Node *n) {
   current_getter = NULL_STR;
-  current_setter = NULL_STR;
+  current_setter = VETO_SET;
   current_propertyname = Swig_scopename_last(Getattr(n, "name"));
   is_immutable = GetFlag(n, "wrap:immutable");
 
@@ -823,7 +825,6 @@ int JSCEmitter::exitVariable(Node *n) {
   t_variable.replace("${setname}", current_setter)
       .replace("${getname}", current_getter)
       .replace("${propertyname}", current_propertyname);
-
 
   if (GetFlag(n, "ismember")) {
     if (Equal(Getattr(n, "storage"), "static") || (Equal(Getattr(n, "nodeType"), "enumitem"))) {

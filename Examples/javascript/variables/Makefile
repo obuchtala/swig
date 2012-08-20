@@ -1,6 +1,6 @@
 TOP = ../..
 SWIG = $(TOP)/../preinst-swig
-SRCS = example.cpp
+SRCS = example.c
 JSCXXSRCS = $(TOP)/../Tools/javascript/javascript.cxx
 JAVASCRIPT_EXE = $(TOP)/../Tools/javascript/javascript
 JAVASCRIPT_MODULE = example
@@ -11,7 +11,7 @@ SWIGOPT = -I$(TOP)/../Lib/javascript -I$(TOP)/../Lib/javascript/jsc
 
 all::
 	$(MAKE) -f $(TOP)/Makefile SRCS='$(SRCS)' SWIG='$(SWIG)' \
-SWIGOPT='$(SWIGOPT)' TARGET='$(TARGET)' INTERFACE='$(INTERFACE)' javascript_cpp
+SWIGOPT='$(SWIGOPT)' TARGET='$(TARGET)' INTERFACE='$(INTERFACE)' javascript
 
 clean::
 	$(MAKE) -f $(TOP)/Makefile javascript_clean

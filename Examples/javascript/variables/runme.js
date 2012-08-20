@@ -1,6 +1,4 @@
-
 // file: runme.js
-
 
 // Try to set the values of some global variables
 example.ivar   =  42;
@@ -36,8 +34,8 @@ print("strvar    = " + example.strvar+ "\n");
 print("cstrvar   = " + example.cstrvar+ "\n");
 print("iptrvar   = " + example.iptrvar+ "\n");
 print("name      = " + example.name + "\n");
-print("ptptr     = " + example.ptptr + example.Point_print(ptptr) + "\n");
-print("pt        = " + pt + "," + Point_print(pt) + "\n");
+print("ptptr     = " + example.ptptr + ": " + example.Point_print(example.ptptr) + "\n");
+print("pt        = " + example.pt + ": " + example.Point_print(example.pt) + "\n");
 
 
 print("\nVariables (values printed from C)");
@@ -53,17 +51,18 @@ try{
 }
 catch(e){
     print("Good.");
+}
 
 print("Trying to set 'status'");
 try{
     example.status = 0;
     print("Hey, what's going on?!?! This shouldn't work");
-  }
-catch(e){
+} catch(e){
     print("Good.");
 }
+
 print("\nI'm going to try and update a structure variable.\n");
 example.pt = example.ptptr;
-print("The new value is");
+print("The new value is: ");
 example.pt_print();
-print("You should see the value" + example.Point_print(example.ptptr));
+print("You should see the value: " + example.Point_print(example.ptptr));

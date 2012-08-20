@@ -1,4 +1,4 @@
-%insert(runtime) %{
+%insert(wrapper) %{
  
 bool JS_registerClass(JSGlobalContextRef context, JSObjectRef parentObject,
                              const char* className,
@@ -37,5 +37,23 @@ bool JS_registerFunction(JSGlobalContextRef context, JSObjectRef object,
                         kJSPropertyAttributeNone, NULL);
     JSStringRelease(js_functionName);
     return true;
+}
+
+bool JS_veto_set_variable(JSContextRef context, JSObjectRef thisObject, JSStringRef propertyName, JSValueRef value, JSValueRef* exception)
+{
+    char buffer[256];
+    char msg[512];
+    int res;
+    
+    JSStringGetUTF8CString(propertyName, buffer, 256);
+    res = sprintf(msg, "Tried to write read-only variable: %s.", buffer);
+    
+    if(res<0) {
+      SWIG_exception_fail(SWIG_ERROR, "Tried to write read-only variable.");
+    } else {
+      SWIG_exception_fail(SWIG_ERROR, msg);
+    }
+    
+    return false;
 }
 %}
