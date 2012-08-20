@@ -177,7 +177,7 @@ ctor_dispatch_case: This template is used for the constructor which is overloade
 
 %fragment ("JS_ctor_dispatch_case", "templates")
 %{if(argc == ${argcount}) {
-    thisObject = _wrap_create_${classname_mangled}${overloadext}(context, thisObject, argc, argv, exception);
+    thisObject = _wrap_create_${classname_mangled}${overloadext}(context, NULL, argc, argv, exception);
   } else %}
   
   
