@@ -49,9 +49,9 @@ bool JS_veto_set_variable(JSContextRef context, JSObjectRef thisObject, JSString
     res = sprintf(msg, "Tried to write read-only variable: %s.", buffer);
     
     if(res<0) {
-      SWIG_exception_fail(SWIG_ERROR, "Tried to write read-only variable.");
+      SWIG_exception(SWIG_ERROR, "Tried to write read-only variable.");
     } else {
-      SWIG_exception_fail(SWIG_ERROR, msg);
+      SWIG_exception(SWIG_ERROR, msg);
     }
     
     return false;

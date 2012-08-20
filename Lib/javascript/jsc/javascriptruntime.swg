@@ -19,7 +19,7 @@
 %insert(runtime) %{
 #define SWIG_Error(code, msg)     SWIG_JSC_exception(context, exception, code, msg)
 #define SWIG_exception(code, msg) SWIG_JSC_exception(context, exception, code, msg)
-#define SWIG_fail                 /* TODO: goto fail ?*/
+#define SWIG_fail                 goto fail
 
 #define SWIG_JSC_FROM_DECL_ARGS(arg1)              (JSContextRef context, arg1)
 #define SWIG_JSC_FROM_CALL_ARGS(arg1)              (context, arg1)

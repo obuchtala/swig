@@ -11,6 +11,10 @@ JSValueRef ${getname}(JSContextRef context, JSObjectRef thisObject, JSStringRef 
     ${LOCALS}
     ${CODE}
     return jsresult;
+
+    goto fail;
+    fail:
+    return NULL;  
 }
 %}
 
@@ -26,6 +30,12 @@ bool ${setname}(JSContextRef context, JSObjectRef thisObject, JSStringRef proper
 {
     ${LOCALS}
     ${CODE}
+    
+    return true;
+    
+    goto fail;
+    fail:
+    return false;    
 }
 %}
 
@@ -41,6 +51,10 @@ JSValueRef ${functionname}(JSContextRef context, JSObjectRef function, JSObjectR
   ${LOCALS}
   ${CODE}
   return jsresult;
+  
+  goto fail;
+  fail:
+  return NULL;  
 }
 %}
 
@@ -164,10 +178,13 @@ JSObjectRef _wrap_create_${classname_mangled}(JSContextRef context, JSObjectRef 
     ${DISPATCH_CASES}
     {
         // TODO: handle illegal arguments
-        thisObject = JSValueToObject(context, JSValueMakeUndefined(context), exception);
+        SWIG_exception_fail(SWIG_ERROR, "Illegal arguments for contruction of ${classname_mangled}");
     }
 
     return thisObject;
+    
+    fail:
+    return NULL;
 }
 %}
 
@@ -189,6 +206,10 @@ JSObjectRef _wrap_create_${classname_mangled}${overloadext}(JSContextRef context
     ${CODE}
 
     return SWIG_JSC_NewPointerObj(context, result, SWIGTYPE_${type_mangled}, SWIG_POINTER_OWN);    
+
+    goto fail;
+    fail:
+    return NULL;
 }
 %}
 /**********************************************************************
@@ -269,5 +290,3 @@ bool ${modulename}_initialize(JSGlobalContextRef context) {
 %fragment ("JS_register_namespace", "templates")
 %{
 JS_registerNamespace(context, ${namespace_mangled}_object, ${parent_namespace}_object, "${namespace}"); %}
-
-
