@@ -164,7 +164,6 @@ SWIG_AsVal_dec(Char)(SWIG_Object obj, Char *val)
 
 %enddef
 
-
 %insert(runtime) %{
 #define SWIG_AsCharPtrAndSize(val, cptr, psize, alloc)  SWIG_JSC_AsCharPtrAndSize(context, val, cptr, psize, alloc)
 #define SWIG_FromCharPtrAndSize(cptr, size)  SWIG_JSC_FromCharPtrAndSize(context, cptr, size)
