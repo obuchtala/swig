@@ -7,53 +7,53 @@
 /**
  *  A class that wraps a code snippet used as template for code generation.
  */
-  class Template {
+class Template {
 
-  public:
-    Template(const String *code);
+public:
+  Template(const String *code);
 
-     Template(const String *code, const String *templateName, bool debug = false);
+   Template(const String *code, const String *templateName, bool debug = false);
 
-    ~Template();
+  ~Template();
 
-    String *str();
+  String *str();
 
-     Template & replace(const String *pattern, const String *repl);
+   Template & replace(const String *pattern, const String *repl);
 
-  private:
-    String *code;
-    String *templateName;
-    bool debug;
+private:
+  String *code;
+  String *templateName;
+  bool debug;
+};
+
+class JSEmitter {
+
+public:
+
+  enum JSEmitterType {
+    JavascriptCore,
+    V8,
+    QtScript
   };
 
-  class JSEmitter {
+   JSEmitter();
 
-  public:
-
-    enum JSEmitterType {
-      JavascriptCore,
-      V8,
-      QtScript
-    };
-
-     JSEmitter();
-
-     virtual ~ JSEmitter();
+   virtual ~ JSEmitter();
 
     /**
      * Opens output files and temporary output DOHs.
      */
-    virtual int initialize(Node *n) = 0;
+  virtual int initialize(Node *n) = 0;
 
     /**
      * Writes all collected code into the output file(s).
      */
-    virtual int dump(Node *n) = 0;
+  virtual int dump(Node *n) = 0;
 
     /**
      * Cleans up all open output DOHs.
      */
-    virtual int close() = 0;
+  virtual int close() = 0;
 
     /**
      * Switches the context for code generation.
@@ -62,56 +62,56 @@
      * be registered in certain static tables.
      * This method should be used to switch output DOHs correspondingly.
      */
-    virtual int switchNamespace(Node *) {
-      return SWIG_OK;
-    };
+  virtual int switchNamespace(Node *) {
+    return SWIG_OK;
+  };
 
     /**
      * Invoked at the beginning of the classHandler.
      */
-    virtual int enterClass(Node *) {
-      return SWIG_OK;
-    };
+  virtual int enterClass(Node *) {
+    return SWIG_OK;
+  };
 
     /**
      * Invoked at the end of the classHandler.
      */
-    virtual int exitClass(Node *) {
-      return SWIG_OK;
-    };
+  virtual int exitClass(Node *) {
+    return SWIG_OK;
+  };
 
     /**
      * Invoked at the beginning of the variableHandler.
      */
-    virtual int enterVariable(Node *) {
-      return SWIG_OK;
-    };
+  virtual int enterVariable(Node *) {
+    return SWIG_OK;
+  };
 
     /**
      * Invoked at the end of the variableHandler.
      */
-    virtual int exitVariable(Node *) {
-      return SWIG_OK;
-    };
+  virtual int exitVariable(Node *) {
+    return SWIG_OK;
+  };
 
     /**
      * Invoked at the beginning of the functionHandler.
      */
-    virtual int enterFunction(Node *) {
-      return SWIG_OK;
-    };
+  virtual int enterFunction(Node *) {
+    return SWIG_OK;
+  };
 
     /**
      * Invoked at the end of the functionHandler.
      */
-    virtual int exitFunction(Node *) {
-      return SWIG_OK;
-    };
+  virtual int exitFunction(Node *) {
+    return SWIG_OK;
+  };
 
     /**
      * Invoked by functionWrapper callback after call to Language::functionWrapper.
      */
-    virtual int emitWrapperFunction(Node *n);
+  virtual int emitWrapperFunction(Node *n);
 
     /**
      * Invoked from constantWrapper after call to Language::constantWrapper.
@@ -124,171 +124,171 @@
      * This method is called by the fragmentDirective handler
      * of the JAVASCRIPT language module.
      **/
-    int registerTemplate(const String *name, const String *code);
+  int registerTemplate(const String *name, const String *code);
 
     /**
      * Retrieve the code template registered for a given name.
      */
-    Template getTemplate(const String *name);
+  Template getTemplate(const String *name);
 
-    void enableDebug();
-    
-    void setStaticFlag(bool is_static = false);
+  void enableDebug();
 
-  protected:
+  void setStaticFlag(bool is_static = false);
 
-    virtual int emitCtor(Node *n) = 0;
+protected:
 
-    virtual int emitDtor(Node *n) = 0;
+  virtual int emitCtor(Node *n) = 0;
 
-    virtual int emitFunction(Node *n, bool is_member) = 0;
+  virtual int emitDtor(Node *n) = 0;
 
-    virtual int emitGetter(Node *n, bool is_member) = 0;
+  virtual int emitFunction(Node *n, bool is_member) = 0;
 
-    virtual int emitSetter(Node *n, bool is_member) = 0;
-  
-    bool isSetterMethod(Node *n);
+  virtual int emitGetter(Node *n, bool is_member) = 0;
 
-    Node *getBaseClass(Node *n);
+  virtual int emitSetter(Node *n, bool is_member) = 0;
 
-    const String *typemapLookup(Node *n, const_String_or_char_ptr tmap_method, SwigType *type, int warning, Node *typemap_attributes = 0);
+  bool isSetterMethod(Node *n);
 
-    void enableDebugTemplates();
+  Node *getBaseClass(Node *n);
 
-  protected:
+  const String *typemapLookup(Node *n, const_String_or_char_ptr tmap_method, SwigType *type, int warning, Node *typemap_attributes = 0);
 
-    // empty string used at different places in the code
-    String *empty_string;
+  void enableDebugTemplates();
 
-    Hash *templates;
+protected:
 
-    Wrapper *current_wrapper;
+  // empty string used at different places in the code
+  String *empty_string;
 
-    bool is_static;
-    
-    bool debug;
-  };
+  Hash *templates;
+
+  Wrapper *current_wrapper;
+
+  bool is_static;
+
+  bool debug;
+};
 
 class JSCEmitter:public JSEmitter {
 
-  private:
+private:
 
-    enum MarshallingMode {
-      Setter,
-      Getter,
-      Ctor,
-      Function
-    };
+  enum MarshallingMode {
+    Setter,
+    Getter,
+    Ctor,
+    Function
+  };
 
-  public:
+public:
 
-     JSCEmitter();
+   JSCEmitter();
 
-     virtual ~ JSCEmitter();
+   virtual ~ JSCEmitter();
 
-    virtual int initialize(Node *n);
+  virtual int initialize(Node *n);
 
-    virtual int dump(Node *n);
+  virtual int dump(Node *n);
 
-    virtual int close();
+  virtual int close();
 
 
-  protected:
+protected:
 
-     virtual int emitCtor(Node *n);
+   virtual int emitCtor(Node *n);
 
-    virtual int emitDtor(Node *n);
+  virtual int emitDtor(Node *n);
 
-    virtual int enterVariable(Node *n);
+  virtual int enterVariable(Node *n);
 
-    virtual int exitVariable(Node *n);
+  virtual int exitVariable(Node *n);
 
-    virtual int enterFunction(Node *n);
+  virtual int enterFunction(Node *n);
 
-    virtual int exitFunction(Node *n);
+  virtual int exitFunction(Node *n);
 
-    virtual int enterClass(Node *n);
+  virtual int enterClass(Node *n);
 
-    virtual int exitClass(Node *n);
+  virtual int exitClass(Node *n);
 
-    virtual int emitFunction(Node *n, bool is_member);
+  virtual int emitFunction(Node *n, bool is_member);
 
   virtual int emitFunctionDispatcher(Node *n, bool is_member);
 
   virtual int emitGetter(Node *n, bool is_member);
 
-    virtual int emitSetter(Node *n, bool is_member);
+  virtual int emitSetter(Node *n, bool is_member);
 
-    void marshalInputArgs(Node *n, ParmList *parms, Wrapper *wrapper, MarshallingMode mode, bool is_member, bool is_static = false);
+  void marshalInputArgs(Node *n, ParmList *parms, Wrapper *wrapper, MarshallingMode mode, bool is_member, bool is_static = false);
 
-    void marshalOutput(Node *n, String *actioncode, Wrapper *wrapper);
+  void marshalOutput(Node *n, String *actioncode, Wrapper *wrapper);
 
-    Parm *skipIgnoredArgs(Parm *p);
+  Parm *skipIgnoredArgs(Parm *p);
 
-    virtual int switchNamespace(Node *n);
+  virtual int switchNamespace(Node *n);
 
-    virtual int createNamespace(String *scope);
+  virtual int createNamespace(String *scope);
 
-    virtual Hash *createNamespaceEntry(const char *name, const char *parent);
+  virtual Hash *createNamespaceEntry(const char *name, const char *parent);
 
   virtual int emitNamespaces();
-  
+
   virtual int emitConstant(Node *n);
 
 private:
 
-    File *f_wrap_cpp;
-    File *f_runtime;
-    File *f_header;
-    File *f_wrappers;
-    File *f_init;
+  File *f_wrap_cpp;
+  File *f_runtime;
+  File *f_header;
+  File *f_wrappers;
+  File *f_init;
 
-    String *NULL_STR;
-    String *VETO_SET;
-    const char *GLOBAL_STR;
+  String *NULL_STR;
+  String *VETO_SET;
+  const char *GLOBAL_STR;
 
-    // contains context specific structs
-    // to allow generation different class definition tables
-    // which are switched on namespace change
-    Hash *namespaces;
-    Hash *current_namespace;
+  // contains context specific structs
+  // to allow generation different class definition tables
+  // which are switched on namespace change
+  Hash *namespaces;
+  Hash *current_namespace;
 
-    // dynamically filled code parts
+  // dynamically filled code parts
 
-    String *create_namespaces_code;
-    String *register_namespaces_code;
+  String *create_namespaces_code;
+  String *register_namespaces_code;
 
-    String *current_class_functions;
-    String *class_variables_code;
-    String *class_static_functions_code;
-    String *class_static_variables_code;
+  String *current_class_functions;
+  String *class_variables_code;
+  String *class_static_functions_code;
+  String *class_static_variables_code;
 
-    String *ctor_wrappers;
-    String *ctor_dispatcher_code;
+  String *ctor_wrappers;
+  String *ctor_dispatcher_code;
 
-    String *initializer_code;
-    String *function_dispatcher_code;
+  String *initializer_code;
+  String *function_dispatcher_code;
 
-    // state variables
-    String* current_propertyname;
-    String* current_getter;
-    String* current_setter;
-    bool is_immutable;
+  // state variables
+  String *current_propertyname;
+  String *current_getter;
+  String *current_setter;
+  bool is_immutable;
 
-    String* current_classname;
-    String* current_classname_mangled;
-    String* current_classtype;
-    String* current_classtype_mangled;
-    String *current_functionwrapper;
-    String *current_functionname;
-  };
+  String *current_classname;
+  String *current_classname_mangled;
+  String *current_classtype;
+  String *current_classtype_mangled;
+  String *current_functionwrapper;
+  String *current_functionname;
+};
 
 /* -----------------------------------------------------------------------------
  * JSEmitter()
  * ----------------------------------------------------------------------------- */
 
 JSEmitter::JSEmitter()
-:  empty_string(NewString("")),current_wrapper(NULL), is_static(false),debug(false) {
+:  empty_string(NewString("")), current_wrapper(NULL), is_static(false), debug(false) {
   templates = NewHash();
 }
 
@@ -402,10 +402,10 @@ int JSEmitter::emitWrapperFunction(Node *n) {
 
     } else if (Cmp(kind, "variable") == 0) {
       if (isSetterMethod(n)) {
-        ret = emitSetter(n, is_member);
+	ret = emitSetter(n, is_member);
 
       } else {
-        ret = emitGetter(n, is_member);
+	ret = emitGetter(n, is_member);
 
       }
     } else {
@@ -539,12 +539,18 @@ Template & Template::replace(const String *pattern, const String *repl) {
 }
 
 JSCEmitter::JSCEmitter()
-: JSEmitter(), NULL_STR(NewString("NULL")),current_classname(NULL),f_header(NULL),current_classtype(NULL),f_runtime(NULL),current_class_functions(NULL),f_wrappers(NULL),current_getter(NULL),is_immutable(NULL),create_namespaces_code(NULL),current_classname_mangled(NULL),initializer_code(NULL),register_namespaces_code(NULL),f_wrap_cpp(NULL),current_setter(NULL),ctor_dispatcher_code(NULL),current_functionwrapper(NULL),class_static_functions_code(NULL),namespaces(NULL),function_dispatcher_code(NULL),namespaces(NULL),GLOBAL_STR(NULL),current_propertyname(NULL),current_namespace(NULL),ctor_wrappers(NULL),class_static_variables_code(NULL),class_variables_code(NULL),f_init(NULL),current_functionname(NULL), current_classtype_mangled(NULL),VETO_SET(NewString("JS_veto_set_variable")) {
+:  
+JSEmitter(), NULL_STR(NewString("NULL")), current_classname(NULL), f_header(NULL), current_classtype(NULL), f_runtime(NULL), current_class_functions(NULL),
+f_wrappers(NULL), current_getter(NULL), is_immutable(NULL), create_namespaces_code(NULL), current_classname_mangled(NULL), initializer_code(NULL),
+register_namespaces_code(NULL), f_wrap_cpp(NULL), current_setter(NULL), ctor_dispatcher_code(NULL), current_functionwrapper(NULL),
+class_static_functions_code(NULL), namespaces(NULL), function_dispatcher_code(NULL), namespaces(NULL), GLOBAL_STR(NULL), current_propertyname(NULL),
+current_namespace(NULL), ctor_wrappers(NULL), class_static_variables_code(NULL), class_variables_code(NULL), f_init(NULL), current_functionname(NULL),
+current_classtype_mangled(NULL), VETO_SET(NewString("JS_veto_set_variable")) {
 }
 
 JSCEmitter::~JSCEmitter() {
-	 Delete(NULL_STR);
-	 Delete(VETO_SET);
+  Delete(NULL_STR);
+  Delete(VETO_SET);
 }
 
 /* ---------------------------------------------------------------------
@@ -573,7 +579,7 @@ void JSCEmitter::marshalInputArgs(Node *n, ParmList *parms, Wrapper *wrapper, Ma
   int startIdx = 0;
   if (is_member && !is_static)
     startIdx = 1;
-  
+
 
   int i = 0;
   for (p = parms; p; p = nextSibling(p), i++) {
@@ -584,36 +590,35 @@ void JSCEmitter::marshalInputArgs(Node *n, ParmList *parms, Wrapper *wrapper, Ma
     case Getter:
     case Function:
       if (is_member && !is_static && i == 0) {
-        Printv(arg, "thisObject", 0);
+	Printv(arg, "thisObject", 0);
       } else {
-        Printf(arg, "argv[%d]", i - startIdx);
+	Printf(arg, "argv[%d]", i - startIdx);
       }
 
       break;
     case Setter:
       if (is_member && !is_static && i == 0) {
-        Printv(arg, "thisObject", 0);
+	Printv(arg, "thisObject", 0);
       } else {
-        Printv(arg, "value", 0);
-      } 
+	Printv(arg, "value", 0);
+      }
       break;
     case Ctor:
-      Printf(arg, "argv[%d]",i);
+      Printf(arg, "argv[%d]", i);
       break;
     default:
       throw "Illegal state.";
     }
 
-    tm = Getattr(p, "tmap:in"); // Get typemap for this argument
-    if ( tm != NULL )
-    {
+    tm = Getattr(p, "tmap:in");	// Get typemap for this argument
+    if (tm != NULL) {
       Replaceall(tm, "$input", arg);
       Setattr(p, "emit:input", arg);
 
       if (Getattr(p, "wrap:disown") || (Getattr(p, "tmap:in:disown"))) {
-        Replaceall(tm, "$disown", "SWIG_POINTER_DISOWN");
+	Replaceall(tm, "$disown", "SWIG_POINTER_DISOWN");
       } else {
-        Replaceall(tm, "$disown", "0");
+	Replaceall(tm, "$disown", "0");
       }
       Replaceall(tm, "$symname", Getattr(n, "sym:name"));
 
@@ -637,17 +642,17 @@ void JSCEmitter::marshalOutput(Node *n, String *actioncode, Wrapper *wrapper) {
   SwigType *type = Getattr(n, "type");
   Setattr(n, "type", type);
   String *tm;
-  
+
   // HACK: output types are not registered as swig_types automatically
-  if(SwigType_ispointer(type)) {
+  if (SwigType_ispointer(type)) {
     SwigType_remember_clientdata(type, NewString("0"));
   }
-  
+
   if ((tm = Swig_typemap_lookup_out("out", n, "result", wrapper, actioncode))) {
     Replaceall(tm, "$result", "jsresult");
     // TODO: May not be the correct way
     Replaceall(tm, "$objecttype", Swig_scopename_last(SwigType_str(SwigType_strip_qualifiers(type), 0)));
-    
+
     if (GetFlag(n, "feature:new")) {
       Replaceall(tm, "$owner", "SWIG_POINTER_OWN");
     } else {
@@ -753,10 +758,10 @@ int JSCEmitter::close() {
 int JSCEmitter::enterFunction(Node *n) {
 
   bool is_overloaded = GetFlag(n, "sym:overloaded");
-  
+
   current_functionname = Getattr(n, "sym:name");
 
-  if(is_overloaded && function_dispatcher_code == 0) {
+  if (is_overloaded && function_dispatcher_code == 0) {
     function_dispatcher_code = NewString("");
   }
 
@@ -768,17 +773,17 @@ int JSCEmitter::exitFunction(Node *n) {
 
   String *functionname = current_functionname;
   String *functionwrapper = current_functionwrapper;
-  
+
   bool is_member = GetFlag(n, "ismember");
-  
+
   // handle overloaded functions
   // Note: wrappers for overloaded functions are currently
   //       not made available (e.g., foo_double, foo_int)
   //       maybe this could be enabled by an extra feature flag 
   bool is_overloaded = GetFlag(n, "sym:overloaded");
 
-  if(is_overloaded) {
-    if(!Getattr(n, "sym:nextSibling")) {
+  if (is_overloaded) {
+    if (!Getattr(n, "sym:nextSibling")) {
 
       functionwrapper = Swig_name_wrapper(Getattr(n, "name"));
       // note: set this attribute to transfer ownership
@@ -786,12 +791,12 @@ int JSCEmitter::exitFunction(Node *n) {
 
       // create dispatcher
       emitFunctionDispatcher(n, is_member);
-      
+
       Delete(function_dispatcher_code);
       function_dispatcher_code = 0;
 
     } else {
-      
+
       //don't register wrappers of overloaded functions in function tables
       return SWIG_OK;
     }
@@ -801,7 +806,7 @@ int JSCEmitter::exitFunction(Node *n) {
       .replace("${functionwrapper}", functionwrapper);
 
   if (is_member) {
-    
+
     if (Equal(Getattr(n, "storage"), "static")) {
       Printv(class_static_functions_code, t_function.str(), 0);
 
@@ -848,7 +853,7 @@ int JSCEmitter::exitVariable(Node *n) {
 }
 
 int JSCEmitter::enterClass(Node *n) {
-      
+
   current_classname = Getattr(n, "sym:name");
   current_classname_mangled = SwigType_manglestr(Getattr(n, "name"));
   current_classtype = NewString(Getattr(n, "classtype"));
@@ -857,7 +862,7 @@ int JSCEmitter::enterClass(Node *n) {
   current_classtype_mangled = NewString("");
   Printf(current_classtype_mangled, "p%s", type);
   Delete(type);
-    
+
   Template t_class_defn = getTemplate("JS_class_definition");
   t_class_defn.replace("${classname_mangled}", current_classname_mangled);
   Wrapper_pretty_print(t_class_defn.str(), f_wrappers);
@@ -868,14 +873,14 @@ int JSCEmitter::enterClass(Node *n) {
   class_static_functions_code = NewString("");
   ctor_wrappers = NewString("");
   ctor_dispatcher_code = NewString("");
-  
+
   return SWIG_OK;
 }
 
-int JSCEmitter::exitClass(Node *n) {    
-  
+int JSCEmitter::exitClass(Node *n) {
+
   String *mangled_name = SwigType_manglestr(Getattr(n, "name"));
-  
+
   Template t_class_tables(getTemplate("JS_class_tables"));
   t_class_tables.replace("${classname_mangled}", mangled_name)
       .replace("${jsclassvariables}", class_variables_code)
@@ -899,15 +904,15 @@ int JSCEmitter::exitClass(Node *n) {
 
   /* prepare registration of base class */
   String *base_name_mangled = NewString("_SwigObject");
-  Node* base_class = getBaseClass(n);
-  if(base_class!=NULL) {
+  Node *base_class = getBaseClass(n);
+  if (base_class != NULL) {
     Delete(base_name_mangled);
     base_name_mangled = SwigType_manglestr(Getattr(base_class, "name"));
   }
 
   t_classtemplate.replace("${classname_mangled}", mangled_name)
-    .replace("${classtype_mangled}", current_classtype_mangled)
-    .replace("${base_classname}", base_name_mangled);
+      .replace("${classtype_mangled}", current_classtype_mangled)
+      .replace("${base_classname}", base_name_mangled);
   Wrapper_pretty_print(t_classtemplate.str(), initializer_code);
 
 /*  
@@ -921,12 +926,12 @@ int JSCEmitter::exitClass(Node *n) {
   /* adds a class registration statement to initializer function */
   Template t_registerclass(getTemplate("JS_register_class"));
   t_registerclass.replace("${classname}", current_classname)
-    .replace("${classname_mangled}", current_classname_mangled)
-    .replace("${namespace_mangled}", Getattr(current_namespace, "name_mangled"));
-    
+      .replace("${classname_mangled}", current_classname_mangled)
+      .replace("${namespace_mangled}", Getattr(current_namespace, "name_mangled"));
+
   Wrapper_pretty_print(t_registerclass.str(), initializer_code);
-  
-    /* clean up all DOHs */
+
+  /* clean up all DOHs */
   Delete(class_variables_code);
   Delete(current_class_functions);
   Delete(class_static_variables_code);
@@ -993,12 +998,12 @@ int JSCEmitter::emitCtor(Node *n) {
 }
 
 int JSCEmitter::emitDtor(Node *) {
- 
+
   Template t_dtor = getTemplate("JS_destructordefn");
   t_dtor.replace("${classname_mangled}", current_classname_mangled)
       .replace("${type}", current_classtype);
   Wrapper_pretty_print(t_dtor.str(), f_wrappers);
-  
+
   return SWIG_OK;
 }
 
@@ -1032,7 +1037,8 @@ int JSCEmitter::emitGetter(Node *n, bool is_member) {
 int JSCEmitter::emitSetter(Node *n, bool is_member) {
 
   // skip variable that are immutable
-  if(is_immutable) return SWIG_OK;
+  if (is_immutable)
+    return SWIG_OK;
 
   Template t_setter(getTemplate("JS_setproperty"));
   bool is_static = Equal(Getattr(n, "storage"), "static");
@@ -1064,25 +1070,25 @@ int JSCEmitter::emitSetter(Node *n, bool is_member) {
  * ----------------------------------------------------------------------------- */
 
 int JSCEmitter::emitConstant(Node *n) {
-  
+
   // call the variable methods as a constants are
   // registred in same way
   enterVariable(n);
-      
+
   current_wrapper = NewWrapper();
-  
-  String* action = NewString("");
+
+  String *action = NewString("");
 
   String *name = Getattr(n, "name");
   String *wrap_name = Swig_name_wrapper(name);
   String *value = Getattr(n, "rawval");
-  if(value == NULL) {
+  if (value == NULL) {
     value = Getattr(n, "rawvalue");
   }
-  if(value == NULL) {
+  if (value == NULL) {
     value = Getattr(n, "value");
   }
-  
+
   Template t_getter(getTemplate("JS_getproperty"));
 
   current_getter = wrap_name;
@@ -1121,11 +1127,11 @@ int JSCEmitter::emitFunction(Node *n, bool is_member) {
   bool is_overloaded = GetFlag(n, "sym:overloaded");
   String *name = Getattr(n, "sym:name");
   String *wrap_name = Swig_name_wrapper(name);
-  
-  if(is_overloaded) {
+
+  if (is_overloaded) {
     Append(wrap_name, Getattr(n, "sym:overname"));
   }
-  
+
   current_functionwrapper = wrap_name;
   Setattr(n, "wrap:name", wrap_name);
 
@@ -1143,25 +1149,25 @@ int JSCEmitter::emitFunction(Node *n, bool is_member) {
       .replace("${CODE}", current_wrapper->code);
   Wrapper_pretty_print(t_function.str(), f_wrappers);
 
-  if(is_overloaded) {
+  if (is_overloaded) {
     Template t_dispatch_case = getTemplate("JS_function_dispatch_case");
-    
+
     int argc = emit_num_arguments(params);
     String *argcount = NewString("");
     Printf(argcount, "%d", argc);
-    
+
     t_dispatch_case.replace("${functionwrapper}", wrap_name)
-      .replace("${argcount}", argcount);
-    
+	.replace("${argcount}", argcount);
+
     Printv(function_dispatcher_code, t_dispatch_case.str(), 0);
-    
+
     Delete(argcount);
   }
 
   return SWIG_OK;
 }
 
-int JSCEmitter::emitFunctionDispatcher(Node *n, bool /*is_member*/) {
+int JSCEmitter::emitFunctionDispatcher(Node *n, bool /*is_member */ ) {
 
   Template t_function(getTemplate("JS_functionwrapper"));
 
@@ -1173,15 +1179,15 @@ int JSCEmitter::emitFunctionDispatcher(Node *n, bool /*is_member*/) {
 
   Append(wrapper->code, function_dispatcher_code);
   Append(wrapper->code, getTemplate("JS_function_dispatch_case_default").str());
-  
+
   t_function.replace("${functionname}", wrap_name)
       .replace("${LOCALS}", wrapper->locals)
       .replace("${CODE}", wrapper->code);
-  
+
   Wrapper_pretty_print(t_function.str(), f_wrappers);
 
   DelWrapper(wrapper);
-  
+
   return SWIG_OK;
 }
 
@@ -1197,7 +1203,7 @@ int JSCEmitter::switchNamespace(Node *n) {
       // if the scope is not yet registered
       // create all scopes/namespaces recursively
       if (!Getattr(namespaces, scope)) {
-        createNamespace(scope);
+	createNamespace(scope);
       }
 
       current_namespace = Getattr(namespaces, scope);
@@ -1263,8 +1269,8 @@ int JSCEmitter::emitNamespaces() {
 
     Template namespace_definition(getTemplate("JS_globaldefn"));
     namespace_definition.replace("${jsglobalvariables}", variables)
-        .replace("${jsglobalfunctions}", functions)
-        .replace("${namespace}", name_mangled);
+	.replace("${jsglobalfunctions}", functions)
+	.replace("${namespace}", name_mangled);
     Wrapper_pretty_print(namespace_definition.str(), f_wrap_cpp);
 
     Template t_createNamespace(getTemplate("JS_create_namespace"));
@@ -1273,20 +1279,19 @@ int JSCEmitter::emitNamespaces() {
 
     Template t_registerNamespace(getTemplate("JS_register_namespace"));
     t_registerNamespace.replace("${namespace_mangled}", name_mangled)
-        .replace("${namespace}", name)
-        .replace("${parent_namespace}", parent_mangled);
+	.replace("${namespace}", name)
+	.replace("${parent_namespace}", parent_mangled);
     Printv(register_namespaces_code, t_registerNamespace.str(), 0);
   }
 
   return SWIG_OK;
 }
 
-JSEmitter* swig_javascript_create_JSC_emitter()
-{
-    return new JSCEmitter();
+JSEmitter *swig_javascript_create_JSC_emitter() {
+  return new JSCEmitter();
 }
 
-extern JSEmitter * swig_javascript_create_JSC_emitter();
+extern JSEmitter *swig_javascript_create_JSC_emitter();
 
 /* ********************************************************************
  * JAVASCRIPT
@@ -1296,7 +1301,7 @@ class JAVASCRIPT:public Language {
 
 public:
   JAVASCRIPT() {
-	  emitter = NULL;
+    emitter = NULL;
   } ~JAVASCRIPT() {
   }
 
@@ -1346,16 +1351,16 @@ int JAVASCRIPT::functionWrapper(Node *n) {
  * --------------------------------------------------------------------- */
 int JAVASCRIPT::functionHandler(Node *n) {
 
- if (GetFlag(n, "isextension") == 1)
-   SetFlag(n, "ismember");
+  if (GetFlag(n, "isextension") == 1)
+    SetFlag(n, "ismember");
 
- emitter->enterFunction(n);
+  emitter->enterFunction(n);
 
- Language::functionHandler(n);
+  Language::functionHandler(n);
 
- emitter->exitFunction(n);
+  emitter->exitFunction(n);
 
- return SWIG_OK;
+  return SWIG_OK;
 }
 
 /* ---------------------------------------------------------------------
@@ -1374,7 +1379,7 @@ int JAVASCRIPT::globalfunctionHandler(Node *n) {
 int JAVASCRIPT::staticmemberfunctionHandler(Node *n) {
   // workaround: storage=static is not set for static member functions
   emitter->setStaticFlag(true);
-  Language::staticmemberfunctionHandler(n);  
+  Language::staticmemberfunctionHandler(n);
   emitter->setStaticFlag(false);
   return SWIG_OK;
 }
@@ -1388,9 +1393,9 @@ int JAVASCRIPT::staticmemberfunctionHandler(Node *n) {
 
 int JAVASCRIPT::variableHandler(Node *n) {
 
-  if(!is_assignable(n)
+  if (!is_assignable(n)
       // HACK: don't know why this is assignable? But does not compile
-      || Equal(Getattr(n, "type"), "a().char") ) {
+      || Equal(Getattr(n, "type"), "a().char")) {
     SetFlag(n, "wrap:immutable");
   }
   emitter->enterVariable(n);
@@ -1427,10 +1432,9 @@ int JAVASCRIPT::constantWrapper(Node *n) {
 
   // TODO: handle callback declarations
   //Note: callbacks trigger this wrapper handler
-  if( Equal(Getattr(n, "kind"), "function") ) {
+  if (Equal(Getattr(n, "kind"), "function")) {
     return SWIG_OK;
   }
-    
   //Language::constantWrapper(n);
   emitter->emitConstant(n);
 
@@ -1469,9 +1473,9 @@ int JAVASCRIPT::fragmentDirective(Node *n) {
 }
 
 int JAVASCRIPT::constantDirective(Node *n) {
-  
+
   Language::constantDirective(n);
-  
+
   return SWIG_OK;
 }
 
@@ -1513,20 +1517,20 @@ void JAVASCRIPT::main(int argc, char *argv[]) {
   for (int i = 1; i < argc; i++) {
     if (argv[i]) {
       if (strcmp(argv[i], "-v8") == 0) {
-        Swig_mark_arg(i);
-        mode = JSEmitter::V8;
-        SWIG_library_directory("javascript/v8");
+	Swig_mark_arg(i);
+	mode = JSEmitter::V8;
+	SWIG_library_directory("javascript/v8");
       } else if (strcmp(argv[i], "-jsc") == 0) {
-        Swig_mark_arg(i);
-        mode = JSEmitter::JavascriptCore;
-        SWIG_library_directory("javascript/jsc");
+	Swig_mark_arg(i);
+	mode = JSEmitter::JavascriptCore;
+	SWIG_library_directory("javascript/jsc");
       } else if (strcmp(argv[i], "-qt") == 0) {
-        Swig_mark_arg(i);
-        mode = JSEmitter::QtScript;
-        SWIG_library_directory("javascript/qt");
+	Swig_mark_arg(i);
+	mode = JSEmitter::QtScript;
+	SWIG_library_directory("javascript/qt");
       } else if (strcmp(argv[i], "-debug-templates") == 0) {
-        Swig_mark_arg(i);
-        debug_templates = true;
+	Swig_mark_arg(i);
+	debug_templates = true;
       }
     }
   }
