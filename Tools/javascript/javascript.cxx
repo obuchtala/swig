@@ -64,7 +64,7 @@ int main(int argc, char* argv[]) {
       std::string symname;
       symname.append(module_name).append("_initialize");
       
-      JSCIntializer init_function = (JSCIntializer) dlsym(handle, symname.c_str());
+      JSCIntializer init_function = reinterpret_cast<JSCIntializer>((long) dlsym(handle, symname.c_str()));
       if(init_function == 0) {
         std::cout << "Could not find initializer function in module " << module_name << std::endl;
         dlclose(handle);
@@ -135,9 +135,11 @@ static JSValueRef jsc_printstring(JSContextRef context,JSObjectRef object, JSObj
 	{
 		JSStringRef string = JSValueToStringCopy(context, args[0], NULL);
 		size_t numChars = JSStringGetMaximumUTF8CStringSize(string);
-		char stringUTF8[numChars];
+		char *stringUTF8 = new char[numChars];
 		JSStringGetUTF8CString(string, stringUTF8, numChars);
 		printf("%s\n", stringUTF8);
+    
+    delete[] stringUTF8;
 	}
     
 	return JSValueMakeUndefined(context);
