@@ -56,7 +56,8 @@ int main(int argc, char* argv[]) {
 
       HANDLE handle = dlopen(lib_name.c_str(), RTLD_LAZY);
       if(handle == 0) {
-        std::cout << "Could not load library " << lib_name << std::endl;
+        std::cout << "Could not load library " << lib_name << ":" 
+                  << std::endl << dlerror() << std::endl;
         continue;
       }
       
@@ -89,7 +90,7 @@ int main(int argc, char* argv[]) {
     }
     
     // Evaluate the javascript
-    char*	scriptContent = jsccreateStringWithContentsOfFile(scriptPath.c_str());
+    char* scriptContent = jsccreateStringWithContentsOfFile(scriptPath.c_str());
     JSStringRef jsScript;
     
     if(!scriptContent) {
