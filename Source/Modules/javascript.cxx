@@ -1046,11 +1046,10 @@ int JSCEmitter::emitSetter(Node *n, bool is_member) {
   ParmList *params = Getattr(n, "parms");
   emit_parameter_variables(params, current_wrapper);
   emit_attach_parmmaps(params, current_wrapper);
-  Wrapper_add_local(current_wrapper, "jsresult", "JSValueRef jsresult");
 
   String *action = emit_action(n);
   marshalInputArgs(n, params, current_wrapper, Setter, is_member, is_static);
-  marshalOutput(n, action, current_wrapper);
+  Append(current_wrapper->code, action);
 
   t_setter.replace("${setname}", wrap_name)
       .replace("${LOCALS}", current_wrapper->locals)
