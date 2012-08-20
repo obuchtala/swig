@@ -12,7 +12,7 @@
   public:
     Template(const String *code);
 
-     Template(const String *code, const String *templateName, bool debug);
+     Template(const String *code, const String *templateName, bool debug = false);
 
     ~Template();
 
@@ -133,7 +133,7 @@
 
     void enableDebug();
     
-    void setStaticFlag(bool is_static);
+    void setStaticFlag(bool is_static = false);
 
   protected:
 
@@ -288,7 +288,7 @@ private:
  * ----------------------------------------------------------------------------- */
 
 JSEmitter::JSEmitter()
-:  empty_string(NewString("")), debug(false) {
+:  empty_string(NewString("")),current_wrapper(NULL), is_static(false),debug(false) {
   templates = NewHash();
 }
 
@@ -474,7 +474,7 @@ Template::Template(const String *code_) {
     Printf(stdout, "Template code was null. Illegal input for template.");
     SWIG_exit(EXIT_FAILURE);
   }
-
+  debug = false;
   code = NewString(code_);
   templateName = NewString("");
 }
@@ -539,12 +539,12 @@ Template & Template::replace(const String *pattern, const String *repl) {
 }
 
 JSCEmitter::JSCEmitter()
-:  JSEmitter(), NULL_STR(NewString("NULL")), VETO_SET(NewString("JS_veto_set_variable")) {
+: JSEmitter(), NULL_STR(NewString("NULL")),current_classname(NULL),f_header(NULL),current_classtype(NULL),f_runtime(NULL),current_class_functions(NULL),f_wrappers(NULL),current_getter(NULL),is_immutable(NULL),create_namespaces_code(NULL),current_classname_mangled(NULL),initializer_code(NULL),register_namespaces_code(NULL),f_wrap_cpp(NULL),current_setter(NULL),ctor_dispatcher_code(NULL),current_functionwrapper(NULL),class_static_functions_code(NULL),namespaces(NULL),function_dispatcher_code(NULL),namespaces(NULL),GLOBAL_STR(NULL),current_propertyname(NULL),current_namespace(NULL),ctor_wrappers(NULL),class_static_variables_code(NULL),class_variables_code(NULL),f_init(NULL),current_functionname(NULL), current_classtype_mangled(NULL),VETO_SET(NewString("JS_veto_set_variable")) {
 }
 
 JSCEmitter::~JSCEmitter() {
-  Delete(NULL_STR);
-  Delete(VETO_SET);
+	 Delete(NULL_STR);
+	 Delete(VETO_SET);
 }
 
 /* ---------------------------------------------------------------------
@@ -684,7 +684,6 @@ int JSCEmitter::initialize(Node *n) {
   create_namespaces_code = NewString("");
   register_namespaces_code = NewString("");
   initializer_code = NewString("");
-
 
   namespaces = NewHash();
   Hash *global_namespace = createNamespaceEntry(Char(Getattr(n, "name")), "global");
@@ -1297,6 +1296,7 @@ class JAVASCRIPT:public Language {
 
 public:
   JAVASCRIPT() {
+	  emitter = NULL;
   } ~JAVASCRIPT() {
   }
 
@@ -1551,6 +1551,7 @@ void JAVASCRIPT::main(int argc, char *argv[]) {
     {
       Printf(stderr, "Unknown emitter type.");
       SWIG_exit(-1);
+      break;
     }
   }
 
