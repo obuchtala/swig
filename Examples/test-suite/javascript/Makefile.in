@@ -28,6 +28,7 @@ CPP_TEST_CASES = \
 	class_ignore \
 	class_scope_weird \
 	complextest \
+	constover \
 	cpp_enum \
 	cpp_namespace \
 	cpp_static \
