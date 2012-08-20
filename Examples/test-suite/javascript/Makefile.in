@@ -14,7 +14,8 @@ JS_DLNK      = @JSCOREDYNAMICLINKING@
 JSCXXFLAGS  = @JSCXXFLAGS@
 
 C_TEST_CASES = \
-	preproc
+	preproc \
+	preproc_include
 
 CPP_TEST_CASES = \
 	abstract_access \
@@ -33,7 +34,6 @@ CPP_TEST_CASES = \
 	enum_template \
 	namespace_virtual_method \
 	overload_copy \
-	preproc_include \
 	ret_by_value \
 	struct_value \
 	template_static \
