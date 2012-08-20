@@ -219,7 +219,7 @@ class JSCEmitter:public JSEmitter {
 
     virtual int emitSetter(Node *n, bool is_member);
 
-    void marshalInputArgs(ParmList *parms, Wrapper *wrapper, MarshallingMode mode, bool is_member, bool is_static = false);
+    void marshalInputArgs(Node *n, ParmList *parms, Wrapper *wrapper, MarshallingMode mode, bool is_member, bool is_static = false);
 
     void marshalOutput(Node *n, String *actioncode, Wrapper *wrapper);
 
@@ -566,7 +566,7 @@ Parm *JSCEmitter::skipIgnoredArgs(Parm *p) {
  * supplied typemaps.
  * --------------------------------------------------------------------- */
 
-void JSCEmitter::marshalInputArgs(ParmList *parms, Wrapper *wrapper, MarshallingMode mode, bool is_member, bool is_static) {
+void JSCEmitter::marshalInputArgs(Node *n, ParmList *parms, Wrapper *wrapper, MarshallingMode mode, bool is_member, bool is_static) {
   String *tm;
   Parm *p;
 
@@ -615,6 +615,7 @@ void JSCEmitter::marshalInputArgs(ParmList *parms, Wrapper *wrapper, Marshalling
       } else {
         Replaceall(tm, "$disown", "0");
       }
+      Replaceall(tm, "$symname", Getattr(n, "sym:name"));
 
       Printf(wrapper->code, "%s\n", tm);
     } else {
@@ -967,7 +968,7 @@ int JSCEmitter::emitCtor(Node *n) {
 
   int num_args = emit_num_arguments(params);
   String *action = emit_action(n);
-  marshalInputArgs(params, current_wrapper, Ctor, true);
+  marshalInputArgs(n, params, current_wrapper, Ctor, true);
 
   Printv(current_wrapper->code, action, "\n", 0);
   t_ctor.replace("${classname_mangled}", mangled_name)
@@ -1017,7 +1018,7 @@ int JSCEmitter::emitGetter(Node *n, bool is_member) {
   Wrapper_add_local(current_wrapper, "jsresult", "JSValueRef jsresult");
 
   String *action = emit_action(n);
-  marshalInputArgs(params, current_wrapper, Getter, is_member, is_static);
+  marshalInputArgs(n, params, current_wrapper, Getter, is_member, is_static);
   marshalOutput(n, action, current_wrapper);
 
   t_getter.replace("${getname}", wrap_name)
@@ -1048,7 +1049,7 @@ int JSCEmitter::emitSetter(Node *n, bool is_member) {
   Wrapper_add_local(current_wrapper, "jsresult", "JSValueRef jsresult");
 
   String *action = emit_action(n);
-  marshalInputArgs(params, current_wrapper, Setter, is_member, is_static);
+  marshalInputArgs(n, params, current_wrapper, Setter, is_member, is_static);
   marshalOutput(n, action, current_wrapper);
 
   t_setter.replace("${setname}", wrap_name)
@@ -1136,7 +1137,7 @@ int JSCEmitter::emitFunction(Node *n, bool is_member) {
   Wrapper_add_local(current_wrapper, "jsresult", "JSValueRef jsresult");
 
   String *action = emit_action(n);
-  marshalInputArgs(params, current_wrapper, Function, is_member, is_static);
+  marshalInputArgs(n, params, current_wrapper, Function, is_member, is_static);
   marshalOutput(n, action, current_wrapper);
 
   t_function.replace("${functionname}", wrap_name)
