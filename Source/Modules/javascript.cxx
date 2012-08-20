@@ -636,6 +636,12 @@ void JSCEmitter::marshalOutput(Node *n, String *actioncode, Wrapper *wrapper) {
   SwigType *type = Getattr(n, "type");
   Setattr(n, "type", type);
   String *tm;
+  
+  // HACK: output types are not registered as swig_types automatically
+  if(SwigType_ispointer(type)) {
+    SwigType_remember_clientdata(type, NewString("0"));
+  }
+  
   if ((tm = Swig_typemap_lookup_out("out", n, "result", wrapper, actioncode))) {
     Replaceall(tm, "$result", "jsresult");
     // TODO: May not be the correct way
