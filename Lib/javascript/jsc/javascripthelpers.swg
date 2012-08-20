@@ -56,4 +56,14 @@ bool JS_veto_set_variable(JSContextRef context, JSObjectRef thisObject, JSString
     
     return false;
 }
+
+JSValueRef JS_CharPtrToJSValue(JSContextRef context, char* cstr) {
+  JSValueRef val;
+  
+  JSStringRef jsstring = JSStringCreateWithUTF8CString((char*) cstr);
+  val = JSValueMakeString(context, jsstring);
+  JSStringRelease(jsstring);
+
+  return val;
+}
 %}

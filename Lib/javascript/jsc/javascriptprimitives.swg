@@ -254,9 +254,7 @@ SWIG_AsVal_dec(size_t)(JSValueRef obj, size_t *val)
 
 %typemap(out) char *
 %{
- JSStringRef jsstring = JSStringCreateWithUTF8CString((char*) $1);
- $result = JSValueMakeString(context, jsstring);
- JSStringRelease(jsstring);
+  $result = JS_CharPtrToJSValue(context, (char*) $1);
 %}
 
 %typemap(arginit) char * 
@@ -279,9 +277,7 @@ SWIG_AsVal_dec(size_t)(JSValueRef obj, size_t *val)
 
 %typemap(out) char *&
 %{
- JSStringRef jsstring = JSStringCreateWithUTF8CString((const char *)*$1);
- $result = JSValueMakeString(context, jsstring);
- JSStringRelease(jsstring);
+  $result = JS_CharPtrToJSValue(context, (const char *)*$1);
 %}
 
 /* char arrays - treat as String */
@@ -294,9 +290,7 @@ SWIG_AsVal_dec(size_t)(JSValueRef obj, size_t *val)
 %typemap(out) char[ANY], char[], 
               unsigned char[ANY], unsigned char[]
 %{
- JSStringRef jsstring = JSStringCreateWithUTF8CString((char*) $1);
- $result = JSValueMakeString(context, jsstring);
- JSStringRelease(jsstring);
+  $result = JS_CharPtrToJSValue(context, (char*) $1);
 %}
 
 %typemap(freearg) char *, char *&, char[ANY], char[] //TODO: Not working: A memory leak

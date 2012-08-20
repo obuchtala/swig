@@ -49,6 +49,7 @@ SWIG_JSC_FromCharPtrAndSize(JSContextRef context, const char* carray, size_t siz
       //swig_type_info* pchar_descriptor = SWIG_pchar_descriptor();
       //return pchar_descriptor ? 
       //  SWIG_InternalNewPointerObj(%const_cast(carray,char *), pchar_descriptor, 0) : SWIG_Py_Void();
+      return JSValueMakeUndefined(context);
     } else {
       JSStringRef jsstring = JSStringCreateWithUTF8CString(carray);
       JSValueRef result = JSValueMakeString(context, jsstring);
