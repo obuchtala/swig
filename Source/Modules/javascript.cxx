@@ -1079,8 +1079,18 @@ int JSEmitter::emitFunctionDispatcher(Node *n, bool /*is_member */ ) {
   Template t_function(getTemplate("js_function_dispatcher"));
 
   Wrapper *wrapper = NewWrapper();
-  String *wrap_name = Swig_name_wrapper(Getattr(n, "name"));
+  String *fun_name = Getattr(n, "sym:name");
+
+  Node *methodclass = Swig_methodclass(n);
+  String *class_name = Getattr(methodclass, "sym:name");
+
+  Append(class_name, fun_name);
+  String *wrap_name = Swig_name_wrapper(class_name);
+
   Setattr(n, "wrap:name", wrap_name);
+  state.function(WRAPPER_NAME, wrap_name);
+
+
 
   Append(wrapper->code, state.global(FUNCTION_DISPATCHERS));
 
