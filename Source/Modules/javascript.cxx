@@ -1752,6 +1752,7 @@ int V8Emitter::initialize(Node *n)
   f_init_register_namespaces = NewString("");
 
   // note: this is necessary for built-in generation of swig runtime code
+  Swig_register_filebyname("begin", f_wrap_cpp);
   Swig_register_filebyname("runtime", f_runtime);
   Swig_register_filebyname("header", f_header);
   Swig_register_filebyname("init", f_init);
