@@ -428,7 +428,7 @@ void init(v8::Handle<v8::Object> target) {
   $jsname_initialize(target);
 }
 
-NODE_MODULE($jsname, $jsname_initialize);
+NODE_MODULE($jsname, init);
 
 
 
