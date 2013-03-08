@@ -5,7 +5,13 @@
  * ----------------------------------------------------------------------------- */
 
 %insert(runtime) %{
+
+#ifdef BUILDING_NODE_EXTENSION
+#include <node/v8.h>
+#else
 #include <v8.h>
+#endif
+
 #include <errno.h>
 #include <limits.h>
 #include <iostream>

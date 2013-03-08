@@ -421,8 +421,16 @@ void $jsname_initialize(v8::Handle<v8::Object> global_obj)
   
   /* create and register namespace objects */
   $jsv8registernspaces
-
 }
+
+
+void init(v8::Handle<v8::Object> target) {
+  $jsname_initialize(target);
+}
+
+NODE_MODULE($jsname, $jsname_initialize);
+
+
 
 } // extern "C"
 %}
