@@ -22,7 +22,6 @@ bool js_template_enable_debug = false;
 #define CTOR_DISPATCHERS "ctor_dispatchers"
 #define DTOR "dtor"
 #define ARGCOUNT "wrap:argc"
-#define FUNCTION_DISPATCHERS "function_dispatchers"
 
 // variables used in code templates
 // ATTENTION: be aware of prefix collisions when defining those variables
@@ -793,12 +792,6 @@ int JSEmitter::enterFunction(Node *n) {
     SetFlag(state.function(), IS_STATIC);
   }
 
-  /* Initialize DOH for collecting function dispatchers */
-  bool is_overloaded = GetFlag(n, "sym:overloaded");
-  if (is_overloaded && state.global(FUNCTION_DISPATCHERS) == 0) {
-    state.global(FUNCTION_DISPATCHERS, NewString(""));
-  }
-
   return SWIG_OK;
 }
 
@@ -1061,13 +1054,6 @@ int JSEmitter::emitFunction(Node *n, bool is_member, bool is_static) {
       .replace(T_ARGCOUNT, Getattr(n, ARGCOUNT))
       .pretty_print(f_wrappers);
 
-  // handle function overloading
-  if (is_overloaded) {
-    Template t_dispatch_case = getTemplate("js_function_dispatch_case");
-    t_dispatch_case.replace(T_WRAPPER, wrap_name)
-        .replace(T_ARGCOUNT, Getattr(n, ARGCOUNT));
-    Append(state.global(FUNCTION_DISPATCHERS), t_dispatch_case.str());
-  }
 
   DelWrapper(wrapper);
 
@@ -1075,24 +1061,47 @@ int JSEmitter::emitFunction(Node *n, bool is_member, bool is_static) {
 }
 
 int JSEmitter::emitFunctionDispatcher(Node *n, bool /*is_member */ ) {
+  Wrapper *wrapper = NewWrapper();
+
+  // Generate call list, go to first node
+  Node *sibl = n;
+
+  while (Getattr(sibl, "sym:previousSibling"))
+    sibl = Getattr(sibl, "sym:previousSibling");	// go all the way up
+
+  do {
+    String *siblname = Getattr(sibl, "wrap:name");
+
+    if (siblname)
+    {
+      // handle function overloading
+      Template t_dispatch_case = getTemplate("js_function_dispatch_case");
+      t_dispatch_case.replace(T_WRAPPER, siblname)
+        .replace(T_ARGCOUNT, Getattr(sibl, ARGCOUNT));
+
+      Append(wrapper->code, t_dispatch_case.str());
+    }
+
+  } while ((sibl = Getattr(sibl, "sym:nextSibling")));
+
+
+
 
   Template t_function(getTemplate("js_function_dispatcher"));
 
-  Wrapper *wrapper = NewWrapper();
+//  String *wrap_name = Swig_name_wrapper(Getattr(n, "name"));
+
+  
   String *fun_name = Getattr(n, "sym:name");
 
   Node *methodclass = Swig_methodclass(n);
   String *class_name = Getattr(methodclass, "sym:name");
 
-  Append(class_name, fun_name);
-  String *wrap_name = Swig_name_wrapper(class_name);
+  String *new_string = NewStringf("%s_%s", class_name, fun_name);
+  String *wrap_name = Swig_name_wrapper(new_string);
 
   Setattr(n, "wrap:name", wrap_name);
   state.function(WRAPPER_NAME, wrap_name);
-
-
-
-  Append(wrapper->code, state.global(FUNCTION_DISPATCHERS));
 
   t_function.replace(T_LOCALS, wrapper->locals)
       .replace(T_CODE, wrapper->code);
@@ -1103,7 +1112,6 @@ int JSEmitter::emitFunctionDispatcher(Node *n, bool /*is_member */ ) {
       .pretty_print(f_wrappers);
 
   // Delete the state variable
-  state.global(FUNCTION_DISPATCHERS, 0);
   DelWrapper(wrapper);
 
   return SWIG_OK;
@@ -1490,7 +1498,7 @@ int JSCEmitter::exitFunction(Node *n) {
   // handle overloaded functions
   if (is_overloaded) {
     if (!Getattr(n, "sym:nextSibling")) {
-      state.function(WRAPPER_NAME, Swig_name_wrapper(Getattr(n, "name")));
+      //state.function(WRAPPER_NAME, Swig_name_wrapper(Getattr(n, "name")));
       // create dispatcher
       emitFunctionDispatcher(n, is_member);
     } else {
@@ -1958,7 +1966,7 @@ int V8Emitter::exitFunction(Node* n)
   bool is_overloaded = GetFlag(n, "sym:overloaded");
   if (is_overloaded) {
     if (!Getattr(n, "sym:nextSibling")) {
-      state.function(WRAPPER_NAME, Swig_name_wrapper(Getattr(n, "name")));
+      //state.function(WRAPPER_NAME, Swig_name_wrapper(Getattr(n, "name")));
       emitFunctionDispatcher(n, is_member);
     } else {
       //don't register wrappers of overloaded functions in function tables
