@@ -268,6 +268,17 @@ fail:
   SWIGTYPE$jsmangledtype->clientdata = &$jsmangledname_clientData;
 %}
 
+
+/* -----------------------------------------------------------------------------
+ * jsv8_inherit_failed:  template for a class inherit statement but with now defined base
+ *   - $jsname:  class name
+ *   - $jsbaseclass:    name of the base class
+ * ----------------------------------------------------------------------------- */
+%fragment("jsv8_inherit_failed", "templates") 
+%{
+  // Unable to inherit derived: $jsname base: $jsbaseclass
+%}
+
 /* -----------------------------------------------------------------------------
  * jsv8_inherit:  template for an class inherit statement.
  *   - $jsmangledname:  mangled class name
@@ -423,12 +434,9 @@ void $jsname_initialize(v8::Handle<v8::Object> global_obj)
   $jsv8registernspaces
 }
 
-
-void init(v8::Handle<v8::Object> target) {
-  $jsname_initialize(target);
-}
-
-NODE_MODULE($jsname, init);
+#ifdef BUILDING_NODE_EXTENSION
+NODE_MODULE($jsname, $jsname_initialize);
+#endif
 
 
 
