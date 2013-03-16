@@ -1,14 +1,34 @@
 %insert(init) %{
 SWIGRUNTIME void
-SWIG_V8_SetModule(swig_module_info *swig_module) {}
-
-SWIGRUNTIME swig_module_info *
-SWIG_V8_GetModule(void) {
-  return 0;
+SWIG_V8_SetModule(void *clientdata, swig_module_info *swig_module) {
+  v8::Handle<v8::Object> global_obj = *(static_cast<v8::Handle<v8::Object> *>(clientdata));
+  global_obj->SetHiddenValue(v8::String::New("swig_module_info_data"), v8::External::Wrap(swig_module));
 }
 
-#define SWIG_GetModule(clientdata)                SWIG_V8_GetModule()
-#define SWIG_SetModule(clientdata, pointer)       SWIG_V8_SetModule(pointer)
+SWIGRUNTIME swig_module_info *
+SWIG_V8_GetModule(void *clientdata) {
+  v8::Handle<v8::Object> global_obj = *(static_cast<v8::Handle<v8::Object> *>(clientdata));
+  v8::Local<v8::Value> moduleinfo = global_obj->GetHiddenValue(v8::String::New("swig_module_info_data"));
+
+  if (moduleinfo.IsEmpty())
+  {
+    // It's not yet loaded
+    return 0;
+  }
+
+  v8::Local<v8::External> moduleinfo_extern = v8::Local<v8::External>::Cast(moduleinfo);
+ 
+  if (moduleinfo_extern.IsEmpty())
+  {
+    // Something's not right
+    return 0;
+  }
+
+  return static_cast<swig_module_info *>(moduleinfo_extern->Value());
+}
+
+#define SWIG_GetModule(clientdata)                SWIG_V8_GetModule(clientdata)
+#define SWIG_SetModule(clientdata, pointer)       SWIG_V8_SetModule(clientdata, pointer)
 
 %}
 

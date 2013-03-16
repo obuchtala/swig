@@ -270,23 +270,23 @@ fail:
 
 
 /* -----------------------------------------------------------------------------
- * jsv8_inherit_failed:  template for a class inherit statement but with now defined base
- *   - $jsname:  class name
- *   - $jsbaseclass:    name of the base class
- * ----------------------------------------------------------------------------- */
-%fragment("jsv8_inherit_failed", "templates") 
-%{
-  // Unable to inherit derived: $jsname base: $jsbaseclass
-%}
-
-/* -----------------------------------------------------------------------------
  * jsv8_inherit:  template for an class inherit statement.
  *   - $jsmangledname:  mangled class name
  *   - $jsbaseclass:    mangled name of the base class
  * ----------------------------------------------------------------------------- */
 %fragment("jsv8_inherit", "templates") 
 %{
-  $jsmangledname_class->Inherit($jsbaseclass_class);
+  if (SWIGTYPE_p$jsbaseclass->clientdata && !(static_cast<SWIGV8_ClientData *>(SWIGTYPE_p$jsbaseclass->clientdata)->class_templ.IsEmpty()))
+  {
+    $jsmangledname_class->Inherit(static_cast<SWIGV8_ClientData *>(SWIGTYPE_p$jsbaseclass->clientdata)->class_templ);
+#ifdef SWIGRUNTIME_DEBUG
+    printf("Inheritance successful $jsmangledname $jsbaseclass\n");
+#endif
+  } else {
+#ifdef SWIGRUNTIME_DEBUG
+    printf("Unable to inherit baseclass, it didn't exist $jsmangledname $jsbaseclass\n");
+#endif
+  }
 %}
 
 /* -----------------------------------------------------------------------------
@@ -402,7 +402,7 @@ extern "C" {
 
 void $jsname_initialize(v8::Handle<v8::Object> global_obj)
 {
-  SWIG_InitializeModule(0);
+  SWIG_InitializeModule(static_cast<void *>(&global_obj));
 
   v8::HandleScope scope;
 

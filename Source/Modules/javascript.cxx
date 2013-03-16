@@ -1833,7 +1833,6 @@ int V8Emitter::close()
 int V8Emitter::enterClass(Node *n)
 {
   JSEmitter::enterClass(n);
-  Setattr(n, "was_emitted", "true");
 
   // emit declaration of a v8 class template
   Template t_decl_class(getTemplate("jsv8_declare_class_template"));
@@ -1880,26 +1879,15 @@ int V8Emitter::exitClass(Node *n)
   Node* baseClass = getBaseClass(n);
   if(baseClass) {
     String *base_name = Getattr(baseClass, "name");
-    String *was_emitted = Getattr(baseClass, "was_emitted");
 
-    if (was_emitted)
-    {
-      Template t_inherit = getTemplate("jsv8_inherit");
-      
-      String *base_name_mangled = SwigType_manglestr(base_name);
-      t_inherit.replace(T_NAME_MANGLED,  state.clazz(NAME_MANGLED))
-        .replace(T_BASECLASS, base_name_mangled)
-        .trim()
-        .pretty_print(f_init_inheritance);
-      Delete(base_name_mangled);
-    } else {
-      Template t_inherit = getTemplate("jsv8_inherit_failed");
-      
-      t_inherit.replace(T_NAME,  state.clazz(NAME))
-        .replace(T_BASECLASS, base_name)
-        .trim()
-        .pretty_print(f_init_inheritance);
-    }
+    Template t_inherit = getTemplate("jsv8_inherit");
+
+    String *base_name_mangled = SwigType_manglestr(base_name);
+    t_inherit.replace(T_NAME_MANGLED,  state.clazz(NAME_MANGLED))
+      .replace(T_BASECLASS, base_name_mangled)
+      .trim()
+      .pretty_print(f_init_inheritance);
+    Delete(base_name_mangled);
   }
 
   //  emit registeration of class template
