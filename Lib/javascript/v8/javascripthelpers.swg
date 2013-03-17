@@ -10,7 +10,12 @@ v8::Persistent<v8::FunctionTemplate> SWIGV8_CreateClassTemplate(const char* symb
     v8::Handle<v8::ObjectTemplate> inst_templ = class_templ->InstanceTemplate();
     inst_templ->SetInternalFieldCount(1);
 
+#ifdef BUILDING_NODE_EXTENSION
     return v8::Persistent<v8::FunctionTemplate>::New(class_templ);
+#else
+    return v8::Persistent<v8::FunctionTemplate>::New(v8::Isolate::GetCurrent(), class_templ);
+#endif
+
 }
 
 /**

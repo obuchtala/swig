@@ -111,7 +111,13 @@ fail:
  * ----------------------------------------------------------------------------- */
 %fragment ("js_dtor", "templates")
 %{
-void $jswrapper(v8::Persistent< v8::Value > object, void *parameter) {
+
+#ifdef BUILDING_NODE_EXTENSION
+void $jswrapper(v8::Persistent< v8::Value > object, void *parameter) 
+#else
+void $jswrapper(v8::Isolate *isolate, v8::Persistent< v8::Value > object, void *parameter) 
+#endif
+{
   SWIGV8_Proxy* proxy = (SWIGV8_Proxy*) parameter;
   if(proxy->swigCMemOwn && proxy->swigCObject) {
 #ifdef SWIGRUNTIME_DEBUG
@@ -122,7 +128,12 @@ void $jswrapper(v8::Persistent< v8::Value > object, void *parameter) {
   delete proxy;
 
   object.Clear();
+
+#ifdef BUILDING_NODE_EXTENSION
   object.Dispose();
+#else
+  object.Dispose(isolate);
+#endif
 }
 %}
 

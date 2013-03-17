@@ -67,7 +67,7 @@ public:
 
 %insert(runtime) %{
 
-// Note: to trigger the c8 gc more often one can tell v8 about the memory consumption
+// Note: to trigger the v8 gc more often one can tell v8 about the memory consumption
 // TODO: we could add a v8 specific parameter to control this value
 #define SWIGV8_AVG_OBJ_SIZE 1000
 
@@ -78,9 +78,19 @@ public:
   };
   
   ~SWIGV8_Proxy() { 
+#ifdef BUILDING_NODE_EXTENSION
     handle.ClearWeak();
+#else
+    handle.ClearWeak(v8::Isolate::GetCurrent());
+#endif
+
     handle->SetInternalField(0, v8::Undefined());
+
+#ifdef BUILDING_NODE_EXTENSION
     handle.Dispose();
+#else
+    handle.Dispose(v8::Isolate::GetCurrent());
+#endif
     handle.Clear();
     v8::V8::AdjustAmountOfExternalAllocatedMemory(-SWIGV8_AVG_OBJ_SIZE);
   }
@@ -94,7 +104,12 @@ public:
 class SWIGV8_ClientData {
 public:
   v8::Handle<v8::FunctionTemplate> class_templ;
+
+#ifdef BUILDING_NODE_EXTENSION
   void (*dtor) (v8::Persistent< v8::Value > object, void *parameter);
+#else
+  void (*dtor) (v8::Isolate *isolate, v8::Persistent< v8::Value > object, void *parameter);
+#endif
 };
 
 v8::Persistent<v8::FunctionTemplate> SWIGV8_SWIGTYPE_Proxy_class_templ;
@@ -104,7 +119,14 @@ int SWIG_V8_ConvertInstancePtr(v8::Handle<v8::Object> objRef, void** ptr, swig_t
   
   if(objRef->InternalFieldCount() < 1) return SWIG_ERROR;
   v8::Handle<v8::Value> cdataRef = objRef->GetInternalField(0);
-  SWIGV8_Proxy *cdata = (SWIGV8_Proxy *) v8::External::Unwrap(cdataRef);
+  v8::Handle<v8::External> cdataRef_extern = v8::Handle<v8::External>::Cast(cdataRef);
+  if (cdataRef_extern.IsEmpty())
+  {
+    return SWIG_ERROR;
+  }
+
+  SWIGV8_Proxy *cdata = (SWIGV8_Proxy *) cdataRef_extern->Value();
+
   if(cdata == NULL) {
     return SWIG_ERROR;
   }
@@ -129,7 +151,12 @@ int SWIG_V8_ConvertInstancePtr(v8::Handle<v8::Object> objRef, void** ptr, swig_t
   return SWIG_OK;
 }
 
-void SWIGV8_Proxy_DefaultDtor(v8::Persistent< v8::Value > object, void *parameter) {
+#ifdef BUILDING_NODE_EXTENSION
+void SWIGV8_Proxy_DefaultDtor(v8::Persistent< v8::Value > object, void *parameter) 
+#else
+void SWIGV8_Proxy_DefaultDtor(v8::Isolate *, v8::Persistent< v8::Value > object, void *parameter) 
+#endif
+{
   SWIGV8_Proxy* proxy = (SWIGV8_Proxy*) parameter;
   if(proxy) {
     delete proxy;
@@ -141,10 +168,17 @@ void SWIGV8_SetPrivateData(v8::Handle<v8::Object> obj, void* ptr, swig_type_info
   cdata->swigCObject = ptr;  
   cdata->swigCMemOwn = (flags & SWIG_POINTER_OWN) ? 1 : 0;
   cdata->info = info;
-  obj->SetPointerInInternalField(0, cdata);
 
+#ifdef BUILDING_NODE_EXTENSION
+  obj->SetAlignedPointerInInternalField(0, cdata);
   cdata->handle = v8::Persistent<v8::Object>::New(obj);
+#else
+  obj->SetAlignedPointerInInternalField(0, cdata);
+  cdata->handle = v8::Persistent<v8::Object>::New(v8::Isolate::GetCurrent(), obj);
+#endif
 
+
+#ifdef BUILDING_NODE_EXTENSION
   // clientdata must be set for owned data as we need to register the dtor
   if(cdata->swigCMemOwn) {
     cdata->handle.MakeWeak(cdata, ((SWIGV8_ClientData*)info->clientdata)->dtor);
@@ -152,6 +186,14 @@ void SWIGV8_SetPrivateData(v8::Handle<v8::Object> obj, void* ptr, swig_type_info
     cdata->handle.MakeWeak(cdata, SWIGV8_Proxy_DefaultDtor);
   }
   cdata->handle.MarkIndependent();
+#else
+  if(cdata->swigCMemOwn) {
+    cdata->handle.MakeWeak(v8::Isolate::GetCurrent(), cdata, ((SWIGV8_ClientData*)info->clientdata)->dtor);
+  } else {
+    cdata->handle.MakeWeak(v8::Isolate::GetCurrent(), cdata, SWIGV8_Proxy_DefaultDtor);
+  }
+  cdata->handle.MarkIndependent(v8::Isolate::GetCurrent());
+#endif
 }
 
 int SWIG_V8_ConvertPtr(v8::Handle<v8::Value> valRef, void** ptr, swig_type_info *info, int flags) {
