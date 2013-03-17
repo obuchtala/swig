@@ -170,7 +170,7 @@ void SWIGV8_SetPrivateData(v8::Handle<v8::Object> obj, void* ptr, swig_type_info
   cdata->info = info;
 
 #ifdef BUILDING_NODE_EXTENSION
-  obj->SetAlignedPointerInInternalField(0, cdata);
+  obj->SetPointerInInternalField(0, cdata);
   cdata->handle = v8::Persistent<v8::Object>::New(obj);
 #else
   obj->SetAlignedPointerInInternalField(0, cdata);
