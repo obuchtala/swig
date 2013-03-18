@@ -119,13 +119,13 @@ int SWIG_V8_ConvertInstancePtr(v8::Handle<v8::Object> objRef, void** ptr, swig_t
   
   if(objRef->InternalFieldCount() < 1) return SWIG_ERROR;
   v8::Handle<v8::Value> cdataRef = objRef->GetInternalField(0);
-  v8::Handle<v8::External> cdataRef_extern = v8::Handle<v8::External>::Cast(cdataRef);
-  if (cdataRef_extern.IsEmpty())
-  {
-    return SWIG_ERROR;
-  }
 
-  SWIGV8_Proxy *cdata = (SWIGV8_Proxy *) cdataRef_extern->Value();
+#ifdef BUILDING_NODE_EXTENSION
+  SWIGV8_Proxy *cdata = (SWIGV8_Proxy *) v8::External::Unwrap(cdataRef);
+#else
+  void* value = External::Cast(cdataRef)->Value();
+  SWIGV8_Proxy *cdata = static_cast<SWIGV8_Proxy *>(value);
+#endif
 
   if(cdata == NULL) {
     return SWIG_ERROR;
