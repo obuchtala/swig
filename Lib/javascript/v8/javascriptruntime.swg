@@ -131,15 +131,11 @@ int SWIG_V8_ConvertInstancePtr(v8::Handle<v8::Object> objRef, void** ptr, swig_t
     return SWIG_ERROR;
   }
   if(cdata->info != info) {
-    bool type_valid = false;
-    swig_cast_info *t = info->cast; 
-    while(t != NULL) {
-      if(t->type == cdata->info) {
-        type_valid = true;
-        break;
-      }
-      t = t->next;
+    swig_cast_info *tc = SWIG_TypeCheckStruct(cdata->info, info);
+    if (!tc && cdata->info->name) {
+      tc = SWIG_TypeCheck(cdata->info->name, info);
     }
+    bool type_valid = tc != 0;
     if(!type_valid) {
       return SWIG_TypeError;
     }
