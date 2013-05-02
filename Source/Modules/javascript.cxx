@@ -1776,7 +1776,8 @@ int V8Emitter::dump(Node *)
 
   SwigType_emit_type_table(f_runtime, f_wrappers);
 
-  emitUndefined();
+  // Let's not and say we did
+  // emitUndefined();
 
   Printv(f_wrap_cpp, f_runtime, "\n", 0);
   Printv(f_wrap_cpp, f_header, "\n", 0);
