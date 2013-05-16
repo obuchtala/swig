@@ -413,7 +413,11 @@ fail:
 %{
 extern "C" {
 
+#ifdef BUILDING_NODE_EXTENSION
+void $jsname_initialize(v8::Handle<v8::Object> global_obj, v8::Handle<v8::Object> /*module*/)
+#else
 void $jsname_initialize(v8::Handle<v8::Object> global_obj)
+#endif
 {
   SWIG_InitializeModule(static_cast<void *>(&global_obj));
 
