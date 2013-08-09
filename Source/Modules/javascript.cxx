@@ -22,7 +22,6 @@ bool js_template_enable_debug = false;
 #define CTOR_DISPATCHERS "ctor_dispatchers"
 #define DTOR "dtor"
 #define ARGCOUNT "wrap:argc"
-#define FUNCTION_DISPATCHERS "function_dispatchers"
 
 // variables used in code templates
 // ATTENTION: be aware of prefix collisions when defining those variables
@@ -793,12 +792,6 @@ int JSEmitter::enterFunction(Node *n) {
     SetFlag(state.function(), IS_STATIC);
   }
 
-  /* Initialize DOH for collecting function dispatchers */
-  bool is_overloaded = GetFlag(n, "sym:overloaded");
-  if (is_overloaded && state.global(FUNCTION_DISPATCHERS) == 0) {
-    state.global(FUNCTION_DISPATCHERS, NewString(""));
-  }
-
   return SWIG_OK;
 }
 
@@ -887,7 +880,6 @@ int JSEmitter::emitCtor(Node *n) {
 
 int JSEmitter::emitDtor(Node *n) {
 
-  Template t_dtor = getTemplate("js_dtor");
   String *wrap_name = Swig_name_wrapper(Getattr(n, "sym:name"));
 
   SwigType *type = state.clazz(TYPE);
@@ -895,20 +887,116 @@ int JSEmitter::emitDtor(Node *n) {
   String *ctype = SwigType_lstr(p_classtype, "");
   String *free = NewString("");
 
+   // (Taken from JSCore implementation.)
+  /* The if (Extend) block was taken from the Ruby implementation.
+   * The problem is that in the case of an %extend to create a destructor for a struct to coordinate automatic memory cleanup with the Javascript collector,
+   * the swig function was not being generated. More specifically:
+     struct MyData {
+       %extend {
+         ~MyData() {
+           FreeData($self);
+         }
+       }
+     };
+     %newobject CreateData;	 
+     struct MyData* CreateData(void);
+     %delobject FreeData;
+     void FreeData(struct MyData* the_data);
+	 
+	 where the use case is something like:
+	   var my_data = example.CreateData();
+	   my_data = null;
+     
+	 This function was not being generated:
+	 SWIGINTERN void delete_MyData(struct MyData *self){
+       FreeData(self);
+     }
+
+     I don't understand fully why it wasn't being generated. It just seems to happen in the Lua generator.
+	 There is a comment about staticmemberfunctionHandler having an inconsistency and I tracked down dome of the SWIGINTERN void delete_*
+	 code to that function in the Language base class.
+	 The Ruby implementation seems to have an explicit check for if(Extend) and explicitly generates the code, so that's what I'm doing here.
+	 The Ruby implementation does other stuff which I omit.
+  */
+  if (Extend) {
+    String *wrap = Getattr(n, "wrap:code");
+    if (wrap) {
+      Printv(f_wrappers, wrap, NIL);
+    }
+  }
+
+
   // HACK: this is only for the v8 emitter. maybe set an attribute wrap:action of node
   // TODO: generate dtors more similar to other wrappers
+  // EW: I think this is wrong. delete should only be used when new was used to create. If malloc was used, free needs to be used.
   if(SwigType_isarray(type)) {
     Printf(free, "delete [] (%s)", ctype);
   } else {
     Printf(free, "delete (%s)", ctype);
   }
 
-  state.clazz(DTOR, wrap_name);
-  t_dtor.replace(T_NAME_MANGLED, state.clazz(NAME_MANGLED))
+  String* destructor_action = Getattr(n, "wrap:action");
+  // Adapted from the JSCore implementation.
+  /* The next challenge is to generate the correct finalize function for JavaScriptCore to call.
+     Originally, it would use this fragment from javascriptcode.swg
+	 %fragment ("JS_destructordefn", "templates")
+     %{
+     void _wrap_${classname_mangled}_finalize(JSObjectRef thisObject)
+     {
+        SWIG_PRV_DATA* t = (SWIG_PRV_DATA*)JSObjectGetPrivate(thisObject);
+        if(t && t->swigCMemOwn) free ((${type}*)t->swigCObject);
+        if(t) free(t);
+     }
+     %}
+
+     But for the above example case of %extend to define a destructor on a struct, we need to override the system to not call
+     free ((${type}*)t->swigCObject);
+	 and substitute it with what the user has provided.
+     To solve this, I created a variation fragment called JS_destructoroverridedefn:
+     SWIG_PRV_DATA* t = (SWIG_PRV_DATA*)JSObjectGetPrivate(thisObject);
+     if(t && t->swigCMemOwn) {
+       ${type}* arg1 = (${type}*)t->swigCObject;
+       ${destructor_action}
+     }
+     if(t) free(t);
+
+	 Based on what I saw in the Lua and Ruby modules, I use Getattr(n, "wrap:action")
+	 to decide if the user has a preferred destructor action.
+	 Based on that, I decide which fragment to use.
+	 And in the case of the custom action, I substitute that action in.
+	 I noticed that destructor_action has the form 
+       delete_MyData(arg1);
+     The explicit arg1 is a little funny, so I structured the fragment to create a temporary variable called arg1 to make the generation easier.
+     This might suggest this solution misunderstands a more complex case.
+
+	 Also, there is a problem where destructor_action is always true for me, even when not requesting %extend as above.
+	 So this code doesn't actually quite work as I expect. The end result is that the code still works because 
+	 destructor_action calls free like the original template. The one caveat is the string in destructor_action casts to char* which is wierd.
+	 I think there is a deeper underlying SWIG issue because I don't think it should be char*. However, it doesn't really matter for free.
+
+	 Maybe the fix for the destructor_action always true problem is that this is supposed to be embedded in the if(Extend) block above.
+	 But I don't fully understand the conditions of any of these things, and since it works for the moment, I don't want to break more stuff.
+  */
+  if(destructor_action) {
+    Template t_dtor = getTemplate("js_dtoroverride");
+    state.clazz(DTOR, wrap_name);
+    t_dtor.replace("${classname_mangled}", state.clazz(NAME_MANGLED))
+      .replace(T_WRAPPER, wrap_name)
+      .replace(T_FREE, free)
+      .replace(T_TYPE, ctype);
+
+    t_dtor.replace("${destructor_action}", destructor_action);
+    Wrapper_pretty_print(t_dtor.str(), f_wrappers);
+  }
+  else {
+    Template t_dtor = getTemplate("js_dtor");
+    state.clazz(DTOR, wrap_name);
+    t_dtor.replace(T_NAME_MANGLED, state.clazz(NAME_MANGLED))
       .replace(T_WRAPPER, wrap_name)
       .replace(T_FREE, free)
       .replace(T_TYPE, ctype)
       .pretty_print(f_wrappers);
+  }
 
   Delete(p_classtype);
   Delete(ctype);
@@ -1061,13 +1149,6 @@ int JSEmitter::emitFunction(Node *n, bool is_member, bool is_static) {
       .replace(T_ARGCOUNT, Getattr(n, ARGCOUNT))
       .pretty_print(f_wrappers);
 
-  // handle function overloading
-  if (is_overloaded) {
-    Template t_dispatch_case = getTemplate("js_function_dispatch_case");
-    t_dispatch_case.replace(T_WRAPPER, wrap_name)
-        .replace(T_ARGCOUNT, Getattr(n, ARGCOUNT));
-    Append(state.global(FUNCTION_DISPATCHERS), t_dispatch_case.str());
-  }
 
   DelWrapper(wrapper);
 
@@ -1075,14 +1156,47 @@ int JSEmitter::emitFunction(Node *n, bool is_member, bool is_static) {
 }
 
 int JSEmitter::emitFunctionDispatcher(Node *n, bool /*is_member */ ) {
+  Wrapper *wrapper = NewWrapper();
+
+  // Generate call list, go to first node
+  Node *sibl = n;
+
+  while (Getattr(sibl, "sym:previousSibling"))
+    sibl = Getattr(sibl, "sym:previousSibling");	// go all the way up
+
+  do {
+    String *siblname = Getattr(sibl, "wrap:name");
+
+    if (siblname)
+    {
+      // handle function overloading
+      Template t_dispatch_case = getTemplate("js_function_dispatch_case");
+      t_dispatch_case.replace(T_WRAPPER, siblname)
+        .replace(T_ARGCOUNT, Getattr(sibl, ARGCOUNT));
+
+      Append(wrapper->code, t_dispatch_case.str());
+    }
+
+  } while ((sibl = Getattr(sibl, "sym:nextSibling")));
+
+
+
 
   Template t_function(getTemplate("js_function_dispatcher"));
 
-  Wrapper *wrapper = NewWrapper();
-  String *wrap_name = Swig_name_wrapper(Getattr(n, "name"));
-  Setattr(n, "wrap:name", wrap_name);
+//  String *wrap_name = Swig_name_wrapper(Getattr(n, "name"));
 
-  Append(wrapper->code, state.global(FUNCTION_DISPATCHERS));
+  
+  String *fun_name = Getattr(n, "sym:name");
+
+  Node *methodclass = Swig_methodclass(n);
+  String *class_name = Getattr(methodclass, "sym:name");
+
+  String *new_string = NewStringf("%s_%s", class_name, fun_name);
+  String *wrap_name = Swig_name_wrapper(new_string);
+
+  Setattr(n, "wrap:name", wrap_name);
+  state.function(WRAPPER_NAME, wrap_name);
 
   t_function.replace(T_LOCALS, wrapper->locals)
       .replace(T_CODE, wrapper->code);
@@ -1093,7 +1207,6 @@ int JSEmitter::emitFunctionDispatcher(Node *n, bool /*is_member */ ) {
       .pretty_print(f_wrappers);
 
   // Delete the state variable
-  state.global(FUNCTION_DISPATCHERS, 0);
   DelWrapper(wrapper);
 
   return SWIG_OK;
@@ -1171,6 +1284,16 @@ void JSEmitter::marshalOutput(Node *n,  Wrapper *wrapper, String *actioncode, co
 void JSEmitter::emitCleanupCode(Node *n, Wrapper *wrapper, ParmList *params) {
   Parm *p;
   String *tm;
+
+  for (p = params; p;) {
+    if ((tm = Getattr(p, "tmap:argout"))) {
+      Replaceall(tm, "$input", Getattr(p, "emit:input"));
+      Printv(wrapper->code, tm, "\n", NIL);
+      p = Getattr(p, "tmap:argout:next");
+    } else {
+      p = nextSibling(p);
+    }
+  }
 
   for (p = params; p;) {
     if ((tm = Getattr(p, "tmap:freearg"))) {
@@ -1480,7 +1603,7 @@ int JSCEmitter::exitFunction(Node *n) {
   // handle overloaded functions
   if (is_overloaded) {
     if (!Getattr(n, "sym:nextSibling")) {
-      state.function(WRAPPER_NAME, Swig_name_wrapper(Getattr(n, "name")));
+      //state.function(WRAPPER_NAME, Swig_name_wrapper(Getattr(n, "name")));
       // create dispatcher
       emitFunctionDispatcher(n, is_member);
     } else {
@@ -1742,6 +1865,7 @@ int V8Emitter::initialize(Node *n)
   f_init_register_namespaces = NewString("");
 
   // note: this is necessary for built-in generation of swig runtime code
+  Swig_register_filebyname("begin", f_wrap_cpp);
   Swig_register_filebyname("runtime", f_runtime);
   Swig_register_filebyname("header", f_header);
   Swig_register_filebyname("init", f_init);
@@ -1757,7 +1881,8 @@ int V8Emitter::dump(Node *)
 
   SwigType_emit_type_table(f_runtime, f_wrappers);
 
-  emitUndefined();
+  // Let's not and say we did
+  // emitUndefined();
 
   Printv(f_wrap_cpp, f_runtime, "\n", 0);
   Printv(f_wrap_cpp, f_header, "\n", 0);
@@ -1859,12 +1984,15 @@ int V8Emitter::exitClass(Node *n)
   //  emit inheritance setup
   Node* baseClass = getBaseClass(n);
   if(baseClass) {
+    String *base_name = Getattr(baseClass, "name");
+
     Template t_inherit = getTemplate("jsv8_inherit");
-    String *base_name_mangled = SwigType_manglestr(Getattr(baseClass, "name"));
+
+    String *base_name_mangled = SwigType_manglestr(base_name);
     t_inherit.replace(T_NAME_MANGLED,  state.clazz(NAME_MANGLED))
-        .replace(T_BASECLASS, base_name_mangled)
-        .trim()
-        .pretty_print(f_init_inheritance);
+      .replace(T_BASECLASS, base_name_mangled)
+      .trim()
+      .pretty_print(f_init_inheritance);
     Delete(base_name_mangled);
   }
 
@@ -1932,7 +2060,7 @@ int V8Emitter::exitFunction(Node* n)
   bool is_overloaded = GetFlag(n, "sym:overloaded");
   if (is_overloaded) {
     if (!Getattr(n, "sym:nextSibling")) {
-      state.function(WRAPPER_NAME, Swig_name_wrapper(Getattr(n, "name")));
+      //state.function(WRAPPER_NAME, Swig_name_wrapper(Getattr(n, "name")));
       emitFunctionDispatcher(n, is_member);
     } else {
       //don't register wrappers of overloaded functions in function tables

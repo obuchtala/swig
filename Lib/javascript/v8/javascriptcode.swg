@@ -111,10 +111,50 @@ fail:
  * ----------------------------------------------------------------------------- */
 %fragment ("js_dtor", "templates")
 %{
+
+#if defined(BUILDING_NODE_EXTENSION) || defined(V8_3_14)
+void $jswrapper(v8::Persistent< v8::Value > object, void *parameter) 
+#else
+void $jswrapper(v8::Isolate *isolate, v8::Persistent< v8::Object > * object, SWIGV8_Proxy *proxy) 
+#endif
+{
+
+#if defined(BUILDING_NODE_EXTENSION) || defined(V8_3_14)
+  SWIGV8_Proxy *proxy = static_cast<SWIGV8_Proxy *>(parameter); 
+#endif
+
+  if(proxy->swigCMemOwn && proxy->swigCObject) {
+#ifdef SWIGRUNTIME_DEBUG
+    printf("Deleting wrapped instance: %s\n", proxy->info->name);
+#endif
+    $jsfree proxy->swigCObject;
+  }
+  delete proxy;
+
+
+#if defined(BUILDING_NODE_EXTENSION) || defined(V8_3_14)
+  object.Clear();
+  object.Dispose();
+#else
+  object->Clear();
+  object->Dispose(isolate);
+#endif
+}
+%}
+
+/* -----------------------------------------------------------------------------
+ * js_dtoroverride:  template for a destructor wrapper
+ *   - $jsmangledname:  mangled class name
+ *   - $jstype:         class type
+ *   - ${destructor_action}: The custom destructor action to invoke. 
+ * ----------------------------------------------------------------------------- */
+%fragment ("js_dtoroverride", "templates")
+%{
 void $jswrapper(v8::Persistent< v8::Value > object, void *parameter) {
   SWIGV8_Proxy* proxy = (SWIGV8_Proxy*) parameter;
   if(proxy->swigCMemOwn && proxy->swigCObject) {
-    $jsfree proxy->swigCObject;
+    $jstype arg1 = ($jstype)proxy->swigCObject;
+    ${destructor_action}
   }
   delete proxy;
 
@@ -262,10 +302,15 @@ fail:
 %fragment("jsv8_define_class_template", "templates") 
 %{
   v8::Handle<v8::FunctionTemplate> $jsmangledname_class = SWIGV8_CreateClassTemplate("$jsmangledname");
-  $jsmangledname_clientData.class_templ = $jsmangledname_class;
+#if defined(BUILDING_NODE_EXTENSION) || defined(V8_3_14)
+  $jsmangledname_clientData.class_templ = v8::Persistent<v8::FunctionTemplate>::New($jsmangledname_class);
+#else
+  $jsmangledname_clientData.class_templ.Reset(v8::Isolate::GetCurrent(), $jsmangledname_class);
+#endif
   $jsmangledname_clientData.dtor = $jsdtor;  
   SWIGTYPE$jsmangledtype->clientdata = &$jsmangledname_clientData;
 %}
+
 
 /* -----------------------------------------------------------------------------
  * jsv8_inherit:  template for an class inherit statement.
@@ -274,7 +319,26 @@ fail:
  * ----------------------------------------------------------------------------- */
 %fragment("jsv8_inherit", "templates") 
 %{
-  $jsmangledname_class->Inherit($jsbaseclass_class);
+  if (SWIGTYPE_p$jsbaseclass->clientdata && !(static_cast<SWIGV8_ClientData *>(SWIGTYPE_p$jsbaseclass->clientdata)->class_templ.IsEmpty()))
+  {
+#if defined(BUILDING_NODE_EXTENSION) || defined(V8_3_14)
+    $jsmangledname_class->Inherit(static_cast<SWIGV8_ClientData *>(SWIGTYPE_p$jsbaseclass->clientdata)->class_templ);
+#else
+    $jsmangledname_class->Inherit(
+      v8::Handle<v8::FunctionTemplate>::New(
+        v8::Isolate::GetCurrent(),
+        static_cast<SWIGV8_ClientData *>(SWIGTYPE_p$jsbaseclass->clientdata)->class_templ)
+     );
+#endif
+
+#ifdef SWIGRUNTIME_DEBUG
+    printf("Inheritance successful $jsmangledname $jsbaseclass\n");
+#endif
+  } else {
+#ifdef SWIGRUNTIME_DEBUG
+    printf("Unable to inherit baseclass, it didn't exist $jsmangledname $jsbaseclass\n");
+#endif
+  }
 %}
 
 /* -----------------------------------------------------------------------------
@@ -386,16 +450,27 @@ fail:
  * ----------------------------------------------------------------------------- */
 %fragment("js_initializer", "templates") 
 %{
-extern "C" {
+// The extern "C" makes little sense here because the paramater is using C++ objects and templates.
+// extern "C" {
 
+#if defined(BUILDING_NODE_EXTENSION)
+void $jsname_initialize(v8::Handle<v8::Object> global_obj, v8::Handle<v8::Object> /*module*/)
+#else
 void $jsname_initialize(v8::Handle<v8::Object> global_obj)
+#endif
 {
-  SWIG_InitializeModule(0);
+  SWIG_InitializeModule(static_cast<void *>(&global_obj));
 
   v8::HandleScope scope;
 
   // a class template for creating proxies of undefined types
-  SWIGV8_SWIGTYPE_Proxy_class_templ = SWIGV8_CreateClassTemplate("SwigProxy");
+
+#if defined(BUILDING_NODE_EXTENSION) || defined(V8_3_14)
+  SWIGV8_SWIGTYPE_Proxy_class_templ = v8::Persistent<v8::FunctionTemplate>::New(SWIGV8_CreateClassTemplate("SwigProxy"));
+#else
+  SWIGV8_SWIGTYPE_Proxy_class_templ.Reset(v8::Isolate::GetCurrent(), SWIGV8_CreateClassTemplate("SwigProxy"));
+#endif
+
   
   /* create objects for namespaces */
   $jsv8nspaces
@@ -420,8 +495,13 @@ void $jsname_initialize(v8::Handle<v8::Object> global_obj)
   
   /* create and register namespace objects */
   $jsv8registernspaces
-
 }
 
-} // extern "C"
+#if defined(BUILDING_NODE_EXTENSION)
+NODE_MODULE($jsname, $jsname_initialize);
+#endif
+
+
+
+// } // extern "C"
 %}

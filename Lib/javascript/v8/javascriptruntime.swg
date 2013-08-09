@@ -5,7 +5,9 @@
  * ----------------------------------------------------------------------------- */
 
 %insert(runtime) %{
+
 #include <v8.h>
+
 #include <errno.h>
 #include <limits.h>
 %}
@@ -38,6 +40,7 @@ void SWIG_V8_Raise(const char* msg) {
 */
 class V8ErrorHandler {
 public:
+  virtual ~V8ErrorHandler() {}
   virtual void error(int code, const char* msg) {
     SWIG_V8_Raise(msg);
   }
@@ -60,7 +63,7 @@ public:
 
 %insert(runtime) %{
 
-// Note: to trigger the c8 gc more often one can tell v8 about the memory consumption
+// Note: to trigger the v8 gc more often one can tell v8 about the memory consumption
 // TODO: we could add a v8 specific parameter to control this value
 #define SWIGV8_AVG_OBJ_SIZE 1000
 
@@ -71,9 +74,19 @@ public:
   };
   
   ~SWIGV8_Proxy() { 
+#if defined(BUILDING_NODE_EXTENSION) || defined(V8_3_14)
     handle.ClearWeak();
-    handle->SetInternalField(0, v8::Undefined());
+#else
+    handle.ClearWeak(v8::Isolate::GetCurrent());
+#endif
+
+    //handle->SetInternalField(0, v8::Undefined());
+
+#if defined(BUILDING_NODE_EXTENSION) || defined(V8_3_14)
     handle.Dispose();
+#else
+    handle.Dispose(v8::Isolate::GetCurrent());
+#endif
     handle.Clear();
     v8::V8::AdjustAmountOfExternalAllocatedMemory(-SWIGV8_AVG_OBJ_SIZE);
   }
@@ -86,8 +99,13 @@ public:
 
 class SWIGV8_ClientData {
 public:
-  v8::Handle<v8::FunctionTemplate> class_templ;
-  void (*dtor) (v8::Persistent< v8::Value > object, void *parameter);
+  v8::Persistent<v8::FunctionTemplate> class_templ;
+
+#if defined(BUILDING_NODE_EXTENSION) || defined(V8_3_14)
+  void (*dtor) (v8::Persistent< v8::Value> object, void *parameter);
+#else
+  void (*dtor) (v8::Isolate *isolate, v8::Persistent< v8::Object > *object, SWIGV8_Proxy *proxy);
+#endif
 };
 
 v8::Persistent<v8::FunctionTemplate> SWIGV8_SWIGTYPE_Proxy_class_templ;
@@ -96,21 +114,23 @@ int SWIG_V8_ConvertInstancePtr(v8::Handle<v8::Object> objRef, void** ptr, swig_t
   v8::HandleScope scope;
   
   if(objRef->InternalFieldCount() < 1) return SWIG_ERROR;
+
+#if defined(BUILDING_NODE_EXTENSION) || defined(V8_3_14)
   v8::Handle<v8::Value> cdataRef = objRef->GetInternalField(0);
-  SWIGV8_Proxy *cdata = (SWIGV8_Proxy *) v8::External::Unwrap(cdataRef);
+  SWIGV8_Proxy *cdata = static_cast<SWIGV8_Proxy *>(v8::External::Unwrap(cdataRef));
+#else
+  SWIGV8_Proxy *cdata = static_cast<SWIGV8_Proxy *>(objRef->GetAlignedPointerFromInternalField(0));
+#endif
+
   if(cdata == NULL) {
     return SWIG_ERROR;
   }
   if(cdata->info != info) {
-    bool type_valid = false;
-    swig_cast_info *t = info->cast; 
-    while(t != NULL) {
-      if(t->type == cdata->info) {
-        type_valid = true;
-        break;
-      }
-      t = t->next;
+    swig_cast_info *tc = SWIG_TypeCheckStruct(cdata->info, info);
+    if (!tc && cdata->info->name) {
+      tc = SWIG_TypeCheck(cdata->info->name, info);
     }
+    bool type_valid = tc != 0;
     if(!type_valid) {
       return SWIG_TypeError;
     }
@@ -122,11 +142,17 @@ int SWIG_V8_ConvertInstancePtr(v8::Handle<v8::Object> objRef, void** ptr, swig_t
   return SWIG_OK;
 }
 
-void SWIGV8_Proxy_DefaultDtor(v8::Persistent< v8::Value > object, void *parameter) {
-  SWIGV8_Proxy* proxy = (SWIGV8_Proxy*) parameter;
-  if(proxy) {
-    delete proxy;
-  }
+#if defined(BUILDING_NODE_EXTENSION) || defined(V8_3_14)
+void SWIGV8_Proxy_DefaultDtor(v8::Persistent< v8::Value > object, void *parameter)
+#else
+void SWIGV8_Proxy_DefaultDtor(v8::Isolate *, v8::Persistent< v8::Object > *object, SWIGV8_Proxy *proxy)
+#endif
+{
+#if defined(BUILDING_NODE_EXTENSION) || defined(V8_3_14)
+  SWIGV8_Proxy *proxy = static_cast<SWIGV8_Proxy *>(parameter);
+#endif
+
+  delete proxy;
 }
 
 void SWIGV8_SetPrivateData(v8::Handle<v8::Object> obj, void* ptr, swig_type_info *info, int flags) {
@@ -134,17 +160,31 @@ void SWIGV8_SetPrivateData(v8::Handle<v8::Object> obj, void* ptr, swig_type_info
   cdata->swigCObject = ptr;  
   cdata->swigCMemOwn = (flags & SWIG_POINTER_OWN) ? 1 : 0;
   cdata->info = info;
+
+#if defined(BUILDING_NODE_EXTENSION) || defined(V8_3_14)
   obj->SetPointerInInternalField(0, cdata);
-
   cdata->handle = v8::Persistent<v8::Object>::New(obj);
+#else
+  obj->SetAlignedPointerInInternalField(0, cdata);
+  cdata->handle.Reset(v8::Isolate::GetCurrent(), obj);
+#endif
 
+#if defined(BUILDING_NODE_EXTENSION) || defined(V8_3_14)
   // clientdata must be set for owned data as we need to register the dtor
-  if(cdata->swigCMemOwn) {
+  if(cdata->swigCMemOwn && (SWIGV8_ClientData*)info->clientdata) {
     cdata->handle.MakeWeak(cdata, ((SWIGV8_ClientData*)info->clientdata)->dtor);
   } else {
     cdata->handle.MakeWeak(cdata, SWIGV8_Proxy_DefaultDtor);
   }
   cdata->handle.MarkIndependent();
+#else
+  if(cdata->swigCMemOwn && (SWIGV8_ClientData*)info->clientdata) {
+    cdata->handle.MakeWeak(v8::Isolate::GetCurrent(), cdata, ((SWIGV8_ClientData*)info->clientdata)->dtor);
+  } else {
+    cdata->handle.MakeWeak(v8::Isolate::GetCurrent(), cdata, SWIGV8_Proxy_DefaultDtor);
+  }
+  cdata->handle.MarkIndependent(v8::Isolate::GetCurrent());
+#endif
 }
 
 int SWIG_V8_ConvertPtr(v8::Handle<v8::Value> valRef, void** ptr, swig_type_info *info, int flags) {
@@ -159,13 +199,25 @@ int SWIG_V8_ConvertPtr(v8::Handle<v8::Value> valRef, void** ptr, swig_type_info 
 
 v8::Handle<v8::Object> SWIG_V8_NewPointerObj(void *ptr, swig_type_info *info, int flags) {
   v8::HandleScope scope;
-  
   v8::Handle<v8::FunctionTemplate> class_templ;
+
+
+#if defined(BUILDING_NODE_EXTENSION) || defined(V8_3_14)
   if(info->clientdata != 0) {
     class_templ = ((SWIGV8_ClientData*) info->clientdata)->class_templ;
   } else {
     class_templ = SWIGV8_SWIGTYPE_Proxy_class_templ;
   }
+#else
+  v8::Isolate *iso = v8::Isolate::GetCurrent();
+  
+  if(info->clientdata != 0) {
+    class_templ = v8::Handle<v8::FunctionTemplate>::New(iso, ((SWIGV8_ClientData*) info->clientdata)->class_templ);
+  } else {
+    class_templ = v8::Handle<v8::FunctionTemplate>::New(iso, SWIGV8_SWIGTYPE_Proxy_class_templ);
+  }
+#endif
+
   v8::Handle<v8::Object> result = class_templ->InstanceTemplate()->NewInstance();
   SWIGV8_SetPrivateData(result, ptr, info, flags);
   
@@ -178,4 +230,8 @@ v8::Handle<v8::Object> SWIG_V8_NewPointerObj(void *ptr, swig_type_info *info, in
 #define SWIG_ConvertInstance(obj, pptr, type, flags)    SWIG_V8_ConvertInstancePtr(obj, pptr, type, flags)
 #define SWIG_NewInstanceObj(thisvalue, type, flags)     SWIG_V8_NewPointerObj(thisvalue, type, flags)
 
+#define SWIG_ConvertFunctionPtr(obj, pptr, type)        SWIG_V8_ConvertPtr(obj, pptr, type, 0)
+#define SWIG_NewFunctionPtrObj(ptr, type)               SWIG_V8_NewPointerObj(ptr, type, 0)
+
 %}
+
