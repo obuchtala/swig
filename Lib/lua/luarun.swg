@@ -16,6 +16,35 @@ extern "C" {
 #include <assert.h>  /* for a few sanity tests */
 
 /* -----------------------------------------------------------------------------
+ * Lua flavors
+ * ----------------------------------------------------------------------------- */
+
+#define SWIG_LUA_FLAVOR_LUA 1
+#define SWIG_LUA_FLAVOR_ELUA 2
+#define SWIG_LUA_FLAVOR_ELUAC 3
+
+#if !defined(SWIG_LUA_TARGET)
+# error SWIG_LUA_TARGET not defined
+#endif
+
+#if (SWIG_LUA_TARGET == SWIG_LUA_FLAVOR_ELUA) || (SWIG_LUA_TARGET == SWIG_LUA_FLAVOR_ELUAC)
+#  define SWIG_LUA_CONSTTAB_INT(B, C) LSTRKEY(B), LNUMVAL(C)
+#  define SWIG_LUA_CONSTTAB_FLOAT(B, C) LSTRKEY(B), LNUMVAL(C)
+#  define SWIG_LUA_CONSTTAB_STRING(B, C) LSTRKEY(B), LSTRVAL(C)
+#  define SWIG_LUA_CONSTTAB_CHAR(B, C) LSTRKEY(B), LNUMVAL(C)
+#else /* SWIG_LUA_FLAVOR_LUA */
+#  define SWIG_LUA_CONSTTAB_INT(B, C) SWIG_LUA_INT, (char *)B, (long)C, 0, 0, 0
+#  define SWIG_LUA_CONSTTAB_FLOAT(B, C) SWIG_LUA_FLOAT, (char *)B, 0, (double)C, 0, 0
+#  define SWIG_LUA_CONSTTAB_STRING(B, C) SWIG_LUA_STRING, (char *)B, 0, 0, (void *)C, 0
+#  define SWIG_LUA_CONSTTAB_CHAR(B, C) SWIG_LUA_CHAR, (char *)B, (long)C, 0, 0, 0
+#endif
+
+#if (SWIG_LUA_TARGET == SWIG_LUA_FLAVOR_ELUA) || (SWIG_LUA_TARGET == SWIG_LUA_FLAVOR_ELUAC)
+#  define LRO_STRVAL(v) {{.p = (char *) v}, LUA_TSTRING}
+#  define LSTRVAL LRO_STRVAL
+#endif
+
+/* -----------------------------------------------------------------------------
  * compatibility defines
  * ----------------------------------------------------------------------------- */
 
@@ -40,6 +69,36 @@ extern "C" {
 #if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM < 502
 # define lua_pushglobaltable(L) lua_pushvalue(L, LUA_GLOBALSINDEX)
 #endif
+
+
+/* --------------------------------------------------------------------------
+ * Helper functions for error handling
+ * -------------------------------------------------------------------------- */
+
+/* Push the string STR on the Lua stack, like lua_pushstring, but
+   prefixed with the the location of the innermost Lua call-point
+   (as formated by luaL_where).  */
+SWIGRUNTIME void
+SWIG_Lua_pusherrstring (lua_State *L, const char *str)
+{
+  luaL_where (L, 1);
+  lua_pushstring (L, str);
+  lua_concat (L, 2);
+}
+
+/* Push a formatted string generated from FMT and following args on
+   the Lua stack, like lua_pushfstring, but prefixed with the the
+   location of the innermost Lua call-point (as formated by luaL_where).  */
+SWIGRUNTIME void
+SWIG_Lua_pushferrstring (lua_State *L, const char *fmt, ...)
+{
+  va_list argp;
+  va_start(argp, fmt);
+  luaL_where(L, 1);
+  lua_pushvfstring(L, fmt, argp);
+  va_end(argp);
+  lua_concat(L, 2);
+}
 
 
 /* -----------------------------------------------------------------------------
@@ -92,7 +151,7 @@ typedef struct swig_lua_class {
   const char **base_names;
 } swig_lua_class;
 
-/* this is the struct for wrappering all pointers in SwigLua
+/* this is the struct for wrapping all pointers in SwigLua
 */
 typedef struct {
   swig_type_info   *type;
@@ -100,7 +159,7 @@ typedef struct {
   void        *ptr;
 } swig_lua_userdata;
 
-/* this is the struct for wrapping arbitary packed binary data
+/* this is the struct for wrapping arbitrary packed binary data
 (currently it is only used for member function pointers)
 the data ordering is similar to swig_lua_userdata, but it is currently not possible
 to tell the two structures apart within SWIG, other than by looking at the type
@@ -126,19 +185,20 @@ typedef struct {
 
 /* Contract support */
 #define SWIG_contract_assert(expr, msg)  \
-  if (!(expr)) { lua_pushstring(L, (char *) msg); goto fail; } else
+  if (!(expr)) { SWIG_Lua_pusherrstring(L, (char *) msg); goto fail; } else
+
 
 /* helper #defines */
 #define SWIG_fail {goto fail;}
 #define SWIG_fail_arg(func_name,argnum,type) \
-  {lua_pushfstring(L,"Error in %s (arg %d), expected '%s' got '%s'",\
+  {SWIG_Lua_pushferrstring(L,"Error in %s (arg %d), expected '%s' got '%s'",\
   func_name,argnum,type,SWIG_Lua_typename(L,argnum));\
   goto fail;}
 #define SWIG_fail_ptr(func_name,argnum,type) \
   SWIG_fail_arg(func_name,argnum,(type && type->str)?type->str:"void*")
 #define SWIG_check_num_args(func_name,a,b) \
   if (lua_gettop(L)<a || lua_gettop(L)>b) \
-  {lua_pushfstring(L,"Error in %s expected %d..%d args, got %d",func_name,a,b,lua_gettop(L));\
+  {SWIG_Lua_pushferrstring(L,"Error in %s expected %d..%d args, got %d",func_name,a,b,lua_gettop(L));\
   goto fail;}
 
 
@@ -184,15 +244,14 @@ SWIG_Lua_SetModule(lua_State* L, swig_module_info *module) {
  * ----------------------------------------------------------------------------- */
 
 /* this function is called when trying to set an immutable.
-default value is to print an error.
+default action is to print an error.
 This can removed with a compile flag SWIGLUA_IGNORE_SET_IMMUTABLE */
 SWIGINTERN int SWIG_Lua_set_immutable(lua_State* L)
 {
 /*  there should be 1 param passed in: the new value */
 #ifndef SWIGLUA_IGNORE_SET_IMMUTABLE
   lua_pop(L,1);  /* remove it */
-  lua_pushstring(L,"This variable is immutable");
-  lua_error(L);
+  luaL_error(L,"This variable is immutable");
 #endif
     return 0;   /* should not return anything */
 }
@@ -605,7 +664,7 @@ SWIGINTERN void SWIG_Lua_init_base_class(lua_State* L,swig_lua_class* clss)
       swig_type_info *info = SWIG_TypeQueryModule(module,module,clss->base_names[i]);
       if (info) clss->bases[i] = (swig_lua_class *) info->clientdata;
     }
-  }	
+  }
 }
 
 /* performs the entire class registration process */
@@ -727,9 +786,8 @@ SWIGRUNTIME void* SWIG_Lua_MustGetPtr(lua_State* L,int index,swig_type_info *typ
        int argnum,const char* func_name){
   void* result;
   if (!SWIG_IsOK(SWIG_ConvertPtr(L,index,&result,type,flags))){
-    lua_pushfstring(L,"Error in %s, expected a %s at argument number %d\n",
-      func_name,(type && type->str)?type->str:"void*",argnum);
-    lua_error(L);
+    luaL_error (L,"Error in %s, expected a %s at argument number %d\n",
+		func_name,(type && type->str)?type->str:"void*",argnum);
   }
   return result;
 }
@@ -853,8 +911,8 @@ SWIG_Lua_InstallConstants(lua_State* L, swig_lua_const_info constants[]) {
 #ifndef SWIG_DOSTRING_FAIL /* Allows redefining of error function */
 #define SWIG_DOSTRING_FAIL(S) fprintf(stderr,"%s\n",S)
 #endif
-/* Executes a C string in Lua a really simple way of calling lua from C
-Unfortunately lua keeps changing its API's, so we need a conditional compile
+/* Executes a C string in Lua which is a really simple way of calling lua from C
+Unfortunately lua keeps changing its APIs, so we need a conditional compile
 In lua 5.0.X its lua_dostring()
 In lua 5.1.X its luaL_dostring()
 */

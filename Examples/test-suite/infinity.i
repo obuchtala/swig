@@ -23,13 +23,13 @@
 		static union MSVC_EVIL_FLOAT_HACK INFINITY_HACK = {{0x00, 0x00, 0x80, 0x7F}};
 		#define INFINITY (INFINITY_HACK.Value)
 	#endif
-	
+
 	#ifdef __GNUC__
 		#define INFINITY (__builtin_inf())
     #elif defined(__clang__)
 		#if __has_builtin(__builtin_inf)
 			#define INFINITY (__builtin_inf())
-		#endif		
+		#endif
 	#endif
 
 	#ifndef INFINITY
@@ -46,4 +46,3 @@ float use_infinity(float inf_val)
     return inf_val;
 }
 %}
-
