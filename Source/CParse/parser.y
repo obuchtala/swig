@@ -3981,7 +3981,7 @@ cpp_template_decl : TEMPLATE LESSTHAN template_parms GREATERTHAN {
 			      while (p) {
 				for (i = 0; i < nargs; i++){
 				  pn = Getattr(p,"name");
-				  if (Strcmp(pn,SwigType_base(Getitem(tlist,i))) == 0) {
+				  if (pn && Strcmp(pn,SwigType_base(Getitem(tlist,i))) == 0) {
 				    int j;
 				    Parm *p1 = tp;
 				    for (j = 0; j < i; j++) {
