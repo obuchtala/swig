@@ -63,6 +63,12 @@ typedef v8::PropertyCallbackInfo<v8::Value> SwigV8PropertyCallbackInfo;
 #define SWIGV8_RETURN_INFO(val, info) info.GetReturnValue().Set(val); return
 #endif
 
+#if (SWIG_V8_VERSION < 0x032113)
+#	define SWIGV8_SCOPE(name) v8::HandleScope name
+#else
+#	define SWIGV8_SCOPE(name) v8::HandleScope name(v8::Isolate::GetCurrent())
+#endif
+
 
 /* ---------------------------------------------------------------------------
  * Basic Proxy object
@@ -114,7 +120,7 @@ public:
 v8::Persistent<v8::FunctionTemplate> SWIGV8_SWIGTYPE_Proxy_class_templ;
 
 int SWIG_V8_ConvertInstancePtr(v8::Handle<v8::Object> objRef, void** ptr, swig_type_info *info, int flags) {
-  v8::HandleScope scope;
+  SWIGV8_SCOPE(scope);
 
   if(objRef->InternalFieldCount() < 1) return SWIG_ERROR;
 
@@ -233,7 +239,7 @@ void SWIGV8_SetPrivateData(v8::Handle<v8::Object> obj, void* ptr, swig_type_info
 }
 
 int SWIG_V8_ConvertPtr(v8::Handle<v8::Value> valRef, void** ptr, swig_type_info *info, int flags) {
-  v8::HandleScope scope;
+  SWIGV8_SCOPE(scope);
 
   if(!valRef->IsObject()) {
     return SWIG_TypeError;
@@ -243,7 +249,7 @@ int SWIG_V8_ConvertPtr(v8::Handle<v8::Value> valRef, void** ptr, swig_type_info 
 }
 
 v8::Handle<v8::Object> SWIG_V8_NewPointerObj(void *ptr, swig_type_info *info, int flags) {
-  v8::HandleScope scope;
+  SWIGV8_SCOPE(scope);
   v8::Handle<v8::FunctionTemplate> class_templ;
 
 #if (SWIG_V8_VERSION < 0x031900)
@@ -284,7 +290,7 @@ v8::Handle<v8::Value> _SWIGV8_wrap_equals(const v8::Arguments &args) {
 #else
 void _SWIGV8_wrap_equals(const v8::FunctionCallbackInfo<v8::Value>& args) {
 #endif
-  v8::HandleScope scope;
+  SWIGV8_SCOPE(scope);
   v8::Handle<v8::Value> jsresult;
   void *arg1 = (void *) 0 ;
   void *arg2 = (void *) 0 ;
@@ -317,7 +323,7 @@ v8::Handle<v8::Value> _wrap_getCPtr(const v8::Arguments &args) {
 #else
 void _wrap_getCPtr(const v8::FunctionCallbackInfo<v8::Value>& args) {
 #endif
-  v8::HandleScope scope;
+  SWIGV8_SCOPE(scope);
   v8::Handle<v8::Value> jsresult;
   void *arg1 = (void *) 0 ;
   long result;
@@ -358,7 +364,7 @@ public:
 
 SWIGRUNTIMEINLINE
 int SwigV8Packed_Check(v8::Handle<v8::Value> valRef) {
-  v8::HandleScope scope;
+  SWIGV8_SCOPE(scope);
   v8::Handle<v8::Object> objRef = valRef->ToObject();
   if(objRef->InternalFieldCount() < 1) return false;
   v8::Handle<v8::Value> flag = objRef->GetHiddenValue(v8::String::New("__swig__packed_data__"));
@@ -368,7 +374,7 @@ int SwigV8Packed_Check(v8::Handle<v8::Value> valRef) {
 SWIGRUNTIME
 swig_type_info* SwigV8Packed_UnpackData(v8::Handle<v8::Value> valRef, void *ptr, size_t size) {
   if (SwigV8Packed_Check(valRef)) {
-    v8::HandleScope scope;
+    SWIGV8_SCOPE(scope);
     SwigV8PackedData *sobj;
 
     v8::Handle<v8::Object> objRef = valRef->ToObject();
@@ -430,7 +436,7 @@ void _wrap_SwigV8PackedData_delete(const v8::WeakCallbackData < v8::Object, Swig
 
 SWIGRUNTIME
 v8::Handle<v8::Value> SWIGV8_NewPackedObj(void *data, size_t size, swig_type_info *type) {
-  v8::HandleScope scope;
+  SWIGV8_SCOPE(scope);
 
   SwigV8PackedData* cdata = new SwigV8PackedData(data, size, type);
   v8::Handle<v8::Object> obj = v8::Object::New();
@@ -474,7 +480,7 @@ v8::Handle<v8::Value> SWIGV8_NewPackedObj(void *data, size_t size, swig_type_inf
 
 SWIGRUNTIME
 v8::Handle<v8::Value> SWIGV8_AppendOutput(v8::Handle<v8::Value> result, v8::Handle<v8::Value> obj) {
-  v8::HandleScope scope;
+  SWIGV8_SCOPE(scope);
   if (result->IsUndefined()) {
     result = v8::Array::New();
   }
