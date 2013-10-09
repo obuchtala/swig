@@ -103,11 +103,11 @@ fail:
     if(errorHandler.err.IsEmpty()) {
       return scope.Close(self);
     }
+    else
+      return v8::Undefined();
 #else
     $jswrapper(args, errorHandler);
-    if(errorHandler.err.IsEmpty()) {
-      return;
-    }
+    return;
 #endif
   }
 %}
@@ -314,11 +314,11 @@ fail:
     if(errorHandler.err.IsEmpty()) {
       return scope.Close(jsresult);
     }
+    else
+      return v8::Undefined();
 #else
     $jswrapper(args, errorHandler);
-    if(errorHandler.err.IsEmpty()) {
-      return;
-    }
+    return;
 #endif
   }
 %}
