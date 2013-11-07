@@ -20,7 +20,7 @@ SWIG_AsCharPtrAndSize(v8::Handle<v8::Value> valRef, char** cptr, size_t* psize, 
     return SWIG_OK;
   } else {
     if(valRef->IsObject()) {
-      v8::Handle<v8::Object> obj = valRef->ToObject();
+      v8::Handle<v8::Object> obj = valRef.As<v8::Object>();
       // try if the object is a wrapped char[]
       swig_type_info* pchar_descriptor = SWIG_pchar_descriptor();
       if (pchar_descriptor) {

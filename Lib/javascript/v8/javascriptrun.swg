@@ -174,7 +174,7 @@ int SWIG_V8_GetInstancePtr(v8::Handle<v8::Value> valRef, void** ptr) {
   if(!valRef->IsObject()) {
     return SWIG_TypeError;
   }
-  v8::Handle<v8::Object> objRef = valRef->ToObject();
+  v8::Handle<v8::Object> objRef = valRef.As<v8::Object>();
 
   if(objRef->InternalFieldCount() < 1) return SWIG_ERROR;
 
@@ -244,7 +244,7 @@ int SWIG_V8_ConvertPtr(v8::Handle<v8::Value> valRef, void** ptr, swig_type_info 
   if(!valRef->IsObject()) {
     return SWIG_TypeError;
   }
-  v8::Handle<v8::Object> objRef = valRef->ToObject();
+  v8::Handle<v8::Object> objRef = valRef.As<v8::Object>();
   return SWIG_V8_ConvertInstancePtr(objRef, ptr, info, flags);
 }
 
@@ -365,8 +365,9 @@ public:
 SWIGRUNTIMEINLINE
 int SwigV8Packed_Check(v8::Handle<v8::Value> valRef) {
   SWIGV8_SCOPE(scope);
-  v8::Handle<v8::Object> objRef = valRef->ToObject();
-  if(objRef->InternalFieldCount() < 1) return false;
+  if (!valRef->IsObject()) return false;
+  v8::Handle<v8::Object> objRef = valRef.As<v8::Object>();
+  if (objRef->InternalFieldCount() < 1) return false;
   v8::Handle<v8::Value> flag = objRef->GetHiddenValue(v8::String::New("__swig__packed_data__"));
   return (flag->IsBoolean() && flag->BooleanValue());
 }
@@ -377,7 +378,7 @@ swig_type_info* SwigV8Packed_UnpackData(v8::Handle<v8::Value> valRef, void *ptr,
     SWIGV8_SCOPE(scope);
     SwigV8PackedData *sobj;
 
-    v8::Handle<v8::Object> objRef = valRef->ToObject();
+    v8::Handle<v8::Object> objRef = valRef.As<v8::Object>();
 
 #if (SWIG_V8_VERSION < 0x031900)
     v8::Handle<v8::Value> cdataRef = objRef->GetInternalField(0);
