@@ -37,14 +37,18 @@ V8ErrorHandler SWIGV8_ErrorHandler;
 
 // instances of this are used in overloaded functions
 class OverloadErrorHandler: public V8ErrorHandler {
+  int _code;
 public:
+  OverloadErrorHandler(): _code(0) {}
   virtual void error(int code, const char* msg) {
-    err = v8::Exception::Error(v8::String::New(msg));
+    _code = code;
     if(code != SWIG_TypeError) {
-      v8::ThrowException(err);
+      V8ErrorHandler::error(code, msg);
     }
   }
-  v8::Handle<v8::Value> err;
+
+  inline void clear() { _code = 0; }
+  inline bool shouldReturn() const { return _code != SWIG_TypeError; }
 };
 
 // Note: these typedefs and defines are used to deal with  v8 API changes since version 3.19.00

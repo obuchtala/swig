@@ -97,17 +97,15 @@ fail:
 %fragment ("js_ctor_dispatch_case", "templates")
 %{
   if(args.Length() == $jsargcount) {
-    errorHandler.err.Clear();
+    errorHandler.clear();
 #if SWIG_V8_VERSION < 0x031900
     self = $jswrapper(args, errorHandler);
-    if(errorHandler.err.IsEmpty()) {
+    if (errorHandler.shouldReturn())
       return scope.Close(self);
-    }
 #else
     $jswrapper(args, errorHandler);
-    if(errorHandler.err.IsEmpty()) {
+    if(errorHandler.shouldReturn())
       return;
-    }
 #endif
   }
 %}
@@ -308,17 +306,15 @@ fail:
 %{
 
   if(args.Length() == $jsargcount) {
-    errorHandler.err.Clear();
+    errorHandler.clear();
 #if (SWIG_V8_VERSION < 0x031900)
     jsresult = $jswrapper(args, errorHandler);
-    if(errorHandler.err.IsEmpty()) {
+    if(errorHandler.shouldReturn())
       return scope.Close(jsresult);
-    }
 #else
     $jswrapper(args, errorHandler);
-    if(errorHandler.err.IsEmpty()) {
+    if(errorHandler.shouldReturn())
       return;
-    }
 #endif
   }
 %}
