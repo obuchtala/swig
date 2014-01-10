@@ -2128,7 +2128,7 @@ void V8Emitter::marshalInputArgs(Node *n, ParmList *parms, Wrapper *wrapper, Mar
     switch (mode) {
     case Getter:
       if (is_member && !is_static && i == 0) {
-        Printv(arg, "info.Holder()", 0);
+        Printv(arg, "args.Holder()", 0);
       } else {
         Printf(arg, "args[%d]", i - startIdx);
       }
@@ -2142,7 +2142,7 @@ void V8Emitter::marshalInputArgs(Node *n, ParmList *parms, Wrapper *wrapper, Mar
       break;
     case Setter:
       if (is_member && !is_static && i == 0) {
-        Printv(arg, "info.Holder()", 0);
+        Printv(arg, "args.Holder()", 0);
       } else {
         Printv(arg, "value", 0);
       }

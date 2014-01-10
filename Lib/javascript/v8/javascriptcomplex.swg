@@ -20,7 +20,7 @@ SWIG_From_dec(Type)(%ifcplusplus(const Type&, Type) c)
 
   vals->Set(0, SWIG_From(double)(Real(c)));
   vals->Set(1, SWIG_From(double)(Imag(c)));
-  return scope.Close(vals);
+  return SWIGV8_SCOPE_CLOSE(scope, vals);
 }
 }
 %enddef
