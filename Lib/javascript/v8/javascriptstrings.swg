@@ -20,7 +20,7 @@ SWIG_AsCharPtrAndSize(v8::Handle<v8::Value> valRef, char** cptr, size_t* psize, 
     return SWIG_OK;
   } else {
     if(valRef->IsObject()) {
-      v8::Handle<v8::Object> obj = valRef->ToObject();
+      v8::Handle<v8::Object> obj = valRef.As<v8::Object>();
       // try if the object is a wrapped char[]
       swig_type_info* pchar_descriptor = SWIG_pchar_descriptor();
       if (pchar_descriptor) {
@@ -44,16 +44,8 @@ SWIG_AsCharPtrAndSize(v8::Handle<v8::Value> valRef, char** cptr, size_t* psize, 
 SWIGINTERNINLINE v8::Handle<v8::Value>
 SWIG_FromCharPtrAndSize(const char* carray, size_t size)
 {
-  if (carray) {
-    if (size > INT_MAX) {
-      // TODO: handle extra long strings
-      return v8::Undefined();
-    } else {
-      v8::Handle<v8::String> js_str = v8::String::New(carray, size);
-      return js_str;
-    }
-  } else {
-    return v8::Undefined();
-  }
+  SWIGV8_SCOPE(scope);
+  v8::Local<v8::String> js_str = carray? SWIGV8_STRING(carray): SWIGV8_SYMBOL("(null)"); //fixme: add size support
+  return SWIGV8_SCOPE_CLOSE(scope, js_str);
 }
 }

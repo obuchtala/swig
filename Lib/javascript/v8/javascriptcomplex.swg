@@ -15,12 +15,12 @@
 SWIGINTERNINLINE v8::Handle<v8::Value>
 SWIG_From_dec(Type)(%ifcplusplus(const Type&, Type) c)
 {
-  v8::HandleScope scope;
+  SWIGV8_SCOPE(scope);
   v8::Local<v8::Array> vals = v8::Array::New(2);
 
   vals->Set(0, SWIG_From(double)(Real(c)));
   vals->Set(1, SWIG_From(double)(Imag(c)));
-  return scope.Close(vals);
+  return SWIGV8_SCOPE_CLOSE(scope, vals);
 }
 }
 %enddef
@@ -33,7 +33,7 @@ SWIG_From_dec(Type)(%ifcplusplus(const Type&, Type) c)
 SWIGINTERN int
 SWIG_AsVal_dec(Type) (v8::Handle<v8::Value> o, Type* val)
 {
-  v8::HandleScope scope;
+  SWIGV8_SCOPE(scope);
   
   if (o->IsArray()) {
     v8::Handle<v8::Array> array = v8::Handle<v8::Array>::Cast(o);
@@ -75,7 +75,7 @@ SWIG_AsVal_dec(Type) (v8::Handle<v8::Value> o, Type* val)
 SWIGINTERN int
 SWIG_AsVal_dec(Type) (v8::Handle<v8::Value> o, Type* val)
 {
-  v8::HandleScope scope;
+  SWIGV8_SCOPE(scope);
 
   if (o->IsArray()) {
     v8::Handle<v8::Array> array = v8::Handle<v8::Array>::Cast(o);

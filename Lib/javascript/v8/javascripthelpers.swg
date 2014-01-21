@@ -17,20 +17,20 @@ typedef v8::PropertyCallbackInfo<void>  SwigV8PropertyCallbackInfoVoid;
  * Creates a class template for a class with specified initialization function.
  */
 v8::Handle<v8::FunctionTemplate> SWIGV8_CreateClassTemplate(const char* symbol) {
-    v8::HandleScope scope;
-    v8::Local<v8::FunctionTemplate> class_templ = v8::FunctionTemplate::New();
-    class_templ->SetClassName(v8::String::NewSymbol(symbol));
+    SWIGV8_SCOPE(scope);
+    v8::Local<v8::FunctionTemplate> class_templ = v8::FunctionTemplate::New(SWIGV8_ISO_ARG 0);
+    class_templ->SetClassName(SWIGV8_SYMBOL(symbol));
 
     v8::Handle<v8::ObjectTemplate> inst_templ = class_templ->InstanceTemplate();
     inst_templ->SetInternalFieldCount(1);
 
     v8::Handle<v8::ObjectTemplate> equals_templ = class_templ->PrototypeTemplate();
-    equals_templ->Set(v8::String::NewSymbol("equals"), v8::FunctionTemplate::New(_SWIGV8_wrap_equals));
+    equals_templ->Set(SWIGV8_SYMBOL("equals"), v8::FunctionTemplate::New(SWIGV8_ISO_ARG _SWIGV8_wrap_equals));
 
     v8::Handle<v8::ObjectTemplate> cptr_templ = class_templ->PrototypeTemplate();
-    cptr_templ->Set(v8::String::NewSymbol("getCPtr"), v8::FunctionTemplate::New(_wrap_getCPtr));
+    cptr_templ->Set(SWIGV8_SYMBOL("getCPtr"), v8::FunctionTemplate::New(SWIGV8_ISO_ARG _wrap_getCPtr));
 
-    return scope.Close(class_templ);
+    return SWIGV8_SCOPE_CLOSE(scope, class_templ);
 }
 
 /**
@@ -38,8 +38,9 @@ v8::Handle<v8::FunctionTemplate> SWIGV8_CreateClassTemplate(const char* symbol) 
  */
 void SWIGV8_AddMemberFunction(v8::Handle<v8::FunctionTemplate> class_templ, const char* symbol,
   SwigV8FunctionCallback _func) {
+    SWIGV8_SCOPE(scope);
     v8::Handle<v8::ObjectTemplate> proto_templ = class_templ->PrototypeTemplate();
-    proto_templ->Set(v8::String::NewSymbol(symbol), v8::FunctionTemplate::New(_func));
+    proto_templ->Set(SWIGV8_SYMBOL(symbol), v8::FunctionTemplate::New(SWIGV8_ISO_ARG _func));
 }
 
 /**
@@ -47,8 +48,9 @@ void SWIGV8_AddMemberFunction(v8::Handle<v8::FunctionTemplate> class_templ, cons
  */
 void SWIGV8_AddMemberVariable(v8::Handle<v8::FunctionTemplate> class_templ, const char* symbol,
   SwigV8AccessorGetterCallback getter, SwigV8AccessorSetterCallback setter) {
+  SWIGV8_SCOPE(scope);
   v8::Handle<v8::ObjectTemplate> proto_templ = class_templ->InstanceTemplate();
-  proto_templ->SetAccessor(v8::String::NewSymbol(symbol), getter, setter);
+  proto_templ->SetAccessor(SWIGV8_SYMBOL(symbol), getter, setter);
 }
 
 /**
@@ -56,7 +58,8 @@ void SWIGV8_AddMemberVariable(v8::Handle<v8::FunctionTemplate> class_templ, cons
  */
 void SWIGV8_AddStaticFunction(v8::Handle<v8::Object> obj, const char* symbol,
   const SwigV8FunctionCallback& _func) {
-  obj->Set(v8::String::NewSymbol(symbol), v8::FunctionTemplate::New(_func)->GetFunction());
+  SWIGV8_SCOPE(scope);
+  obj->Set(SWIGV8_SYMBOL(symbol), v8::FunctionTemplate::New(SWIGV8_ISO_ARG _func)->GetFunction());
 }
 
 /**
@@ -64,11 +67,12 @@ void SWIGV8_AddStaticFunction(v8::Handle<v8::Object> obj, const char* symbol,
  */
 void SWIGV8_AddStaticVariable(v8::Handle<v8::Object> obj, const char* symbol,
   SwigV8AccessorGetterCallback getter, SwigV8AccessorSetterCallback setter) {
-  obj->SetAccessor(v8::String::NewSymbol(symbol), getter, setter);
+  SWIGV8_SCOPE(scope);
+  obj->SetAccessor(SWIGV8_SYMBOL(symbol), getter, setter);
 }
 
 void JS_veto_set_variable(v8::Local<v8::String> property, v8::Local<v8::Value> value,
-  const SwigV8PropertyCallbackInfoVoid& info)
+  const SwigV8PropertyCallbackInfoVoid& args)
 {
     char buffer[256];
     char msg[512];

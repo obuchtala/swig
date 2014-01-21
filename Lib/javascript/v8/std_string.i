@@ -23,7 +23,8 @@ std::string* SWIGV8_valueToStringPtr(v8::Handle<v8::Value> val) {
   int res = SWIG_AsCharPtrAndSize(val, &chars, &size, &alloc);
 
   if(res != SWIG_OK) {
-    v8::ThrowException(v8::Exception::TypeError(v8::String::New("Could not convert to string.")));
+    v8::Isolate *iso = v8::Isolate::GetCurrent();
+    iso->ThrowException(v8::Exception::TypeError(SWIGV8_STRING("Could not convert to string.")));
     return 0;
   }
 
@@ -51,14 +52,14 @@ namespace std {
   %{
      tmp = SWIGV8_valueToStringPtr($input);
      $1 = *tmp;
-     if (tmp == 0) { v8::ThrowException(v8::Exception::TypeError(v8::String::New("Null pointer."))); goto fail; }
+     if (tmp == 0) { v8::Isolate *iso = v8::Isolate::GetCurrent(); iso->ThrowException(v8::Exception::TypeError(SWIGV8_STRING("Null pointer."))); goto fail; }
      if (tmp) delete tmp;
   %}
 
   %typemap(in, fragment="SWIGV8_valueToString") const string &
   %{
      $1 = SWIGV8_valueToStringPtr($input);
-     if ($1 == 0) { v8::ThrowException(v8::Exception::TypeError(v8::String::New("Null pointer."))); goto fail; }
+     if ($1 == 0) { v8::Isolate *iso = v8::Isolate::GetCurrent(); iso->ThrowException(v8::Exception::TypeError(SWIGV8_STRING("Null pointer."))); goto fail; }
   %}
 
   %typemap(freearg) const string &

@@ -7,9 +7,11 @@
 %fragment(SWIG_From_frag(bool),"header") {
 SWIGINTERNINLINE
 v8::Handle<v8::Value>
-SWIG_From_dec(bool)(bool value)
+SWIG_From_dec(bool)(bool val)
 {
-  return v8::Boolean::New(value);
+  SWIGV8_SCOPE(scope);
+  v8::Local<v8::Boolean> value = v8::Boolean::New(SWIGV8_ISO_ARG val);
+  return SWIGV8_SCOPE_CLOSE(scope, value);
 }
 }
 
@@ -31,9 +33,11 @@ int SWIG_AsVal_dec(bool)(v8::Handle<v8::Value> obj, bool *val)
 
 %fragment(SWIG_From_frag(int),"header") {
 SWIGINTERNINLINE
-v8::Handle<v8::Value> SWIG_From_dec(int)(int value)
+v8::Handle<v8::Value> SWIG_From_dec(int)(int val)
 {
-  return v8::Int32::New(value);
+  SWIGV8_SCOPE(scope);
+  v8::Local<v8::Integer> value = v8::Integer::New(SWIGV8_ISO_ARG val);
+  return SWIGV8_SCOPE_CLOSE(scope, value);
 }
 }
 
@@ -54,9 +58,11 @@ int SWIG_AsVal_dec(int)(v8::Handle<v8::Value> valRef, int* val)
 
 %fragment(SWIG_From_frag(long),"header") {
 SWIGINTERNINLINE
-v8::Handle<v8::Value> SWIG_From_dec(long)(long value)
+v8::Handle<v8::Value> SWIG_From_dec(long)(long val)
 {
-  return v8::Number::New(value);
+  SWIGV8_SCOPE(scope);
+  v8::Local<v8::Value> value = v8::Number::New(SWIGV8_ISO_ARG val);
+  return SWIGV8_SCOPE_CLOSE(scope, value);
 }
 }
 
@@ -81,8 +87,10 @@ int SWIG_AsVal_dec(long)(v8::Handle<v8::Value> obj, long* val)
 SWIGINTERNINLINE
 v8::Handle<v8::Value> SWIG_From_dec(unsigned long)(unsigned long value)
 {
-  return (value > LONG_MAX) ?
-    v8::Integer::NewFromUnsigned(value) : v8::Integer::New(%numeric_cast(value,long));
+  SWIGV8_SCOPE(scope);
+  v8::Local<v8::Integer> r = (value > LONG_MAX) ?
+    v8::Integer::NewFromUnsigned(SWIGV8_ISO_ARG value) : v8::Integer::New(SWIGV8_ISO_ARG %numeric_cast(value,long));
+  return SWIGV8_SCOPE_CLOSE(scope, r);
 }
 }
 
@@ -114,9 +122,11 @@ int SWIG_AsVal_dec(unsigned long)(v8::Handle<v8::Value> obj, unsigned long *val)
     fragment=SWIG_From_frag(long),
     fragment="<limits.h>") {
 SWIGINTERNINLINE
-v8::Handle<v8::Value> SWIG_From_dec(long long)(long long value)
+v8::Handle<v8::Value> SWIG_From_dec(long long)(long long val)
 {
-  return v8::Number::New(value);
+  SWIGV8_SCOPE(scope);
+  v8::Local<v8::Value> value = v8::Number::New(SWIGV8_ISO_ARG val);
+  return SWIGV8_SCOPE_CLOSE(scope, value);
 }
 }
 
@@ -145,8 +155,10 @@ int SWIG_AsVal_dec(long long)(v8::Handle<v8::Value> obj, long long* val)
 SWIGINTERNINLINE
 v8::Handle<v8::Value> SWIG_From_dec(unsigned long long)(unsigned long long value)
 {
-  return (value > LONG_MAX) ?
-    v8::Integer::NewFromUnsigned(value) : v8::Integer::New(%numeric_cast(value,long));
+  SWIGV8_SCOPE(scope);
+  v8::Local<v8::Integer> r = (value > LONG_MAX) ?
+    v8::Integer::NewFromUnsigned(SWIGV8_ISO_ARG value) : v8::Integer::New(SWIGV8_ISO_ARG %numeric_cast(value,long));
+  return SWIGV8_SCOPE_CLOSE(scope, r);
 }
 }
 
@@ -179,7 +191,9 @@ int SWIG_AsVal_dec(unsigned long long)(v8::Handle<v8::Value> obj, unsigned long 
 SWIGINTERN
 v8::Handle<v8::Value> SWIG_From_dec(double) (double val)
 {
-  return v8::Number::New(val);
+  SWIGV8_SCOPE(scope);
+  v8::Local<v8::Value> value = v8::Number::New(SWIGV8_ISO_ARG val);
+  return SWIGV8_SCOPE_CLOSE(scope, value);
 }
 }
 
