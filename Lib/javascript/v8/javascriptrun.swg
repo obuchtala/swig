@@ -272,7 +272,7 @@ int SWIG_V8_ConvertPtr(v8::Handle<v8::Value> valRef, void** ptr, swig_type_info 
 
 v8::Handle<v8::Object> SWIG_V8_NewPointerObj(void *ptr, swig_type_info *info, int flags) {
   SWIGV8_SCOPE(scope);
-  v8::Handle<v8::FunctionTemplate> class_templ;
+  v8::Local<v8::FunctionTemplate> class_templ;
 
 #if (SWIG_V8_VERSION < 0x031900)
   if(info->clientdata != 0) {
@@ -282,9 +282,9 @@ v8::Handle<v8::Object> SWIG_V8_NewPointerObj(void *ptr, swig_type_info *info, in
   }
 #else
   if(info->clientdata != 0) {
-    class_templ = v8::Handle<v8::FunctionTemplate>::New(iso, ((SWIGV8_ClientData*) info->clientdata)->class_templ);
+    class_templ = v8::Local<v8::FunctionTemplate>::New(iso, ((SWIGV8_ClientData*) info->clientdata)->class_templ);
   } else {
-    class_templ = v8::Handle<v8::FunctionTemplate>::New(iso, SWIGV8_SWIGTYPE_Proxy_class_templ);
+    class_templ = v8::Local<v8::FunctionTemplate>::New(iso, SWIGV8_SWIGTYPE_Proxy_class_templ);
   }
 #endif
 
