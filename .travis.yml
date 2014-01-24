@@ -1,62 +1,64 @@
-language: cpp
-compiler:
-  - clang
-  - gcc
+language: objective-c
 env:
-  - SWIGLANG=
+  - SWIGLANG= CC=gcc-4.2 CXX=g++-4.2
+  - SWIGLANG= CC=clang CXX=clang++
 matrix:
   include:
-    - compiler: gcc
-      env: SWIGLANG=csharp
-    - compiler: gcc
-      env: SWIGLANG=go
-    - compiler: gcc
-      env: SWIGLANG=guile
-    - compiler: gcc
-      env: SWIGLANG=java
-    - compiler: gcc
-      env: SWIGLANG=lua
-    - compiler: gcc
-      env: SWIGLANG=octave SWIGJOBS=-j4
-    - compiler: gcc
-      env: SWIGLANG=perl5
-    - compiler: gcc
-      env: SWIGLANG=php
-    - compiler: gcc
-      env: SWIGLANG=python
-    - compiler: gcc
-      env: SWIGLANG=python PY3=1
-    - compiler: gcc
-      env: SWIGLANG=ruby
-    - compiler: gcc
-      env: SWIGLANG=tcl
+    - env: SWIGLANG=go CC=gcc-4.2 CXX=g++-4.2
+    - env: SWIGLANG=go CC=clang CXX=clang++
+    - env: SWIGLANG=java CC=gcc-4.2 CXX=g++-4.2
+    - env: SWIGLANG=java CC=clang CXX=clang++
+    - env: SWIGLANG=lua CC=gcc-4.2 CXX=g++-4.2
+    - env: SWIGLANG=lua CC=clang CXX=clang++
+    - env: SWIGLANG=perl5 CC=gcc-4.2 CXX=g++-4.2
+    - env: SWIGLANG=perl5 CC=clang CXX=clang++
+    - env: SWIGLANG=php CC=gcc-4.2 CXX=g++-4.2
+    - env: SWIGLANG=php CC=clang CXX=clang++
+    - env: SWIGLANG=python CC=gcc-4.2 CXX=g++-4.2
+    - env: SWIGLANG=python CC=clang CXX=clang++
+    - env: SWIGLANG=ruby CC=gcc-4.2 CXX=g++-4.2
+    - env: SWIGLANG=ruby CC=clang CXX=clang++
+    - env: SWIGLANG=tcl CC=gcc-4.2 CXX=g++-4.2
+    - env: SWIGLANG=tcl CC=clang CXX=clang++
   allow_failures:
-      # None
+    - env: SWIGLANG=csharp CC=gcc-4.2 CXX=g++-4.2
+    - env: SWIGLANG=csharp CC=clang CXX=clang++
+    - env: SWIGLANG=python PY3=1 CC=gcc-4.2 CXX=g++-4.2
+    - env: SWIGLANG=python PY3=1 CC=clang CXX=clang++
+    - env: SWIGLANG=guile CC=gcc-4.2 CXX=g++-4.2
+    - env: SWIGLANG=guile CC=clang CXX=clang++
+    - env: SWIGLANG=octave SWIGJOBS=-j4 CC=gcc-4.2 CXX=g++-4.2
+    - env: SWIGLANG=octave SWIGJOBS=-j4 CC=clang CXX=clang++
 before_install:
   - date -u
-  - lsb_release -a
   - uname -a
-  - sudo apt-get -qq update
-  - time sudo apt-get -qq install libboost-dev
-  - if test -z "$SWIGLANG"; then sudo apt-get -qq install yodl; fi
-  - if test "$SWIGLANG" = "csharp"; then sudo apt-get -qq install mono-devel; fi
-  - if test "$SWIGLANG" = "go"; then go env | sed -e 's/^/export /' > goenvsetup && source goenvsetup && rm -f goenvsetup; fi # Until configure.ac is fixed
-  - if test "$SWIGLANG" = "guile"; then sudo apt-get -qq install guile-2.0-dev; fi
-  - if test "$SWIGLANG" = "lua"; then sudo apt-get -qq install lua5.1 liblua5.1-dev; fi
-  - if test "$SWIGLANG" = "octave"; then sudo apt-get -qq install octave3.2 octave3.2-headers; fi
-  - if test "$SWIGLANG" = "php"; then sudo apt-get install php5-cli php5-dev; fi
-  - if test "$SWIGLANG" = "python" -a "$PY3"; then sudo apt-get install python3-dev; fi
-  - if test "$SWIGLANG" = "tcl"; then sudo apt-get -qq install tcl8.4-dev; fi
+  - sw_vers
+  - brew update
+  - brew list
+#  - brew search
+  - $CC --version
+  - $CXX --version
+  - ls -la $(which $CC)
+  - ls -la $(which $CXX)
+  - brew install pcre
+  - brew install boost
+#  - if test "$SWIGLANG" = "csharp"; then brew install https://gist.github.com/shtirlic/4696903/raw/243c2f92961a285bb721aa67954c1efee4cd6a84/mono.rb; fi
+  - if test "$SWIGLANG" = "csharp"; then brew install https://gist.github.com/raw/4696903/243c2f92961a285bb721aa67954c1efee4cd6a84/mono.rb; fi
+#  - if test "$SWIGLANG" = "go"; then go env | sed -e 's/^/export /' > goenvsetup && source goenvsetup && rm -f goenvsetup; fi # Until configure.ac is fixed
+  - if test "$SWIGLANG" = "guile"; then brew install guile; fi
+  - if test "$SWIGLANG" = "lua"; then brew install lua; fi
+  - if test "$SWIGLANG" = "python" -a "$PY3"; then brew install python3 && brew list -v python3; fi
 script:
   - ./autogen.sh && ./configure
   - make -s $SWIGJOBS
-  - ./swig -version
+  - ./swig -version && ./swig -pcreversion
   - if test -z "$SWIGLANG"; then make -s $SWIGJOBS check-ccache; fi
   - if test -z "$SWIGLANG"; then make -s $SWIGJOBS check-errors-test-suite; fi
-  - if test -z "$SWIGLANG"; then sudo make -s install && swig -version && ccache-swig -V; fi
   - if test -n "$SWIGLANG"; then make -s check-$SWIGLANG-version; fi
   - if test -n "$SWIGLANG"; then make -k $SWIGJOBS check-$SWIGLANG-examples; fi
   - if test -n "$SWIGLANG"; then make -k $SWIGJOBS check-$SWIGLANG-test-suite; fi
 branches:
   only:
     - master
+    - travis-osx
+
