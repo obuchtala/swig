@@ -352,6 +352,19 @@ if test x"$enable_cpp11_testing" = xyes; then
   fi
 fi
 
+# On darwin 10.7,10.8,10.9 using clang++, need to ensure using
+# libc++ for tests and examples to run under mono. May affect 
+# other language targets as well - problem is an OSX incompatibility
+# between libraries depending on libstdc++ and libc++.
+CLANGXX=
+$CXX -v 2>&1 | grep -i clang >/dev/null && CLANGXX=yes
+case $host in
+  *-*-darwin11* | *-*-darwin12* |*-*-darwin13*  ) if test "$CLANGXX" = "yes";
+    then PLATCXXFLAGS="$PLATCXXFLAGS -stdlib=libc++"
+    fi;;
+  *) ;;
+esac
+
 # Set info about shared libraries.
 AC_SUBST(SO)
 AC_SUBST(LDSHARED)
@@ -481,10 +494,10 @@ if test x"${with_tclconfig}" != x ; then
 fi
 # check in a few common install locations
 if test x"${TCLCONFIG}" = x ; then
-    for i in `ls -d /usr/lib/ 2>/dev/null` \
-	     `ls -d -r /usr/lib/tcl*/ 2>/dev/null` \
-	     `ls -d /usr/local/lib/ 2>/dev/null` \
-	     `ls -d -r /usr/local/lib/tcl*/ 2>/dev/null` ; do
+    for i in `ls -d -r /usr/lib*/ 2>/dev/null` \
+	     `ls -d -r /usr/lib*/tcl*/ 2>/dev/null` \
+	     `ls -d -r /usr/local/lib*/ 2>/dev/null` \
+	     `ls -d -r /usr/local/lib*/tcl*/ 2>/dev/null` ; do
 	if test -f $i"tclConfig.sh" ; then
 	    TCLCONFIG=`(cd $i; pwd)`
 	    break
@@ -851,6 +864,13 @@ if test -n "$PERL"; then
       else
       AC_MSG_RESULT($PERL5LDFLAGS)
     fi
+    AC_MSG_CHECKING(for Perl5 Test::More module) # For test-suite
+    PERL5TESTMORE=`($PERL -e 'use Test::More; print "good";') 2>/dev/null`
+    if test -z "$PERL5TESTMORE" ; then
+      AC_MSG_RESULT(not found)
+      else
+      AC_MSG_RESULT(found)
+    fi
 	else
 		AC_MSG_RESULT(unable to determine perl5 configuration)
 		PERL5EXT=$PERL5DIR
@@ -912,13 +932,13 @@ if test -n "$OCTAVE"; then
    AC_MSG_CHECKING([for Octave preprocessor flags])
    OCTAVE_CPPFLAGS=
    for n in CPPFLAGS INCFLAGS; do
-     OCTAVE_CPPFLAGS="${OCTAVE_CPPFLAGS} "`${mkoctfile} -p $n`
+     OCTAVE_CPPFLAGS="${OCTAVE_CPPFLAGS} "`unset CPPFLAGS; ${mkoctfile} -p $n`
    done
    AC_MSG_RESULT([$OCTAVE_CPPFLAGS])
    AC_MSG_CHECKING([for Octave compiler flags])
    OCTAVE_CXXFLAGS=
    for n in ALL_CXXFLAGS; do
-     OCTAVE_CXXFLAGS="${OCTAVE_CXXFLAGS} "`${mkoctfile} -p $n`
+     OCTAVE_CXXFLAGS="${OCTAVE_CXXFLAGS} "`unset CXXFLAGS; ${mkoctfile} -p $n`
    done
    AC_MSG_RESULT([$OCTAVE_CXXFLAGS])
    AC_MSG_CHECKING([for Octave linker flags])
@@ -975,7 +995,7 @@ AC_MSG_CHECKING(for java include file jni.h)
 AC_ARG_WITH(javaincl, [  --with-javaincl=path    Set location of Java include directory], [JAVAINCDIR="$withval"], [JAVAINCDIR=])
 
 if test -z "$JAVAINCDIR" ; then
-  JAVAINCDIR="/usr/j2sdk*/include /usr/local/j2sdk*/include /usr/jdk*/include /usr/local/jdk*/include /opt/j2sdk*/include /opt/jdk*/include /usr/java/include /usr/java/j2sdk*/include /usr/java/jdk*/include /usr/local/java/include /opt/java/include /usr/include/java /usr/local/include/java /usr/lib/java/include /usr/lib/jvm/java*/include /usr/include/kaffe /usr/local/include/kaffe /usr/include"
+  JAVAINCDIR="/usr/j2sdk*/include /usr/local/j2sdk*/include /usr/jdk*/include /usr/local/jdk*/include /opt/j2sdk*/include /opt/jdk*/include /usr/java/include /usr/java/j2sdk*/include /usr/java/jdk*/include /usr/local/java/include /opt/java/include /usr/include/java /usr/local/include/java /usr/lib/java/include /usr/lib/jvm/java*/include /usr/lib64/jvm/java*/include /usr/include/kaffe /usr/local/include/kaffe /usr/include"
 
   # Add in default installation directory on Windows for Cygwin
   case $host in
@@ -1267,7 +1287,7 @@ fi
 
 AC_MSG_CHECKING(for Ruby header files)
 if test -n "$RUBY"; then
-        # Try Ruby1.9 first
+        # Try Ruby1.9+ first
         RUBYDIR=`($RUBY -rrbconfig -e 'print RbConfig::CONFIG[["rubyhdrdir"]] || $rubyhdrdir') 2>/dev/null`
 	if test x"$RUBYDIR" = x"" || test x"$RUBYDIR" = x"nil"; then
 		RUBYDIR=`($RUBY -rmkmf -e 'print Config::CONFIG[["archdir"]] || $archdir') 2>/dev/null`
@@ -1276,20 +1296,20 @@ if test -n "$RUBY"; then
         fi
 	if test x"$RUBYDIR" != x""; then
 		dirs="$RUBYDIR"
-		RUBYINCLUDE=none
+		RUBYINCLUDE=
 		for i in $dirs; do
 			if test -r $i/ruby.h; then
-				AC_MSG_RESULT($i)
-				RUBYINCLUDE="-I$i"
+				if test x"$RUBYARCH" = x""; then
+					RUBYINCLUDE="-I$i"
+				else
+					RUBYINCLUDE="-I$i -I$i/$RUBYARCH"
+				fi
+				AC_MSG_RESULT($RUBYINCLUDE)
 				break
 			fi
 		done
-		if test x"$RUBYARCH" != x""; then
-			RUBYINCLUDE="-I$RUBYDIR -I$RUBYDIR/$RUBYARCH"
-		fi
-		if test "$RUBYINCLUDE" = none; then
-			RUBYINCLUDE="-I$RUBYDIR"
-			AC_MSG_RESULT(could not locate ruby.h...using $RUBYINCLUDE)
+		if test x"$RUBYINCLUDE" = x""; then
+			AC_MSG_RESULT(could not locate ruby.h)
 		fi
 
 		# Find library and path for linking.
@@ -1343,8 +1363,6 @@ if test -n "$RUBY"; then
 		fi
 	else
 		AC_MSG_RESULT(unable to determine ruby configuration)
-		RUBYINCLUDE="-I$RUBYDIR"
-		RUBYLIB="$RUBYDIR"
 	fi
 
 	case $host in
@@ -1356,9 +1374,6 @@ if test -n "$RUBY"; then
 	RUBYSO=.`($RUBY -rrbconfig -e 'print Config::CONFIG[["DLEXT"]]') 2>/dev/null`
 else
 	AC_MSG_RESULT(could not figure out how to run ruby)
-	RUBYINCLUDE="-I/usr/local/lib/ruby/1.4/arch"
-	RUBYLIB="/usr/local/lib/ruby/1.4/arch"
-	RUBYLINK="-lruby -lm"
 fi
 
 case $host in
@@ -1997,6 +2012,7 @@ if test x"${GOBIN}" = xno -o x"${with_alllang}" = xno ; then
   GOC=
   GO1=false
   GO12=false
+  GO13=false
   GOGCC=false
   GOOPT=
   GOVERSIONOPTION=
@@ -2011,6 +2027,7 @@ else
   GOGCC=false
   GO1=false
   GO12=false
+  GO13=false
   GOOPT=
   GOVERSIONOPTION=
   if test -n "$GO" ; then
@@ -2050,11 +2067,13 @@ else
       esac
       case $go_version in
       go1.0* | go1.1*)
-        GO12=false
 	GOOPT="$GOOPT -use-shlib"
 	;;
-      *)
+      go1.2*)
         GO12=true
+	;;
+      *)
+	GO13=true
 	;;
       esac
     else
@@ -2071,6 +2090,7 @@ else
       fi
       GOOPT="-intgosize 32"
       GO12=false
+      GO13=false
     fi
   fi
 fi
@@ -2080,6 +2100,7 @@ AC_SUBST(GO)
 AC_SUBST(GOC)
 AC_SUBST(GO1)
 AC_SUBST(GO12)
+AC_SUBST(GO13)
 AC_SUBST(GOOPT)
 AC_SUBST(GOVERSIONOPTION)
 
@@ -2179,7 +2200,7 @@ AC_SUBST(SKIP_TCL)
 
 
 SKIP_PERL5=
-if test -z "$PERL" || test -z "$PERL5EXT" ; then
+if test -z "$PERL" || test -z "$PERL5EXT" || test -z "$PERL5TESTMORE"; then
     SKIP_PERL5="1"
 fi
 AC_SUBST(SKIP_PERL5)

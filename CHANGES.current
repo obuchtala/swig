@@ -5,6 +5,34 @@ See the RELEASENOTES file for a summary of changes in each release.
 Version 3.0.0 (in progress)
 ============================
 
+2014-02-15: wsfulton
+            [Java] Add support for the cdata library.
+
+2014-02-06: gjanssens
+            [Guile] Patch #133. Make scm to string conversion work with non-ascii strings.
+            Guile 2 has a completely rewritten string implementation. SWIG made some assumptions
+            that are no longer valid as to the internals of guile's string representation.
+
+2014-01-30: wsfulton
+            [C#] Add new swigtype_inout.i library containing SWIGTYPE *& OUTPUT typemaps.
+
+            Example usage wrapping:
+
+              void f(XXX *& x) { x = new XXX(111); }
+
+            would be:
+
+              XXX x = null;
+              f(out x);
+              // use x
+              x.Dispose(); // manually clear memory or otherwise leave out and leave it to the garbage collector
+
+2014-01-21: ianlancetaylor
+	    [Go] Add %go_import directive.
+
+2014-01-21: ianlancetaylor
+	    [Go] Add support for Go 1.3, not yet released.
+
 2014-01-20: wsfulton
             Director exceptions (Swig::DirectorException) now derive from std::exception
             and hence provide the what() method. In Python and Ruby, this replaces the now
