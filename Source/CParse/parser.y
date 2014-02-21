@@ -356,10 +356,17 @@ static void add_symbols(Node *n) {
 	  }
 	  Delete(prefix);
 	}
-
-	Setattr(n,"ismember","1");
       }
     }
+
+    if (!isfriend && (inclass || extendmode)) {
+      Setattr(n,"ismember","1");
+    }
+
+    if (extendmode) {
+      Setattr(n,"isextendmember","1");
+    }
+
     if (!isfriend && inclass) {
       if ((cplus_mode != CPLUS_PUBLIC)) {
 	only_csymbol = 1;
@@ -1389,6 +1396,7 @@ static void mark_nodes_as_extend(Node *n) {
   for (; n; n = nextSibling(n)) {
     if (Getattr(n, "template") && Strcmp(nodeType(n), "class") == 0)
       continue;
+    /* Fix me: extend is not a feature. Replace with isextendmember? */
     Setattr(n, "feature:extend", "1");
     mark_nodes_as_extend(firstChild(n));
   }
@@ -3480,6 +3488,7 @@ cpp_class_decl  : storage_class cpptype idcolon inherit LBRACE {
 		     Setattr($<node>$, "nested:outer", currentOuterClass);
 		     set_access_mode($<node>$);
 		   }
+		   Swig_features_get(Swig_cparse_features(), Namespaceprefix, Getattr($<node>$, "name"), 0, $<node>$);
 		   /* save yyrename to the class attribute, to be used later in add_symbols()*/
 		   Setattr($<node>$, "class_rename", make_name($<node>$, $3, 0));
 		   Setattr($<node>$, "Classprefix", $3);
@@ -3623,7 +3632,6 @@ cpp_class_decl  : storage_class cpptype idcolon inherit LBRACE {
 		   Delattr($<node>$, "Classprefix");
 		   Delete(Namespaceprefix);
 		   Namespaceprefix = Swig_symbol_qualifiedscopename(0);
-		   Swig_features_get(Swig_cparse_features(), Namespaceprefix, Getattr($$, "name"), 0, $$);
 		   if (cplus_mode == CPLUS_PRIVATE) {
 		     $$ = 0; /* skip private nested classes */
 		   } else if (cparse_cplusplus && currentOuterClass && ignore_nested_classes && !GetFlag($$, "feature:flatnested")) {
@@ -3704,6 +3712,8 @@ cpp_class_decl  : storage_class cpptype idcolon inherit LBRACE {
 		 Setattr($<node>$, "nested:outer", currentOuterClass);
 		 set_access_mode($<node>$);
 	       }
+	       Swig_features_get(Swig_cparse_features(), Namespaceprefix, 0, 0, $<node>$);
+	       /* save yyrename to the class attribute, to be used later in add_symbols()*/
 	       Setattr($<node>$, "class_rename", make_name($<node>$,0,0));
 	       if (strcmp($2,"class") == 0) {
 		 cplus_mode = CPLUS_PRIVATE;
@@ -3737,7 +3747,6 @@ cpp_class_decl  : storage_class cpptype idcolon inherit LBRACE {
                /* Check for pure-abstract class */
 	       Setattr($$,"abstracts", pure_abstracts($6));
 	       n = $8;
-	       Swig_features_get(Swig_cparse_features(), Namespaceprefix, 0, 0, $$);
 	       if (cparse_cplusplus && currentOuterClass && ignore_nested_classes && !GetFlag($$, "feature:flatnested")) {
 		 String *name = n ? Copy(Getattr(n, "name")) : 0;
 		 $$ = nested_forward_declaration($1, $2, 0, name, n);
@@ -4347,14 +4356,17 @@ cpp_members  : cpp_member cpp_members {
 		   }
              }
              | EXTEND LBRACE { 
-                  if (cplus_mode != CPLUS_PUBLIC) {
-		     Swig_error(cparse_file,cparse_line,"%%extend can only be used in a public section\n");
-		  }
-             } cpp_members RBRACE cpp_members {
+	       extendmode = 1;
+	       if (cplus_mode != CPLUS_PUBLIC) {
+		 Swig_error(cparse_file,cparse_line,"%%extend can only be used in a public section\n");
+	       }
+             } cpp_members RBRACE {
+	       extendmode = 0;
+	     } cpp_members {
 	       $$ = new_node("extend");
 	       mark_nodes_as_extend($4);
 	       appendChild($$,$4);
-	       set_nextSibling($$,$6);
+	       set_nextSibling($$,$7);
 	     }
              | include_directive { $$ = $1; }
              | empty { $$ = 0;}

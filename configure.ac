@@ -707,15 +707,21 @@ AS_HELP_STRING([--with-python3=path], [Set location of Python 3.x executable]),[
 if test x"${PY3BIN}" = xno -o x"${with_alllang}" = xno ; then
   AC_MSG_NOTICE([Disabling Python 3.x support])
 else
-  for py_ver in 3 3.6 3.5 3.4 3.3 3.2 3.1 3.0; do
-    AC_CHECK_PROGS(PYTHON3, [python$py_ver])
-    if test -n "$PYTHON3"; then
-      AC_CHECK_PROGS(PY3CONFIG, [$PYTHON3-config])
-      if test -n "$PY3CONFIG"; then
-        break
+  if test "x$PY3BIN" = xyes; then
+    for py_ver in 3 3.6 3.5 3.4 3.3 3.2 3.1 3.0; do
+      AC_CHECK_PROGS(PYTHON3, [python$py_ver])
+      if test -n "$PYTHON3"; then
+        AC_CHECK_PROGS(PY3CONFIG, [$PYTHON3-config])
+        if test -n "$PY3CONFIG"; then
+          break
+        fi
       fi
-    fi
-  done
+    done
+  else
+    PYTHON3="$PY3BIN"
+    AC_CHECK_PROGS(PY3CONFIG, [$PYTHON3-config])
+  fi
+
 
   if test -n "$PYTHON3" -a -n "$PY3CONFIG"; then
     AC_MSG_CHECKING([for Python 3.x prefix])
@@ -2403,35 +2409,34 @@ case $build in
 esac
 AC_DEFINE_UNQUOTED(SWIG_LIB_WIN_UNIX, ["$SWIG_LIB_WIN_UNIX"], [Directory for SWIG system-independent libraries (Unix install on native Windows)])
 
-AC_CONFIG_FILES([			        \
-    Makefile				        \
-    swig.spec				        \
-    Source/Makefile			        \
-    Examples/Makefile			        \
-    Examples/xml/Makefile		        \
-    Examples/test-suite/errors/Makefile		\
-    Examples/test-suite/chicken/Makefile	\
-    Examples/test-suite/csharp/Makefile	        \
-    Examples/test-suite/d/Makefile	        \
-    Examples/test-suite/guile/Makefile	        \
-    Examples/test-suite/java/Makefile	        \
-    Examples/test-suite/mzscheme/Makefile	\
-    Examples/test-suite/ocaml/Makefile	        \
-    Examples/test-suite/octave/Makefile	        \
-    Examples/test-suite/perl5/Makefile	        \
-    Examples/test-suite/php/Makefile	        \
-    Examples/test-suite/pike/Makefile	        \
-    Examples/test-suite/python/Makefile	        \
-    Examples/test-suite/ruby/Makefile	        \
-    Examples/test-suite/tcl/Makefile	        \
-    Examples/test-suite/lua/Makefile	        \
-    Examples/test-suite/allegrocl/Makefile	\
-    Examples/test-suite/clisp/Makefile		\
-    Examples/test-suite/cffi/Makefile		\
-    Examples/test-suite/uffi/Makefile		\
-    Examples/test-suite/r/Makefile		\
-    Examples/test-suite/go/Makefile		\
-    Lib/ocaml/swigp4.ml
+AC_CONFIG_FILES([
+    Makefile
+    swig.spec
+    Source/Makefile
+    Examples/Makefile
+    Examples/xml/Makefile
+    Examples/test-suite/errors/Makefile
+    Examples/test-suite/chicken/Makefile
+    Examples/test-suite/csharp/Makefile
+    Examples/test-suite/d/Makefile
+    Examples/test-suite/guile/Makefile
+    Examples/test-suite/java/Makefile
+    Examples/test-suite/mzscheme/Makefile
+    Examples/test-suite/ocaml/Makefile
+    Examples/test-suite/octave/Makefile
+    Examples/test-suite/perl5/Makefile
+    Examples/test-suite/php/Makefile
+    Examples/test-suite/pike/Makefile
+    Examples/test-suite/python/Makefile
+    Examples/test-suite/ruby/Makefile
+    Examples/test-suite/tcl/Makefile
+    Examples/test-suite/lua/Makefile
+    Examples/test-suite/allegrocl/Makefile
+    Examples/test-suite/clisp/Makefile
+    Examples/test-suite/cffi/Makefile
+    Examples/test-suite/uffi/Makefile
+    Examples/test-suite/r/Makefile
+    Examples/test-suite/go/Makefile
 ])
 AC_CONFIG_FILES([preinst-swig], [chmod +x preinst-swig])
 AC_CONFIG_FILES([CCache/ccache_swig_config.h])
