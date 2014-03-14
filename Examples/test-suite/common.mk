@@ -284,6 +284,7 @@ CPP_TEST_CASES += \
 	naturalvar_more \
 	naturalvar_onoff \
 	nested_class \
+	nested_directors \
 	nested_comment \
 	nested_scope \
 	nested_workaround \
@@ -294,6 +295,7 @@ CPP_TEST_CASES += \
 	operator_pointer_ref \
 	operbool \
 	ordering \
+	overload_bool \
 	overload_copy \
 	overload_extend \
 	overload_method \
@@ -347,6 +349,7 @@ CPP_TEST_CASES += \
 	smart_pointer_simple \
 	smart_pointer_static \
 	smart_pointer_template_const_overload \
+	smart_pointer_template_defaults_overload \
 	smart_pointer_templatemethods \
 	smart_pointer_templatevariables \
 	smart_pointer_typedef \
@@ -492,7 +495,8 @@ CPP_TEST_CASES += \
 
 # C++11 test cases.
 CPP11_TEST_CASES = \
-        cpp11_alternate_function_syntax \
+	cpp11_alignment \
+	cpp11_alternate_function_syntax \
 	cpp11_constexpr \
 	cpp11_decltype \
 	cpp11_default_delete \
@@ -507,6 +511,7 @@ CPP11_TEST_CASES = \
 	cpp11_noexcept \
 	cpp11_null_pointer_constant \
 	cpp11_raw_string_literals \
+	cpp11_result_of \
 	cpp11_rvalue_reference \
 	cpp11_rvalue_reference2 \
 	cpp11_rvalue_reference3 \
@@ -516,17 +521,18 @@ CPP11_TEST_CASES = \
 	cpp11_template_double_brackets \
 	cpp11_template_explicit \
 	cpp11_template_typedefs \
-        cpp11_uniform_initialization \
+	cpp11_type_traits \
+	cpp11_uniform_initialization \
 	cpp11_unrestricted_unions \
 	cpp11_userdefined_literals \
-	cpp11_variadic_templates
-
-#	cpp11_hash_tables \           # not fully implemented yet
-#	cpp11_result_of \             # SWIG does not support
-#	cpp11_strongly_typed_enumerations \ # SWIG not quite getting this right yet in all langs
 
 # Broken C++11 test cases.
-CPP11_TEST_BROKEN = 
+CPP11_TEST_BROKEN = \
+#	cpp11_hash_tables \           # not fully implemented yet
+#	cpp11_strongly_typed_enumerations \ # SWIG not quite getting this right yet in all langs
+#	cpp11_variadic_templates \    # Broken for some languages (such as Java)
+#	cpp11_reference_wrapper \     # No typemaps
+
 
 #
 # Put all the heavy STD/STL cases here, where they can be skipped if needed
@@ -577,6 +583,7 @@ C_TEST_CASES += \
 	extern_declaration \
 	funcptr \
 	function_typedef \
+	global_functions \
 	immutable_values \
 	inctest \
 	integers \
@@ -708,9 +715,9 @@ swig_and_compile_runtime = \
 
 setup = \
 	if [ -f $(srcdir)/$(SCRIPTPREFIX)$*$(SCRIPTSUFFIX) ]; then	  \
-	  echo "$(ACTION)ing testcase $* (with run test) under $(LANGUAGE)" ; \
+	  echo "$(ACTION)ing $(LANGUAGE) testcase $* (with run test)" ; \
 	else								  \
-	  echo "$(ACTION)ing testcase $* under $(LANGUAGE)" ;		  \
+	  echo "$(ACTION)ing $(LANGUAGE) testcase $*" ;		  \
 	fi;
 
 

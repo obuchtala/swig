@@ -5,6 +5,85 @@ See the RELEASENOTES file for a summary of changes in each release.
 Version 3.0.0 (in progress)
 ============================
 
+2014-03-06: wsfulton
+            [Python] Change in default behaviour wrapping C++ bool. Only a Python True or False
+            will now work for C++ bool parameters. This fixes overloading bool with other types.
+            Python 2.3 minimum is now required for wrapping bool.
+
+            When wrapping:
+
+              const char* overloaded(bool value) { return "bool"; }
+              const char* overloaded(int value) { return "int"; }
+
+            Previous behaviour:
+              >>> overloaded(False)
+              'int'
+              >>> overloaded(True)
+              'int'
+              >>> overloaded(0)
+              'int'
+
+            Now we get the expected behaviour:
+              >>> overloaded(False)
+              'bool'
+              >>> overloaded(0)
+              'int'
+
+            The consequence is when wrapping bool in non-overloaded functions:
+
+              const char* boolfunction(bool value) { return value ? "true" : "false"; }
+
+            The previous behaviour was very Pythonic:
+              >>> boolfunction("")
+              'false'
+              >>> boolfunction("hi")
+              'true'
+              >>> boolfunction(12.34)
+              'true'
+              >>> boolfunction(0)
+              'false'
+              >>> boolfunction(1)
+              'true'
+
+            Now the new behaviour more along the lines of C++ due to stricter type checking. The
+            above calls result in an exception and need to be explicitly converted into a bool as
+            follows:
+              >>> boolfunction(0)
+              Traceback (most recent call last):
+                File "<stdin>", line 1, in <module>
+              TypeError: in method 'boolfunction', argument 1 of type 'bool'
+              >>> boolfunction(bool(0))
+              'false'
+
+            The old behaviour can be resurrected by passing the -DSWIG_PYTHON_LEGACY_BOOL command line
+            parameter when executing SWIG. Typemaps can of course be written to customise the behaviour
+            for specific parameters.
+
+            *** POTENTIAL INCOMPATIBILITY  ***
+
+2014-03-06: wsfulton
+	    Fix SF Bug #1363 - Problem with method overloading when some methods are added by %extend
+            and others are real methods and using template default parameters with smart pointers.
+            This is noticeable as a regression since 2.0.12 when using the default smart pointer
+            handling for some languages when the smart pointer wraps std::map and other STL containers.
+
+2014-03-02: wsfulton
+	    [Python] SF Patch #346 from Jens Krueger. Correct exception thrown attempting to
+            access a non-existent C/C++ global variable on the 'cvar' object. The exception thrown
+            used to be a NameError. However, as this access is via a primary, an AttributeError
+            is more correct and so the exception thrown now is an AttributeError. Reference:
+            http://docs.python.org/2/reference/expressions.html#attribute-references
+
+            *** POTENTIAL INCOMPATIBILITY  ***
+
+2014-03-01: wsfulton
+	    [Python] Patch #143 Fix type shown when using type() to include the module and package
+            name when using -builtin.
+
+2014-03-01: wsfulton
+	    [Python] SF patch #347 Fix missing argument count checking with -modern.
+            Fixes regression introduced when builtin changes were introduced in SWIG-2.0.3.
+
 2014-02-21: wsfulton
 	    [PHP] Fix warning suppression using %warnfilter for PHP reserved class names.
 
@@ -38,6 +117,29 @@ Version 3.0.0 (in progress)
 
 2014-02-15: wsfulton
             [Java] Add support for the cdata library.
+
+2014-02-08: vkalinin
+            Nested class support added. This primarily allows SWIG to properly parse nested
+            classes and keep the nested class information in the parse tree. Java and C#
+            have utilised this information wrapping the C++ nested classes as Java/C#
+            nested classes. The remaining target languages ignore nested classes as in
+            previous versions. Help is needed by users of these remaining languages to
+            design how C++ nested classes can be best wrapped. Please talk to us on the
+            swig-devel mailing list if you think you can help.
+
+            Previously, there was limited nested class support. Nested classes were treated
+            as opaque pointers. However, the "nestedworkaround" feature provided a way to
+            wrap a nested class as if it was a global class. This feature no longer exists
+            and is replaced by the new "flatnested" feature. This effectively does the same
+            thing with less manual code to be written. Please see the 'Nested classes'
+            section in the documentation in SWIGPlus.html if you were previously using this
+            feature.
+
+            SWIG now parses the contents of nested classes where previously it did not. You
+            may find that you will need to make adjustments to your interface file as
+            effectively extra code is being wrapped.
+
+            *** POTENTIAL INCOMPATIBILITY  ***
 
 2014-02-06: gjanssens
             [Guile] Patch #133. Make scm to string conversion work with non-ascii strings.
