@@ -73,6 +73,14 @@ void display_mapping(DOH *d) {
   }
 }
 
+extern "C"
+{
+  static int compareByLen(const DOH *f, const DOH *s) {
+    return Len(s) - Len(f);
+  }
+}
+
+
 /* NEW LANGUAGE NOTE:***********************************************
  most of the default options are handled by SWIG
  you can add new ones here
@@ -2062,10 +2070,6 @@ public:
     }
 
     Printv(output, "\n", NIL);
-  }
-
-  static int compareByLen(const DOH *f, const DOH *s) {
-    return Len(s) - Len(f);
   }
 
   /* -----------------------------------------------------------------------------
