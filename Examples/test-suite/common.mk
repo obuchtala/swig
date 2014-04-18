@@ -197,6 +197,7 @@ CPP_TEST_CASES += \
 	disown \
 	dynamic_cast \
 	empty \
+	enum_ignore \
 	enum_plus \
 	enum_rename \
 	enum_scope_template \
@@ -580,6 +581,7 @@ C_TEST_CASES += \
 	enums \
 	enum_forward \
 	enum_macro \
+	enum_missing \
 	extern_declaration \
 	funcptr \
 	function_typedef \
