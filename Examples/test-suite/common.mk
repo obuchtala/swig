@@ -409,7 +409,6 @@ CPP_TEST_CASES += \
 	template_partial_specialization \
 	template_partial_specialization_typedef \
 	template_qualifier \
-	template_qualifier \
 	template_ref_type \
 	template_rename \
 	template_retvalue \
@@ -602,6 +601,7 @@ C_TEST_CASES += \
 	memberin_extend_c \
 	name \
 	nested \
+	nested_extend_c \
 	nested_structs \
 	newobject2 \
 	overload_extend \

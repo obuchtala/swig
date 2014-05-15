@@ -19,7 +19,7 @@ AH_BOTTOM([
 /* Default language */
 #define SWIG_LANG               "-tcl"
 
-/* Deal with Microsoft's attempt at deprecating C standard runtime functions */
+/* Deal with attempt by Microsoft to deprecate C standard runtime functions */
 #if defined(_MSC_VER)
 # define _CRT_SECURE_NO_DEPRECATE
 #endif
@@ -489,7 +489,7 @@ if test x"${with_tclconfig}" != x ; then
    if test -f "${with_tclconfig}/tclConfig.sh" ; then
       TCLCONFIG=`(cd ${with_tclconfig}; pwd)`
    else
-      AC_MSG_ERROR([${with_tcl} directory doesn't contain tclConfig.sh])
+      AC_MSG_ERROR([${with_tcl} directory does not contain tclConfig.sh])
    fi
 fi
 # check in a few common install locations
@@ -1203,7 +1203,7 @@ else
 
       if test -z "$JSCORELIB"; then
         AC_MSG_RESULT(not found)
-        JSCENABLED=0
+        JSCENABLED=
       else
         JSCOREDYNAMICLINKING="$JSCORELIB"
         JSCENABLED=1
@@ -1270,7 +1270,7 @@ else
 
   if test "$JSV8LIB" = "" ; then
     AC_MSG_RESULT(not found)
-    JSV8ENABLED=0
+    JSV8ENABLED=
   else
     AC_MSG_RESULT($JSV8LIBDIR)
     JSV8ENABLED=1
@@ -2266,9 +2266,13 @@ else
       GOGCC=true
       GOVERSIONOPTION=--version
       AC_MSG_CHECKING([whether gccgo version is too old])
-      go_version=`$GO $GOVERSIONOPTION | sed -e 's/[^0-9]* \([0-9.]*\) .*$/\1/' -e 's/[.]//g'`
-      if test "$go_version" -lt 470; then
+      go_version=[`$GO $GOVERSIONOPTION | sed -n '1p' | sed -e 's/^.* \([0-9.]*\) *$/\1/' -e 's/[.]//g'`]
+      if test "x$go_version" = x; then
+        AC_MSG_RESULT([could not determine gccgo version - disabling Go])
+        GO=
+      elif test "$go_version" -lt 470; then
         AC_MSG_RESULT([yes - minimum version is 4.7.0])
+        GO=
       else
 	AC_MSG_RESULT([no])
         if test "$go_version" -lt 480; then
