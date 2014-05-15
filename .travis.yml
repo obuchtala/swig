@@ -16,7 +16,7 @@ matrix:
     - env: SWIGLANG=ruby CC=clang CXX=clang++
     - env: SWIGLANG=tcl CC=clang CXX=clang++
   allow_failures:
-    - env: SWIGLANG=go CC=clang CXX=clang++
+    - env: SWIGLANG=php CC=clang CXX=clang++
 before_install:
   - date -u
   - uname -a
