@@ -23,11 +23,6 @@ before_install:
   - sw_vers
   - brew update
   - brew list
-#  - brew search
-  - $CC --version
-  - $CXX --version
-  - ls -la $(which $CC)
-  - ls -la $(which $CXX)
   - brew install pcre
   - brew install boost
   - if test "$SWIGLANG" = "csharp"; then brew install https://dl.dropboxusercontent.com/u/696131/Homebrew/mono.rb; fi
@@ -35,15 +30,27 @@ before_install:
   - if test "$SWIGLANG" = "guile"; then Tools/brew-install guile; fi
   - if test "$SWIGLANG" = "lua"; then brew install lua; fi
   - if test "$SWIGLANG" = "python" -a "$PY3"; then brew install python3 && brew list -v python3; fi
+  - ls -la $(which $CC)
+  - ls -la $(which $CXX)
+  - $CC --version
+  - $CXX --version
 script:
-  - ./autogen.sh && ./configure
+  - echo 'Configuring...' && echo -en 'travis_fold:start:script.1\\r'
+  - ./autogen.sh && mkdir -p build/build && cd build/build && ../../configure $CONFIGOPTS
+  - echo -en 'travis_fold:end:script.1\\r'
   - make -s $SWIGJOBS
   - ./swig -version && ./swig -pcreversion
   - if test -z "$SWIGLANG"; then make -s $SWIGJOBS check-ccache; fi
   - if test -z "$SWIGLANG"; then make -s $SWIGJOBS check-errors-test-suite; fi
+  - echo 'Installing...' && echo -en 'travis_fold:start:script.2\\r'
+  - if test -z "$SWIGLANG"; then sudo make -s install && swig -version && ccache-swig -V; fi
+  - echo -en 'travis_fold:end:script.2\\r'
   - if test -n "$SWIGLANG"; then make -s check-$SWIGLANG-version; fi
   - if test -n "$SWIGLANG"; then make -k $SWIGJOBS check-$SWIGLANG-examples; fi
   - if test -n "$SWIGLANG"; then make -k $SWIGJOBS check-$SWIGLANG-test-suite; fi
+  - echo 'Cleaning...' && echo -en 'travis_fold:start:script.3\\r'
+  - make maintainer-clean
+  - echo -en 'travis_fold:end:script.3\\r'
 branches:
   only:
     - master
