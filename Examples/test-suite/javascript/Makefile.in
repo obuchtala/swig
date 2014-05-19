@@ -28,14 +28,6 @@ _setup = \
 	  echo "$(ACTION)ing $(LANGUAGE) ($(JSENGINE)) testcase $*" ;     \
 	fi;
 
-ifneq (jsc,$(ENGINE))
-
-  # This test can not be run with v8 as it uses v8 API incompatible output typemaps
-  typemap_variables.cpptest:
-	  echo "skipping $(LANGUAGE) ($(JSENGINE)) testcase typemap_variables" ;
-
-endif
-
 ifeq (node,$(JSENGINE))
 
   SWIGOPT += -v8 -DBUILDING_NODE_EXTENSION=1
@@ -93,7 +85,7 @@ else
 
 	run_testcase = \
 		if [ -f $(srcdir)/$*$(SCRIPTSUFFIX) ]; then \
-			$(top_builddir)/Tools/javascript/javascript -$(JSENGINE) $(srcdir)/$*$(SCRIPTSUFFIX); \
+		  $(RUNTOOL) $(top_builddir)/Tools/javascript/javascript -$(JSENGINE) $(srcdir)/$*$(SCRIPTSUFFIX); \
 		fi
 
   %.ctest:
@@ -116,9 +108,6 @@ endif
 
 %.clean:
 	rm -rf $*
-
-clean:
-	rm -f *_wrap.cxx
-	rm -f *_wrap.c
-	rm -f *.so
-	rm -f *.o
+	rm -f $*_wrap.*
+	rm -f $*.so
+	rm -f $*.o

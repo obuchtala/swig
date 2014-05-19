@@ -730,7 +730,8 @@ javascript_clean:
 	rm -f *_wrap* $(RUNME)
 	rm -f core @EXTRA_CLEAN@
 	rm -f *.@OBJEXT@ *@JSSO@ *.$(SO)
-	(cd $(ROOT_DIR)/Tools/javascript && $(MAKE) -s clean)
+	rm -f binding.gyp
+	cd $(ROOT_DIR)/Tools/javascript && $(MAKE) -s clean
 
 ##################################################################
 #####                       ANDROID                         ######
@@ -782,7 +783,7 @@ android_version:
 # -----------------------------------------------------------------
 
 android_clean:
-	cd $(SRCDIR) && ant -q -logfile /dev/null clean
+	test -n "$(SRCDIR)" && cd $(SRCDIR) ; ant -q -logfile /dev/null clean
 	rm -f $(INTERFACEDIR)$(TARGET)_wrap.*
 	rm -f `find $(PACKAGEDIR) -name \*.java | grep -v $(PROJECTNAME).java`
 	rm -rf obj
