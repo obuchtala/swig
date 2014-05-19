@@ -1,51 +1,51 @@
 language: cpp
 compiler:
-  - clang
+  # - clang
   - gcc
 env:
-  - SWIGLANG=
+  - SWIGLANG=javascript ENGINE=jsc
 matrix:
   include:
-    - compiler: gcc
-      env: SWIGLANG=csharp
-    - compiler: gcc
-      env: SWIGLANG=go
-    - compiler: gcc
-      env: SWIGLANG=guile
-    - compiler: gcc
-      env: SWIGLANG=java
-    - compiler: gcc
-      env: SWIGLANG=javascript ENGINE=node
-    - compiler: gcc
-      env: SWIGLANG=javascript ENGINE=jsc
-    - compiler: gcc
-      env: SWIGLANG=javascript ENGINE=v8
-    - compiler: gcc
-      env: SWIGLANG=lua
-    - compiler: gcc
-      env: SWIGLANG=octave SWIGJOBS=-j4
-    - compiler: gcc
-      env: SWIGLANG=perl5
-    - compiler: gcc
-      env: SWIGLANG=php
-    - compiler: gcc
-      env: SWIGLANG=python VER=2.4
-    - compiler: gcc
-      env: SWIGLANG=python VER=2.5
-    - compiler: gcc
-      env: SWIGLANG=python VER=2.6
-    - compiler: gcc
-      env: SWIGLANG=python # 2.7
-    - compiler: gcc
-      env: SWIGLANG=python PY3=3 # 3.2
-    - compiler: gcc
-      env: SWIGLANG=python PY3=3 VER=3.3
-    - compiler: gcc
-      env: SWIGLANG=python PY3=3 VER=3.4
-    - compiler: gcc
-      env: SWIGLANG=ruby
-    - compiler: gcc
-      env: SWIGLANG=tcl
+    # - compiler: gcc
+    #   env: SWIGLANG=csharp
+    # - compiler: gcc
+    #   env: SWIGLANG=go
+    # - compiler: gcc
+    #   env: SWIGLANG=guile
+    # - compiler: gcc
+    #   env: SWIGLANG=java
+    # - compiler: gcc
+    #   env: SWIGLANG=javascript ENGINE=node
+    # - compiler: gcc
+    #   env: SWIGLANG=javascript ENGINE=jsc
+    # - compiler: gcc
+    #   env: SWIGLANG=javascript ENGINE=v8
+    # - compiler: gcc
+    #   env: SWIGLANG=lua
+    # - compiler: gcc
+    #   env: SWIGLANG=octave SWIGJOBS=-j4
+    # - compiler: gcc
+    #   env: SWIGLANG=perl5
+    # - compiler: gcc
+    #   env: SWIGLANG=php
+    # - compiler: gcc
+    #   env: SWIGLANG=python VER=2.4
+    # - compiler: gcc
+    #   env: SWIGLANG=python VER=2.5
+    # - compiler: gcc
+    #   env: SWIGLANG=python VER=2.6
+    # - compiler: gcc
+    #   env: SWIGLANG=python # 2.7
+    # - compiler: gcc
+    #   env: SWIGLANG=python PY3=3 # 3.2
+    # - compiler: gcc
+    #   env: SWIGLANG=python PY3=3 VER=3.3
+    # - compiler: gcc
+    #   env: SWIGLANG=python PY3=3 VER=3.4
+    # - compiler: gcc
+    #   env: SWIGLANG=ruby
+    # - compiler: gcc
+    #   env: SWIGLANG=tcl
   allow_failures:
     # None
 before_install:
@@ -70,22 +70,10 @@ before_install:
   - $CC --version
   - $CXX --version
 script:
-  - echo 'Configuring...' && echo -en 'travis_fold:start:script.1\\r'
   - ./autogen.sh && mkdir -p build/build && cd build/build && ../../configure $CONFIGOPTS
-  - echo -en 'travis_fold:end:script.1\\r'
   - make -s $SWIGJOBS
-  - ./swig -version && ./swig -pcreversion
-  - if test -z "$SWIGLANG"; then make -s $SWIGJOBS check-ccache; fi
-  - if test -z "$SWIGLANG"; then make -s $SWIGJOBS check-errors-test-suite; fi
-  - echo 'Installing...' && echo -en 'travis_fold:start:script.2\\r'
-  - if test -z "$SWIGLANG"; then sudo make -s install && swig -version && ccache-swig -V; fi
-  - echo -en 'travis_fold:end:script.2\\r'
-  - if test -n "$SWIGLANG"; then make -s check-$SWIGLANG-version; fi
-  - if test -n "$SWIGLANG"; then make -k $SWIGJOBS check-$SWIGLANG-examples; fi
-  - if test -n "$SWIGLANG"; then make -k $SWIGJOBS check-$SWIGLANG-test-suite; fi
-  - echo 'Cleaning...' && echo -en 'travis_fold:start:script.3\\r'
-  - make maintainer-clean && ../../configure $CONFIGOPTS
-  - echo -en 'travis_fold:end:script.3\\r'
+  - if test -n "$SWIGLANG"; then make -k $SWIGJOBS check-$SWIGLANG-test-suite RUNTOOL="catchsegv"; fi
 branches:
   only:
-    - master
+    # - master
+    - null_pointer
