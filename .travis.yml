@@ -16,7 +16,7 @@ matrix:
     - env: SWIGLANG=ruby CC=clang CXX=clang++
     - env: SWIGLANG=tcl CC=clang CXX=clang++
   allow_failures:
-    - env: SWIGLANG=php CC=clang CXX=clang++
+    # None
 before_install:
   - date -u
   - uname -a
@@ -42,9 +42,9 @@ script:
   - ./swig -version && ./swig -pcreversion
   - if test -z "$SWIGLANG"; then make -s $SWIGJOBS check-ccache; fi
   - if test -z "$SWIGLANG"; then make -s $SWIGJOBS check-errors-test-suite; fi
-  - echo 'Installing...' && echo -en 'travis_fold:start:script.2\\r'
-  - if test -z "$SWIGLANG"; then sudo make -s install && swig -version && ccache-swig -V; fi
-  - echo -en 'travis_fold:end:script.2\\r'
+#  - echo 'Installing...' && echo -en 'travis_fold:start:script.2\\r'
+#  - if test -z "$SWIGLANG"; then sudo make -s install && swig -version && ccache-swig -V; fi
+#  - echo -en 'travis_fold:end:script.2\\r'
   - if test -n "$SWIGLANG"; then make -s check-$SWIGLANG-version; fi
   - if test -n "$SWIGLANG"; then make -k $SWIGJOBS check-$SWIGLANG-examples; fi
   - if test -n "$SWIGLANG"; then make -k $SWIGJOBS check-$SWIGLANG-test-suite; fi
