@@ -8,8 +8,8 @@ matrix:
     # - env: SWIGLANG=go CC=clang CXX=clang++
     # - env: SWIGLANG=guile CC=clang CXX=clang++
     # - env: SWIGLANG=java CC=clang CXX=clang++
-    # - env: SWIGLANG=javascript ENGINE=jsc CC=clang CXX=clang++
-    # NOT WORKING yet because of v8 version (it is actually too recent)
+    - env: SWIGLANG=javascript ENGINE=jsc CC=clang CXX=clang++
+    # NOT WORKING yet because of unsupported v8 version
     # - env: SWIGLANG=javascript ENGINE=v8 CC=clang CXX=clang++
     - env: SWIGLANG=javascript ENGINE=node CC=clang CXX=clang++
     # - env: SWIGLANG=lua CC=clang CXX=clang++
@@ -28,7 +28,7 @@ before_install:
   - brew update
   - brew list
   - brew install pcre
-  # - brew install boost
+  - brew install boost
   - if test "$SWIGLANG" = "csharp"; then brew install https://dl.dropboxusercontent.com/u/696131/Homebrew/mono.rb; fi
 #  - if test "$SWIGLANG" = "go"; then go env | sed -e 's/^/export /' > goenvsetup && source goenvsetup && rm -f goenvsetup; fi # Until configure.ac is fixed
   - if test "$SWIGLANG" = "guile"; then Tools/brew-install guile; fi
