@@ -1234,7 +1234,7 @@ else
       JSV8INCDIR="/usr/include /usr/local/include/ $JSV8INCDIR"
       ;;
     *-*-darwin*)
-      JSV8INCDIR="$JSV8INCDIR"
+      JSV8INCDIR="/usr/include /usr/local/include/ $JSV8INCDIR"
       ;;
     *)
       ;;
@@ -1262,6 +1262,11 @@ else
   v8libdirs="$JSV8LIBDIR /usr/lib*/ /usr/local/lib*/"
   for d in $v8libdirs ; do
     if test -r $d/libv8.so; then
+      JSV8LIBDIR=$d
+      JSV8LIB="-L$d -lv8"
+      break
+    fi
+    if test -r $d/libv8.dylib; then
       JSV8LIBDIR=$d
       JSV8LIB="-L$d -lv8"
       break
