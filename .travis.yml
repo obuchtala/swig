@@ -33,7 +33,6 @@ before_install:
 #  - if test "$SWIGLANG" = "go"; then go env | sed -e 's/^/export /' > goenvsetup && source goenvsetup && rm -f goenvsetup; fi # Until configure.ac is fixed
   - if test "$SWIGLANG" = "guile"; then Tools/brew-install guile; fi
   - if test "$SWIGLANG" = "javascript" -a "$ENGINE" = "v8"; then brew install v8; fi
-  - if test "$SWIGLANG" = "javascript" -a "$ENGINE" = "node"; then brew install node; fi
   - if test "$SWIGLANG" = "lua"; then brew install lua; fi
   - if test "$SWIGLANG" = "python" -a "$PY3"; then brew install python3 && brew list -v python3; fi
   - ls -la $(which $CC)
