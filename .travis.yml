@@ -4,17 +4,18 @@ env:
   - SWIGLANG= CC=clang CXX=clang++
 matrix:
   include:
-    - env: SWIGLANG=csharp CC=clang CXX=clang++
-    - env: SWIGLANG=go CC=clang CXX=clang++
-    - env: SWIGLANG=guile CC=clang CXX=clang++
-    - env: SWIGLANG=java CC=clang CXX=clang++
-    - env: SWIGLANG=lua CC=clang CXX=clang++
-    - env: SWIGLANG=perl5 CC=clang CXX=clang++
-    - env: SWIGLANG=php CC=clang CXX=clang++
-    - env: SWIGLANG=python CC=clang CXX=clang++
-    - env: SWIGLANG=python PY3=1 CC=clang CXX=clang++
-    - env: SWIGLANG=ruby CC=clang CXX=clang++
-    - env: SWIGLANG=tcl CC=clang CXX=clang++
+    # - env: SWIGLANG=csharp CC=clang CXX=clang++
+    # - env: SWIGLANG=go CC=clang CXX=clang++
+    # - env: SWIGLANG=guile CC=clang CXX=clang++
+    # - env: SWIGLANG=java CC=clang CXX=clang++
+    - env: SWIGLANG=javascript ENGINE=jsc CC=clang CXX=clang++
+    # - env: SWIGLANG=lua CC=clang CXX=clang++
+    # - env: SWIGLANG=perl5 CC=clang CXX=clang++
+    # - env: SWIGLANG=php CC=clang CXX=clang++
+    # - env: SWIGLANG=python CC=clang CXX=clang++
+    # - env: SWIGLANG=python PY3=1 CC=clang CXX=clang++
+    # - env: SWIGLANG=ruby CC=clang CXX=clang++
+    # - env: SWIGLANG=tcl CC=clang CXX=clang++
   allow_failures:
     # None
 before_install:
